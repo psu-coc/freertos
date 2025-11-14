@@ -20,6 +20,7 @@
 
 /* USER CODE BEGIN Non_Secure_CallLib */
 /* Includes ------------------------------------------------------------------*/
+
 #include "main.h"
 #include "secure_nsc.h"
 #include <stdio.h>
@@ -28,11 +29,38 @@
 #include "Crypto/hmac-sha256/hmac-sha256.h"
 #include "aes-gcm/aes.h"   // รวม AES CBC, CTR, ECB ไว้หมด
 #include "Aesnew/aes.h"
+#include "arm_cmse.h"
 
 #define SHA256_DIGEST_SIZE 32
-#define BLOCK_SIZE 512 // 32 124 1024 4096
+#define BLOCK_SIZE 1024 // 32 128 1024 4096
 #define TOTAL_SIZE 0x40000
 #define BLOCKS (TOTAL_SIZE / BLOCK_SIZE)
+
+#define SAFE_FLASH_PAGE   128
+#define TARGET_FLASH_ADDR 0x08068000 // Page 128 Bank 2
+
+
+#define FLASH_TEST_ADDR_SECURE  0x0C0BE000  // Secure view
+#define FLASH_TEST_ADDR_NS      0x080BE000  // Non-Secure view
+#define FLASH_TEST_PAGE         120         // Bank 2, Page 120
+#define FLASH_TEST_BANK         FLASH_BANK_2
+#define FLASH_PAGE_SIZE         0x800       // 2KB per page
+#define FLASH_TEST_DATA         0x1234567812345678ULL
+
+
+// ⭐ เพิ่ม helper function ที่ top ของไฟล์
+static inline void InvalidateICache(void)
+{
+    #if (__ICACHE_PRESENT == 1U)
+    SCB->ICIALLU = 0UL;  // Invalidate entire I-Cache
+    __DSB();
+    __ISB();
+    #endif
+}
+
+__attribute__((section(".gnu.linkonce.b._ns_work_buffer")))
+static uint8_t ns_work_buffer[256] __attribute__((aligned(8)));
+
 /** @addtogroup STM32L5xx_HAL_Examples
   * @{
   */
@@ -115,6 +143,48 @@ CMSE_NS_ENTRY void SECURE_RegisterCallback(SECURE_CallbackIDTypeDef CallbackId, 
 //}
 
 
+
+
+
+
+
+//__attribute__((cmse_nonsecure_entry))
+//int32_t SECURE_EraseProgramFlash(SecureFlashParams_t *params)
+//{
+//    HAL_StatusTypeDef status;
+//    FLASH_EraseInitTypeDef EraseInitStruct = {0};
+//    uint32_t PageError = 0;
+//
+//    // Safety: check pointer is from non-secure
+//    if (!CMSE_IS_NONSECURE_ADDRESS(params)) return -100;
+//
+//    status = HAL_FLASH_Unlock();
+//    if (status != HAL_OK) return -1;
+//
+//    EraseInitStruct.TypeErase = FLASH_TYPEERASE_PAGES;
+//    EraseInitStruct.Page = params->page;
+//    EraseInitStruct.NbPages = 1;
+//    EraseInitStruct.Banks = params->bank;
+//
+//    status = HAL_FLASHEx_Erase(&EraseInitStruct, &PageError);
+//    if (status != HAL_OK || PageError != 0xFFFFFFFF) {
+//        HAL_FLASH_Lock();
+//        return -2;
+//    }
+//    __DSB();
+//    __ISB();
+//
+//    status = HAL_FLASH_Program(FLASH_TYPEPROGRAM_DOUBLEWORD, params->target_addr, params->value);
+//
+//    HAL_FLASH_Lock();
+//
+//    if (status == HAL_OK) return 0;
+//    else return -3;
+//}
+
+
+
+
 __attribute__((cmse_nonsecure_entry))
 void SECURE_CopyMessage(char* buffer, size_t maxlen)
 {
@@ -157,11 +227,50 @@ void SECURE_ComputeHMAC(uint8_t *output_digest, size_t maxlen)
 
 }
 
+static uint8_t secure_digest_2[SHA256_DIGEST_SIZE];
+uint8_t *real_memory = (uint8_t *)0x8040000;
+uint8_t seed[32] = {0};
+//uint8_t real_memory[TOTAL_SIZE];  // This is safe, real RAM
+
 static const uint8_t key[] = "MySecureKey123"; // Example key
 static hmac_sha256 hmac;
 static uint8_t memory_region[1024];     // Simulate memory to attest
 static uint8_t secure_digest_1[SHA256_DIGEST_SIZE];
 
+
+
+__attribute__((cmse_nonsecure_entry))
+void SECURE_LinearHMAC(uint8_t *output_digest, size_t maxlen)
+{
+
+
+//    __disable_irq();
+    if (!output_digest || maxlen < SHA256_DIGEST_SIZE) {
+        __enable_irq();
+        return;
+    }
+
+    // Optional: Fill real_memory with known data for consistent testing
+    for (int i = 0; i < TOTAL_SIZE; i++) {
+        real_memory[i] = i & 0xFF;  // test pattern
+    }
+
+//    hmac_sha256_initialize(&hmac, key, strlen((const char *)key));
+    hmac_sha256_initialize(&hmac, key, sizeof(key));
+
+
+    // Process blocks sequentially (not shuffled)
+    for (int i = 0; i < BLOCKS; i++) {
+        const uint8_t *block = &real_memory[i * BLOCK_SIZE];
+        hmac_sha256_update(&hmac, block, BLOCK_SIZE);
+    }
+
+    hmac_sha256_finalize(&hmac, NULL, 0);
+    memcpy(output_digest, hmac.digest, SHA256_DIGEST_SIZE);
+
+
+    __enable_irq();
+}
 
 //__attribute__((cmse_nonsecure_entry))
 //void SECURE_LinearHMAC(uint8_t *output_digest, size_t maxlen)
@@ -184,11 +293,6 @@ static uint8_t secure_digest_1[SHA256_DIGEST_SIZE];
 //    memcpy(output_digest,secure_digest_1, SHA256_DIGEST_SIZE);
 //}
 
-
-static uint8_t secure_digest_2[SHA256_DIGEST_SIZE];
-uint8_t *real_memory = (uint8_t *)0x8040000;
-uint8_t seed[32] = {0};
-//uint8_t real_memory[TOTAL_SIZE];  // This is safe, real RAM
 
 
 
@@ -423,15 +527,14 @@ void SECURE_ShuffledHMAC_secure(uint8_t *out_digest, size_t out_len,
 
     // 4) HMAC over shuffled blocks
     hmac_sha256_initialize(&hmac, (const uint8_t*)key, strlen(key));
-//    uint8_t copy[BLOCK_SIZE];
+    uint8_t copy[BLOCK_SIZE];
     for (int i = 0; i < BLOCKS; i++) {
         const uint8_t *blk = &real_memory[(size_t)indices[i] * BLOCK_SIZE];
         __disable_irq();
-        //memcpy(copy, blk, BLOCK_SIZE);
-        hmac_sha256_update(&hmac, blk, BLOCK_SIZE);
-
+        memcpy(copy, blk, BLOCK_SIZE);
+//        hmac_sha256_update(&hmac, blk, BLOCK_SIZE);
         __enable_irq();
-        //hmac_sha256_update(&hmac, copy, BLOCK_SIZE);
+        hmac_sha256_update(&hmac, copy, BLOCK_SIZE);
     }
     hmac_sha256_finalize(&hmac, NULL, 0);
     memcpy(out_digest, hmac.digest, SHA256_DIGEST_SIZE);
@@ -477,13 +580,9 @@ void SECURE_SMARM(uint8_t *output_digest, size_t maxlen)
 
 	const uint8_t *block = &real_memory[indices[i] * BLOCK_SIZE];
 
-	//	        __disable_irq();
-
-	hmac_sha256_update(&hmac, block, BLOCK_SIZE);
-
-	//	        __enable_irq();
-
-
+		__disable_irq();
+		hmac_sha256_update(&hmac, block, BLOCK_SIZE);
+		__enable_irq();
 
 	}
 
@@ -492,36 +591,7 @@ void SECURE_SMARM(uint8_t *output_digest, size_t maxlen)
 	memcpy(output_digest,hmac.digest, SHA256_DIGEST_SIZE);
 }
 
-__attribute__((cmse_nonsecure_entry))
-void SECURE_LinearHMAC(uint8_t *output_digest, size_t maxlen)
-{
 
-
-    __disable_irq();
-    if (!output_digest || maxlen < SHA256_DIGEST_SIZE) {
-        __enable_irq();
-        return;
-    }
-
-    // Optional: Fill real_memory with known data for consistent testing
-    for (int i = 0; i < TOTAL_SIZE; i++) {
-        real_memory[i] = i & 0xFF;  // test pattern
-    }
-
-    hmac_sha256_initialize(&hmac, key, strlen((const char *)key));
-
-    // Process blocks sequentially (not shuffled)
-    for (int i = 0; i < BLOCKS; i++) {
-        const uint8_t *block = &real_memory[i * BLOCK_SIZE];
-        hmac_sha256_update(&hmac, block, BLOCK_SIZE);
-    }
-
-    hmac_sha256_finalize(&hmac, NULL, 0);
-    memcpy(output_digest, hmac.digest, SHA256_DIGEST_SIZE);
-
-
-    __enable_irq();
-}
 
 
 __attribute__((cmse_nonsecure_entry))
@@ -612,23 +682,1093 @@ static void LocalTest_HMAC(void)
 //    memcpy(output_digest, hmac.digest, SHA256_DIGEST_SIZE);
 //}
 
-
+// Ben : old secure flashtest
+//__attribute__((cmse_nonsecure_entry))
+//
+//void Secure_FlashTest(void)
+//
+//{
+//
+//HAL_StatusTypeDef status;
+//
+//FLASH_EraseInitTypeDef EraseInitStruct = {0};
+//
+//FLASH_BBAttributesTypeDef flash_bb_attr = {0};
+//
+//uint32_t PageError = 0;
+//
+//uint64_t test_data = FLASH_TEST_DATA;
+//
+//uint32_t saved_attr = 0;
+//
+//
+//
+//printf("[Secure] === Flash Test with BB Attribute Management ===\r\n");
+//
+//
+//
+//// ========== Step 1: Get Current Block Attributes ==========
+//
+//flash_bb_attr.Bank = FLASH_TEST_BANK;
+//
+//flash_bb_attr.BBAttributesType = FLASH_BB_SEC;
+//
+//
+//
+//status = HAL_FLASHEx_GetConfigBBAttributes(&flash_bb_attr);
+//
+//if (status != HAL_OK)
+//
+//{
+//
+//printf("[Secure] ❌ Get BB Attributes FAILED: %d\r\n", status);
+//
+//return;
+//
+//}
+//
+//
+//
+//// Save current attribute for page 120
+//
+//// Page 120 = bit 120 in BBAttributes_array
+//
+//uint32_t attr_index = FLASH_TEST_PAGE / 32; // which uint32 (120/32 = 3)
+//
+//uint32_t attr_bit = FLASH_TEST_PAGE % 32; // which bit (120%32 = 24)
+//
+//
+//
+//saved_attr = flash_bb_attr.BBAttributes_array[attr_index];
+//
+//uint32_t page_is_secure = (saved_attr >> attr_bit) & 0x1;
+//
+//
+//
+//printf("[Secure] Page %d current attr: %s\r\n",
+//
+//FLASH_TEST_PAGE,
+//
+//page_is_secure ? "SECURE" : "NON-SECURE");
+//
+//
+//
+//// ========== Step 2: Promote Page to SECURE ==========
+//
+//printf("[Secure] Promoting page to SECURE...\r\n");
+//
+//
+//
+//// Set bit to make page Secure
+//
+//flash_bb_attr.BBAttributes_array[attr_index] |= (1U << attr_bit);
+//
+//
+//
+//status = HAL_FLASHEx_ConfigBBAttributes(&flash_bb_attr);
+//
+//if (status != HAL_OK)
+//
+//{
+//
+//printf("[Secure] ❌ Promote to SECURE FAILED: %d\r\n", status);
+//
+//return;
+//
+//}
+//
+//
+//
+//printf("[Secure] ✅ Page promoted to SECURE\r\n");
+//
+//
+//
+//// ========== Step 3: Unlock Flash ==========
+//
+//status = HAL_FLASH_Unlock();
+//
+//if (status != HAL_OK)
+//
+//{
+//
+//printf("[Secure] ❌ Unlock FAILED: %d\r\n", status);
+//
+//goto restore_attributes;
+//
+//}
+//
+//printf("[Secure] ✅ Unlocked\r\n");
+//
+//
+//
+//// ========== Step 4: Erase Page ==========
+//
+//EraseInitStruct.TypeErase = FLASH_TYPEERASE_PAGES;
+//
+//EraseInitStruct.Page = FLASH_TEST_PAGE;
+//
+//EraseInitStruct.NbPages = 1;
+//
+//EraseInitStruct.Banks = FLASH_TEST_BANK;
+//
+//
+//
+//status = HAL_FLASHEx_Erase(&EraseInitStruct, &PageError);
+//
+//
+//
+//if (status != HAL_OK || PageError != 0xFFFFFFFF)
+//
+//{
+//
+//printf("[Secure] ❌ Erase FAILED: status=%d, PageError=0x%08lX\r\n",
+//
+//status, PageError);
+//
+//HAL_FLASH_Lock();
+//
+//goto restore_attributes;
+//
+//}
+//
+//printf("[Secure] ✅ Erase OK\r\n");
+//
+//
+//
+//// ========== Step 5: Program ==========
+//
+//status = HAL_FLASH_Program(FLASH_TYPEPROGRAM_DOUBLEWORD,
+//
+//FLASH_TEST_ADDR_SECURE,
+//
+//test_data);
+//
+//
+//
+//if (status != HAL_OK)
+//
+//{
+//
+//printf("[Secure] ❌ Program FAILED: status=%d, error=0x%08lX\r\n",
+//
+//status, HAL_FLASH_GetError());
+//
+//HAL_FLASH_Lock();
+//
+//goto restore_attributes;
+//
+//}
+//
+//printf("[Secure] ✅ Program OK\r\n");
+//
+//
+//
+//// ========== Step 6: Lock Flash ==========
+//
+//HAL_FLASH_Lock();
+//
+//
+//
+//// ========== Step 7: Verify (while still Secure) ==========
+//
+//__DSB();
+//
+//__ISB();
+//
+//
+//
+//uint64_t verify_value = *(volatile uint64_t*)FLASH_TEST_ADDR_SECURE;
+//
+//
+//
+//if (verify_value == test_data)
+//
+//{
+//
+//printf("[Secure] ✅ Verify OK!\r\n");
+//
+//printf("[Secure] Written: 0x%016llX\r\n", test_data);
+//
+//printf("[Secure] Read: 0x%016llX\r\n", verify_value);
+//
+//}
+//
+//else
+//
+//{
+//
+//printf("[Secure] ❌ Verify FAILED!\r\n");
+//
+//printf("[Secure] Expected: 0x%016llX\r\n", test_data);
+//
+//printf("[Secure] Got: 0x%016llX\r\n", verify_value);
+//
+//}
+//
+//
+//
+//restore_attributes:
+//
+//// ========== Step 8: Restore Original Attributes ==========
+//
+//printf("[Secure] Restoring original attributes...\r\n");
+//
+//
+//
+//// Restore saved attribute
+//
+//flash_bb_attr.BBAttributes_array[attr_index] = saved_attr;
+//
+//
+//
+//status = HAL_FLASHEx_ConfigBBAttributes(&flash_bb_attr);
+//
+//if (status != HAL_OK)
+//
+//{
+//
+//printf("[Secure] ⚠️ WARNING: Failed to restore attributes: %d\r\n", status);
+//
+//printf("[Secure] ⚠️ Page may remain SECURE!\r\n");
+//
+//}
+//
+//else
+//
+//{
+//
+//printf("[Secure] ✅ Attributes restored to %s\r\n",
+//
+//page_is_secure ? "SECURE" : "NON-SECURE");
+//
+//}
+//
+//
+//
+//// ========== Step 9: Invalidate Caches ==========
+//
+//// Clear instruction cache
+//
+//SCB_InvalidateICache();
+//
+//
+//
+//// Memory barrier
+//
+//__DSB();
+//
+//__ISB();
+//
+//
+//
+//printf("[Secure] 🎉 Flash Test Complete!\r\n");
+//
+//}
 
 __attribute__((cmse_nonsecure_entry))
-void SECURE_FillTest(uint8_t *buffer, size_t len)
+void Secure_FlashTest(void)
 {
+	 	HAL_StatusTypeDef status;
+	    FLASH_EraseInitTypeDef EraseInitStruct = {0};
+	    FLASH_BBAttributesTypeDef flash_bb_attr = {0};
+	    uint32_t PageError = 0;
+	    uint64_t test_data = FLASH_TEST_DATA;
+	    uint32_t saved_attr = 0;
 
-	BSP_LED_Toggle(LED1);
+	    printf("[Secure] === Flash Test (with BB Attributes) ===\r\n");
 
-    if (!buffer || len < 4) return;
+	    // ========== Step 1: Get Current BB Attributes ==========
+	    flash_bb_attr.Bank = FLASH_TEST_BANK;
+	    flash_bb_attr.BBAttributesType = FLASH_BB_SEC;
 
-    buffer[0] = 0xDE;
-    buffer[1] = 0xAD;
-    buffer[2] = 0xBE;
-    buffer[3] = 0xEF;
+	    HAL_FLASHEx_GetConfigBBAttributes(&flash_bb_attr);
+
+	    uint32_t attr_index = FLASH_TEST_PAGE / 32;  // 120/32 = 3
+	    uint32_t attr_bit = FLASH_TEST_PAGE % 32;    // 120%32 = 24
+
+	    saved_attr = flash_bb_attr.BBAttributes_array[attr_index];
+	    uint32_t page_is_secure = (saved_attr >> attr_bit) & 0x1;
+
+	    printf("[Secure] Page %d current: %s\r\n",
+	           FLASH_TEST_PAGE,
+	           page_is_secure ? "SECURE" : "NON-SECURE");
+
+	    // ========== Step 2: Promote Page to SECURE ==========
+	    printf("[Secure] Promoting to SECURE...\r\n");
+
+	    // Set bit to make page Secure
+	    flash_bb_attr.BBAttributes_array[attr_index] |= (1U << attr_bit);
+
+	    status = HAL_FLASHEx_ConfigBBAttributes(&flash_bb_attr);
+	    if (status != HAL_OK)
+	    {
+	        printf("[Secure] ❌ Promote FAILED: %d\r\n", status);
+	        return;
+	    }
+
+	    printf("[Secure] ✅ Promoted to SECURE\r\n");
+
+	    // Small delay for attribute change to take effect
+//	    for (volatile int i = 0; i < 1000; i++);
+
+	    // ========== Step 3: Unlock Flash ==========
+	    status = HAL_FLASH_Unlock();
+	    if (status != HAL_OK)
+	    {
+	        printf("[Secure] ❌ Unlock FAILED: %d\r\n", status);
+	        goto restore_attributes;
+	    }
+	    printf("[Secure] ✅ Unlocked\r\n");
+
+	    // ========== Step 4: Erase Page ==========
+	    EraseInitStruct.TypeErase = FLASH_TYPEERASE_PAGES;
+	    EraseInitStruct.Page = FLASH_TEST_PAGE;
+	    EraseInitStruct.NbPages = 1;
+	    EraseInitStruct.Banks = FLASH_TEST_BANK;
+
+	    status = HAL_FLASHEx_Erase(&EraseInitStruct, &PageError);
+
+	    if (status != HAL_OK || PageError != 0xFFFFFFFF)
+	    {
+	        printf("[Secure] ❌ Erase FAILED: status=%d, PageError=0x%08lX\r\n",
+	               status, PageError);
+	        HAL_FLASH_Lock();
+	        goto restore_attributes;
+	    }
+	    printf("[Secure] ✅ Erase OK\r\n");
+
+	    // ========== Step 5: Prepare Data in Work Buffer ==========
+	    // Copy data to NS work buffer (required by some HAL implementations)
+	    memcpy(ns_work_buffer, &test_data, sizeof(test_data));
+
+	    // Memory barrier
+	    __DSB();
+	    __ISB();
+
+	    // ========== Step 6: Program via Secure Address ==========
+	    printf("[Secure] Programming...\r\n");
+
+	    // Use Secure alias address (0x0C...)
+	    uint64_t data_to_write;
+	    memcpy(&data_to_write, ns_work_buffer, sizeof(data_to_write));
+
+	    status = HAL_FLASH_Program(FLASH_TYPEPROGRAM_DOUBLEWORD,
+	                                FLASH_TEST_ADDR_SECURE,  // Secure alias
+	                                data_to_write);
+
+	    if (status != HAL_OK)
+	    {
+	        uint32_t flash_error = HAL_FLASH_GetError();
+	        printf("[Secure] ❌ Program FAILED\r\n");
+	        printf("[Secure]    Status: %d\r\n", status);
+	        printf("[Secure]    Error: 0x%08lX\r\n", flash_error);
+	        printf("[Secure]    SECSR: 0x%08lX\r\n", FLASH->SECSR);
+	        HAL_FLASH_Lock();
+	        goto restore_attributes;
+	    }
+
+	    printf("[Secure] ✅ Program OK\r\n");
+
+	    // ========== Step 7: Lock Flash ==========
+	    HAL_FLASH_Lock();
+
+	    // ========== Step 8: Verify (while still Secure) ==========
+	    // Clean and invalidate cache
+	    __DSB();
+	    __ISB();
+
+	    uint64_t verify_value = *(volatile uint64_t*)FLASH_TEST_ADDR_SECURE;
+
+	    if (verify_value == test_data)
+	    {
+	        printf("[Secure] ✅ Verify OK!\r\n");
+	        printf("[Secure]    Written:  0x%016llX\r\n", test_data);
+	        printf("[Secure]    Read:     0x%016llX\r\n", verify_value);
+	    }
+	    else
+	    {
+	        printf("[Secure] ❌ Verify FAILED!\r\n");
+	        printf("[Secure]    Expected: 0x%016llX\r\n", test_data);
+	        printf("[Secure]    Got:      0x%016llX\r\n", verify_value);
+	    }
+
+	restore_attributes:
+	    // ========== Step 9: Demote back to Original Attributes ==========
+	    printf("[Secure] Restoring attributes...\r\n");
+
+	    // Restore original attribute
+	    flash_bb_attr.BBAttributes_array[attr_index] = saved_attr;
+
+	    status = HAL_FLASHEx_ConfigBBAttributes(&flash_bb_attr);
+	    if (status != HAL_OK)
+	    {
+	        printf("[Secure] ⚠️  WARNING: Failed to restore: %d\r\n", status);
+	        printf("[Secure] ⚠️  Page may remain SECURE!\r\n");
+	    }
+	    else
+	    {
+	        printf("[Secure] ✅ Attributes restored\r\n");
+	    }
+
+	    // ========== Step 10: Invalidate Caches ==========
+	    __DSB();
+	    __ISB();
+
+	    printf("[Secure] 🎉 Flash Test Complete!\r\n");
+}
+
+// ✅ Wrapper function ที่บังคับใช้ Non-Secure register
+static void FLASH_PageErase_NS(uint32_t Page, uint32_t Banks)
+{
+    // Wait for Flash ready
+    while (FLASH->NSSR & FLASH_NSSR_NSBSY);
+
+    // Set bank
+    if (Banks == FLASH_BANK_2) {
+        SET_BIT(FLASH->NSCR, FLASH_NSCR_NSBKER);
+    } else {
+        CLEAR_BIT(FLASH->NSCR, FLASH_NSCR_NSBKER);
+    }
+
+    // Set page number and enable page erase
+    MODIFY_REG(FLASH->NSCR,
+               (FLASH_NSCR_NSPNB | FLASH_NSCR_NSPER),
+               ((Page << FLASH_NSCR_NSPNB_Pos) | FLASH_NSCR_NSPER));
+
+    // Start erase
+    SET_BIT(FLASH->NSCR, FLASH_NSCR_NSSTRT);
 }
 
 
+
+//Ben try to delete direcly
+__attribute__((cmse_nonsecure_entry))
+void Secure_EraseWriteVerify(void)
+{
+    HAL_StatusTypeDef status;
+    FLASH_EraseInitTypeDef EraseInitStruct = {0};
+    uint32_t PageError = 0;
+    uint64_t test_value = 0x123456789ABCDEF0ULL;
+
+    uint32_t target_page = 127;
+    uint32_t target_addr = 0x0807F800;
+
+    volatile uint32_t debug_step = 0;
+    volatile uint32_t debug_match = 0;
+    volatile uint32_t debug_notmatch = 0;
+
+    HAL_ICACHE_Disable();
+    debug_step = 1;
+
+    // ========== Unlock NS ==========
+    FLASH->NSKEYR = FLASH_KEY1;
+    FLASH->NSKEYR = FLASH_KEY2;
+
+    if (HAL_FLASH_Unlock() != HAL_OK) {
+        debug_step = 10; // Unlock failed
+        HAL_ICACHE_Enable();
+        return;
+    }
+
+    // ========== ✅ บังคับให้ HAL คิดว่าเป็น Non-Secure operation ==========
+    extern FLASH_ProcessTypeDef pFlash;
+    pFlash.ProcedureOnGoing = FLASH_TYPEERASE_PAGES;  // Non-Secure operation
+
+    FLASH->NSSR = 0xFFFFFFFF;  // Clear all flags
+    __DSB();
+    __ISB();
+
+    // ========== Erase ด้วย HAL ==========
+//    debug_step = 2;
+//
+//    EraseInitStruct.TypeErase = FLASH_TYPEERASE_PAGES;
+//    EraseInitStruct.Page = target_page;
+//    EraseInitStruct.NbPages = 1;
+//    EraseInitStruct.Banks = FLASH_BANK_2;
+//
+//    status = HAL_FLASHEx_Erase(&EraseInitStruct, &PageError);
+//
+//    if (status != HAL_OK || PageError != 0xFFFFFFFF) {
+//        debug_step = 20;  // Erase failed
+//        SET_BIT(FLASH->NSCR, FLASH_NSCR_NSLOCK);
+//        HAL_ICACHE_Enable();
+//        return;
+//    }
+
+    debug_step = 3;  // Erase OK
+
+    __DSB();
+    __ISB();
+
+    // ========== Program 256 words ==========
+    debug_step = 4;
+
+    for (uint32_t i = 0; i < 256; i++) {
+        uint32_t addr = target_addr + (i * 8);
+        uint64_t value = test_value + i;
+
+        while (FLASH->NSSR & FLASH_NSSR_NSBSY);
+
+        // Clear any errors
+        FLASH->NSSR = 0xFFFFFFFF;
+
+        SET_BIT(FLASH->NSCR, FLASH_NSCR_NSPG);
+
+        *(volatile uint32_t*)addr = (uint32_t)(value);
+        __ISB();
+        *(volatile uint32_t*)(addr + 4) = (uint32_t)(value >> 32);
+
+        while (FLASH->NSSR & FLASH_NSSR_NSBSY);
+
+        CLEAR_BIT(FLASH->NSCR, FLASH_NSCR_NSPG);
+    }
+
+    __DSB();
+    __ISB();
+
+    // ========== Invalidate Cache ==========
+    debug_step = 5;
+    HAL_ICACHE_Invalidate();
+    __DSB();
+    __ISB();
+
+    // ========== Verify ==========
+    debug_step = 6;
+
+    for (uint32_t j = 0; j < 256; j++) {
+        uint32_t addr = target_addr + (j * 8);
+        uint64_t expected = test_value + j;
+        uint64_t actual = *(volatile uint64_t*)addr;
+
+        if (actual == expected) {
+            debug_match++;
+        } else {
+            debug_notmatch++;
+        }
+    }
+
+    SET_BIT(FLASH->NSCR, FLASH_NSCR_NSLOCK);
+    HAL_ICACHE_Enable();
+
+    if (debug_match == 256) {
+        debug_step = 100;  // ✅ Success
+    } else {
+        debug_step = 101;  // ❌ Failed
+    }
+}
+
+__attribute__((cmse_nonsecure_entry))
+void Secure_WriteFlash_128KB(uint32_t *success_words, uint32_t *failed_words)
+{
+    uint64_t test_value = 0x123456789ABCDEF0ULL;
+
+    // ✅ Pages 64-127 (128KB)
+    uint32_t start_addr = 0x08060000;  // Page 64
+    uint32_t end_addr   = 0x0807FFFF;  // Page 127
+    uint32_t total_words = (end_addr - start_addr + 1) / 8;  // 16,384 words
+
+    uint32_t success = 0;
+    uint32_t failed = 0;
+
+    HAL_ICACHE_Disable();
+
+    // Unlock NS Flash
+    FLASH->NSKEYR = FLASH_KEY1;
+    FLASH->NSKEYR = FLASH_KEY2;
+
+    if (FLASH->NSCR & FLASH_NSCR_NSLOCK) {
+        HAL_ICACHE_Enable();
+        *success_words = 0;
+        *failed_words = total_words;
+        return;
+    }
+
+    // Force Non-Secure operation
+    extern FLASH_ProcessTypeDef pFlash;
+    pFlash.ProcedureOnGoing = FLASH_TYPEERASE_PAGES;
+
+    FLASH->NSSR = 0xFFFFFFFF;
+    __DSB();
+    __ISB();
+
+    // ========== Write 128KB ==========
+    uint32_t word_index = 0;
+
+    for (uint32_t addr = start_addr; addr <= end_addr; addr += 8) {
+        uint64_t value = test_value + word_index;
+
+        while (FLASH->NSSR & FLASH_NSSR_NSBSY);
+        FLASH->NSSR = 0xFFFFFFFF;
+        SET_BIT(FLASH->NSCR, FLASH_NSCR_NSPG);
+
+        *(volatile uint32_t*)addr = (uint32_t)(value);
+        __ISB();
+        *(volatile uint32_t*)(addr + 4) = (uint32_t)(value >> 32);
+
+        while (FLASH->NSSR & FLASH_NSSR_NSBSY);
+        CLEAR_BIT(FLASH->NSCR, FLASH_NSCR_NSPG);
+
+        word_index++;
+    }
+
+    __DSB();
+    __ISB();
+
+    // Invalidate Cache
+    HAL_ICACHE_Invalidate();
+    __DSB();
+    __ISB();
+
+    // ========== Verify ==========
+    word_index = 0;
+
+    for (uint32_t addr = start_addr; addr <= end_addr; addr += 8) {
+        uint64_t expected = test_value + word_index;
+        uint64_t actual = *(volatile uint64_t*)addr;
+
+        if (actual == expected) {
+            success++;
+        } else {
+            failed++;
+        }
+
+        word_index++;
+    }
+
+    SET_BIT(FLASH->NSCR, FLASH_NSCR_NSLOCK);
+    HAL_ICACHE_Enable();
+
+    *success_words = success;
+    *failed_words = failed;
+}
+
+
+__attribute__((cmse_nonsecure_entry))
+void Secure_WriteFlash_128KB_2(uint32_t *success_words, uint32_t *failed_words)
+{
+    uint64_t test_value = 0x123456789ABCDEF0ULL;
+
+    // ✅ Pages 64-127 (128KB)
+    uint32_t start_addr = 0x08060000;  // Page 64
+    uint32_t end_addr   = 0x0807FFFF;  // Page 127
+    uint32_t total_words = (end_addr - start_addr + 1) / 8;  // 16,384 words
+
+    uint32_t success = 0;
+    uint32_t failed = 0;
+
+    HAL_ICACHE_Disable();
+
+    // Unlock NS Flash
+    FLASH->NSKEYR = FLASH_KEY1;
+    FLASH->NSKEYR = FLASH_KEY2;
+
+    if (FLASH->NSCR & FLASH_NSCR_NSLOCK) {
+        HAL_ICACHE_Enable();
+        *success_words = 0;
+        *failed_words = total_words;
+        return;
+    }
+
+    // Force Non-Secure operation
+    extern FLASH_ProcessTypeDef pFlash;
+    pFlash.ProcedureOnGoing = FLASH_TYPEERASE_PAGES;
+
+    FLASH->NSSR = 0xFFFFFFFF;
+    __DSB();
+    __ISB();
+
+    // ========== Write 128KB ==========
+    uint32_t word_index = 0;
+
+    for (uint32_t addr = start_addr; addr <= end_addr; addr += 8) {
+        uint64_t value = test_value + word_index;
+
+        while (FLASH->NSSR & FLASH_NSSR_NSBSY);
+        FLASH->NSSR = 0xFFFFFFFF;
+        SET_BIT(FLASH->NSCR, FLASH_NSCR_NSPG);
+
+        *(volatile uint32_t*)addr = (uint32_t)(test_value);
+        __ISB();
+        *(volatile uint32_t*)(addr + 4) = (uint32_t)(test_value >> 32);
+
+        while (FLASH->NSSR & FLASH_NSSR_NSBSY);
+        CLEAR_BIT(FLASH->NSCR, FLASH_NSCR_NSPG);
+
+        word_index++;
+    }
+
+    __DSB();
+    __ISB();
+
+    // Invalidate Cache
+    HAL_ICACHE_Invalidate();
+    __DSB();
+    __ISB();
+
+    // ========== Verify ==========
+    word_index = 0;
+
+    for (uint32_t addr = start_addr; addr <= end_addr; addr += 8) {
+        uint64_t expected = test_value + word_index;
+        uint64_t actual = *(volatile uint64_t*)addr;
+
+        if (actual == expected) {
+            success++;
+        } else {
+            failed++;
+        }
+
+        word_index++;
+    }
+
+    SET_BIT(FLASH->NSCR, FLASH_NSCR_NSLOCK);
+    HAL_ICACHE_Enable();
+
+    *success_words = success;
+    *failed_words = failed;
+}
+
+
+// Ben flash erase version 1 using hal
+//__attribute__((cmse_nonsecure_entry))
+//void Secure_EraseWriteVerify(void)
+//{
+//    HAL_StatusTypeDef status;
+//    FLASH_EraseInitTypeDef EraseInitStruct = {0};
+//    uint32_t PageError = 0;
+//    uint64_t test_value = 0x12345678;
+//    uint32_t target_addr = 0x0807F800;
+//
+//
+//    EraseInitStruct.TypeErase = FLASH_TYPEERASE_PAGES;
+//    EraseInitStruct.Page = 255;
+//    EraseInitStruct.NbPages = 1;
+//    EraseInitStruct.Banks = 2;
+//
+//    status = HAL_FLASHEx_Erase(&EraseInitStruct, &PageError);
+//
+//    if (status != HAL_OK || PageError != 0xFFFFFFFF) {
+//        printf("❌ Erase FAIL status=%d PageError=0x%08lX\r\n", status, PageError);
+//        HAL_FLASH_Lock();
+//        return;
+//    }
+//    printf("✅ Erase OK! Page %d Bank 2\r\n", SAFE_FLASH_PAGE);
+//
+//    __DSB();
+//    __ISB();
+//
+//    uint64_t after_erase = *(volatile uint64_t*)target_addr;
+//    printf("After Erase: 0x%08lX%08lX\r\n",
+//           (uint32_t)(after_erase >> 32),
+//           (uint32_t)(after_erase & 0xFFFFFFFF));
+//
+//
+//
+//    	 status = HAL_FLASH_Program(
+//    	        FLASH_TYPEPROGRAM_DOUBLEWORD,
+//				target_addr,
+//    	        test_value
+//    	    );
+//
+//
+//    uint32_t flash_error = HAL_FLASH_GetError();
+//    if (status != HAL_OK) {
+//        printf("❌ Program FAIL! status=%d error=0x%08lX\r\n", status, flash_error);
+//        HAL_FLASH_Lock();
+//        return;
+//    }
+//    printf("Program status=%d error=0x%08lX\r\n", status, flash_error);
+//
+//    __DSB();
+//    __ISB();
+//
+//    uint64_t verify_value = *(volatile uint64_t*)target_addr;
+//    if (verify_value == test_value) {
+//        printf("✅ Write+Verify OK!\r\n");
+//        printf("   Expected: 0x%08lX%08lX\r\n",
+//               (uint32_t)(test_value >> 32),
+//               (uint32_t)(test_value & 0xFFFFFFFF));
+//        printf("   Read:     0x%08lX%08lX\r\n",
+//               (uint32_t)(verify_value >> 32),
+//               (uint32_t)(verify_value & 0xFFFFFFFF));
+//    } else {
+//        printf("❌ Verify FAIL!\r\n");
+//        printf("   Expected: 0x%08lX%08lX\r\n",
+//               (uint32_t)(test_value >> 32),
+//               (uint32_t)(test_value & 0xFFFFFFFF));
+//        printf("   Read:     0x%08lX%08lX\r\n",
+//               (uint32_t)(verify_value >> 32),
+//               (uint32_t)(verify_value & 0xFFFFFFFF));
+//    }
+//}
+
+__attribute__((cmse_nonsecure_entry))
+void Secure_Flash256KB(FlashResult_t *result)
+{
+	// just run 10 pages
+    if (!result) return;
+
+    // ⭐ ใช้ Pages 128-137 (Non-secure area, แต่ Secure World เขียนได้)
+    const uint32_t START_PAGE = 246;
+    const uint32_t TOTAL_PAGES = 10;   // แค่ 10 pages = 20 KB
+    const uint32_t PAGE_SIZE = 0x800;
+    const uint32_t BANK2_BASE = 0x08040000;
+    const uint32_t DW_PER_PAGE = 256;
+    const uint64_t FLASH_TEST_DATA_BASE = 0x1234567890ABCDEFULL;
+
+    HAL_StatusTypeDef status;
+    uint32_t PageError = 0;
+
+    result->total_pages = TOTAL_PAGES;
+    result->success_pages = 0;
+    result->failed_pages = 0;
+    result->total_words = 0;
+    result->success_words = 0;
+    result->failed_words = 0;
+
+    // --- BB Attribute Management Variables ---
+    FLASH_BBAttributesTypeDef flash_bb_attr = {0};
+    uint32_t saved_attr_array[4] = {0}; // Bank 2 has 128 pages, 128/32 = 4 uint32_t values
+    uint8_t original_page_is_secure[TOTAL_PAGES];
+
+    flash_bb_attr.Bank = FLASH_BANK_2;
+    flash_bb_attr.BBAttributesType = FLASH_BB_SEC;
+    HAL_FLASHEx_GetConfigBBAttributes(&flash_bb_attr);
+
+    if (status != HAL_OK) {
+            // Cannot proceed if we can't read attributes
+        return;
+    }
+
+    memcpy(saved_attr_array, flash_bb_attr.BBAttributes_array, sizeof(saved_attr_array));
+
+
+    // --- Step 2: Promote all target pages to SECURE ---
+       for (uint32_t i = 0; i < TOTAL_PAGES; i++) {
+           uint32_t page = START_PAGE + i;
+           uint32_t attr_index = page / 32;
+           uint32_t attr_bit = page % 32;
+
+           // Check if it's already secure
+           if (flash_bb_attr.BBAttributes_array[attr_index] & (1U << attr_bit)) {
+               original_page_is_secure[i] = 1;
+           } else {
+               original_page_is_secure[i] = 0;
+               // Set bit to make page Secure
+               flash_bb_attr.BBAttributes_array[attr_index] |= (1U << attr_bit);
+           }
+       }
+
+       // Apply the new (all-secure) attributes
+          status = HAL_FLASHEx_ConfigBBAttributes(&flash_bb_attr);
+          if (status != HAL_OK) {
+              // Failed to promote pages, cannot proceed
+              return;
+          }
+
+    uint32_t start_time = HAL_GetTick();
+
+    status = HAL_FLASH_Unlock();
+    if (status != HAL_OK) {
+        result->time_ms = HAL_GetTick() - start_time;
+        return;
+    }
+
+    // ⭐ Loop Pages 128-137
+    for (uint32_t i = 0; i < TOTAL_PAGES; i++) {
+        uint32_t page = START_PAGE + i;
+        uint32_t page_addr = BANK2_BASE + (page * PAGE_SIZE);
+        uint8_t page_ok = 1;
+
+
+        // Erase page
+
+        // ตรวจสอบว่า Flash ไม่ได้ทำงานอยู่ก่อน
+        while (__HAL_FLASH_GET_FLAG(FLASH_FLAG_BSY)) {};
+
+        // ตรวจสอบและล้าง Error Flag ที่อาจค้างอยู่จากการทำงานก่อนหน้า
+        if (__HAL_FLASH_GET_FLAG(FLASH_FLAG_ALL_ERRORS)) {
+            __HAL_FLASH_CLEAR_FLAG(FLASH_FLAG_ALL_ERRORS);
+        }
+
+
+        FLASH_EraseInitTypeDef EraseInit = {0};
+        EraseInit.TypeErase = FLASH_TYPEERASE_PAGES;
+        EraseInit.Banks = FLASH_BANK_2;
+        EraseInit.Page = page;
+        EraseInit.NbPages = 1;
+
+        status = HAL_FLASHEx_Erase(&EraseInit, &PageError);
+        if (status != HAL_OK || PageError != 0xFFFFFFFF) {
+
+        	// อ่านค่า Error Flag ทั้งหมด
+        	    uint32_t flash_error = HAL_FLASH_GetError();
+        	    printf("❌ Erase FAIL on Page %lu! HAL_Status=%d, Flash_Error_Flags=0x%08lX, PageError=0x%08lX\r\n",
+        	           page, status, flash_error, PageError);
+
+        	    // ล้าง Flag ที่อาจค้างอยู่
+        	    __HAL_FLASH_CLEAR_FLAG(FLASH_FLAG_ALL_ERRORS);
+
+
+            result->failed_pages++;
+            page_ok = 0;
+            continue;
+        }
+
+        InvalidateICache();
+        __DSB();
+        __ISB();
+
+        // Program 256 doublewords (2 KB)
+        for (uint32_t dw = 0; dw < DW_PER_PAGE; dw++) {
+
+            uint64_t test_value = FLASH_TEST_DATA_BASE + page + dw;
+            uint32_t target_addr = page_addr + (dw * 8);
+
+            result->total_words++;
+
+            status = HAL_FLASH_Program(FLASH_TYPEPROGRAM_DOUBLEWORD,
+                                       target_addr,
+                                       test_value);
+
+            if (status != HAL_OK) {
+                result->failed_words++;
+                page_ok = 0;
+                break;
+            }
+
+
+            InvalidateICache();
+            __DMB();
+            __DSB();
+            __ISB();
+
+            // Verify
+            uint64_t verify_value = *(volatile uint64_t*)target_addr;
+
+            if (verify_value == test_value) {
+                result->success_words++;
+            } else {
+                result->failed_words++;
+                page_ok = 0;
+                break;
+            }
+        }
+
+        if (page_ok) {
+            result->success_pages++;
+        } else {
+            result->failed_pages++;
+        }
+    }
+
+    HAL_FLASH_Lock();
+
+    result->time_ms = HAL_GetTick() - start_time;
+}
+
+
+//__attribute__((cmse_nonsecure_entry))
+//void Secure_Flash256KB(FlashResult_t *result)
+//{
+//    if (!result) return;
+//
+//    // Configuration
+//    const uint32_t BANK2_START = 0x08040000;
+//    const uint32_t BANK2_PAGES = 128;
+//    const uint32_t DW_PER_PAGE = 256;
+//    const uint64_t FLASH_TEST_DATA_BASE = 0x1234567890ABCDEFULL;
+//
+//    HAL_StatusTypeDef status;
+//    uint32_t PageError = 0;
+//
+//    // Initialize result
+//    result->total_pages = BANK2_PAGES;
+//    result->success_pages = 0;
+//    result->failed_pages = 0;
+//    result->total_words = 0;
+//    result->success_words = 0;
+//    result->failed_words = 0;
+//
+//    uint32_t start_time = HAL_GetTick();
+//
+//    // Unlock Flash
+//    status = HAL_FLASH_Unlock();
+//    if (status != HAL_OK) {
+//        result->time_ms = HAL_GetTick() - start_time;
+//        return;
+//    }
+//
+//    // Loop every page
+//    for (uint32_t page = 0; page < BANK2_PAGES; page++) {
+//
+//        uint32_t page_addr = BANK2_START + (page * 0x800);
+//        uint8_t page_ok = 1;  // ✅ ใช้ 1 = true, 0 = false
+//
+//        // Erase page
+//        FLASH_EraseInitTypeDef EraseInit = {0};
+//        EraseInit.TypeErase = FLASH_TYPEERASE_PAGES;
+//        EraseInit.Banks = FLASH_BANK_2;
+//        EraseInit.Page = page;
+//        EraseInit.NbPages = 1;
+//
+//        status = HAL_FLASHEx_Erase(&EraseInit, &PageError);
+//        if (status != HAL_OK || PageError != 0xFFFFFFFF) {
+//            result->failed_pages++;
+//            page_ok = 0;  // ✅ ใช้ 0 แทน false
+//            continue;
+//        }
+//
+//        __DSB();
+//        __ISB();
+//
+//        // Program 256 doublewords
+//        for (uint32_t i = 0; i < DW_PER_PAGE; i++) {
+//
+//            uint64_t test_value = FLASH_TEST_DATA_BASE + page + i;
+//            uint32_t target_addr = page_addr + (i * 8);
+//
+//            result->total_words++;
+//
+//            // Program
+//            status = HAL_FLASH_Program(FLASH_TYPEPROGRAM_DOUBLEWORD,
+//                                       target_addr,
+//                                       test_value);
+//
+//            if (status != HAL_OK) {
+//                result->failed_words++;
+//                page_ok = 0;
+//                break;
+//            }
+//
+//            __DSB();
+//            __ISB();
+//
+//
+//            // Verify
+//            uint64_t verify_value = *(volatile uint64_t*)target_addr;
+//
+//            if (verify_value == test_value) {
+//                result->success_words++;  // Count success
+//            } else {
+//                result->failed_words++;
+//                page_ok = 0;
+//                break;
+//            }
+//        }
+//
+//        if (page_ok) {
+//            result->success_pages++;
+//        } else {
+//            result->failed_pages++;
+//        }
+//    }
+//
+//    // Lock Flash
+//    HAL_FLASH_Lock();
+//
+//    result->time_ms = HAL_GetTick() - start_time;
+//}
 
 
 

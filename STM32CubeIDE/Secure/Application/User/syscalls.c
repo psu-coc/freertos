@@ -174,3 +174,11 @@ int _execve(char *name, char **argv, char **env)
   errno = ENOMEM;
   return -1;
 }
+
+// ✅ เพิ่ม function นี้ท้ายสุด: เอาไว้แก้เออเร่อ
+int _gettimeofday(struct timeval *tv, void *tz)
+{
+  (void)tv;
+  (void)tz;
+  return 0;  // Return dummy value
+}

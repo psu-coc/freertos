@@ -16,3 +16,4 @@
 ../Application/User/syscalls.c:155:5:_link	1
 ../Application/User/syscalls.c:163:5:_fork	1
 ../Application/User/syscalls.c:169:5:_execve	1
+../Application/User/syscalls.c:179:5:_gettimeofday	1

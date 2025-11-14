@@ -39,6 +39,24 @@ typedef enum
   GTZC_ERROR_CB_ID       = 0x01U  /*!< GTZC secure error callback ID */
 } SECURE_CallbackIDTypeDef;
 
+
+typedef struct {
+    uint32_t page;
+    uint32_t bank;
+    uint32_t target_addr;
+    uint64_t value;
+} SecureFlashParams_t;
+
+typedef struct {
+    uint32_t total_pages;
+    uint32_t success_pages;
+    uint32_t failed_pages;
+    uint32_t total_words;
+    uint32_t success_words;
+    uint32_t failed_words;
+    uint32_t time_ms;
+} FlashResult_t;
+
 /* Exported constants --------------------------------------------------------*/
 /* Exported macro ------------------------------------------------------------*/
 /* Exported functions ------------------------------------------------------- */
@@ -53,6 +71,7 @@ void SECURE_LEDToggle(void);
 void SECURE_RegisterCallback(SECURE_CallbackIDTypeDef CallbackId, void *func);
 void SECURE_LEDToggle(void);
 
+int32_t SECURE_EraseProgramFlash(SecureFlashParams_t *params);
 void SECURE_ComputeHMAC(uint8_t *output_digest, size_t maxlen);
 void SECURE_LinearHMAC(uint8_t *output_digest, size_t maxlen);
 void SECURE_ShuffledHMAC(uint8_t *output_digest, size_t maxlen);
@@ -60,9 +79,14 @@ void SECURE_TEST(uint8_t *output_digest, size_t maxlen);
 void SECURE_SMARM(uint8_t *output_digest, size_t maxlen);
 void SECURE_FillTest(uint8_t *buffer, size_t len);
 void SECURE_CopyMessage(char* buffer, size_t maxlen);
+void Secure_EraseWriteVerify(void);
+void Secure_FlashTest(void);
+void Secure_Flash256KB(FlashResult_t *result);
+void Secure_WriteFlash_128KB(uint32_t *success_words, uint32_t *failed_words);
+void Secure_WriteFlash_128KB_2(uint32_t *success_words, uint32_t *failed_words);
+
 
 //const char* SECURE_GetMessage(void);
-//void SECURE_CopyMessage(char *buffer, size_t maxlen)
 //void SECURE_RunHMAC(void);
 
 
