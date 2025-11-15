@@ -712,23 +712,9 @@ void StartTask08(void *argument)
             continue;
         }
 
-        // Calculate erase elapsed times
-        uint32_t erase_rtos_ms = erase_rtos_end - erase_rtos_start;
+        uint32_t erase_rtos_ticks = erase_rtos_end - erase_rtos_start;
+        uint32_t erase_tim2_cycles = erase_tim2_end - erase_tim2_start;
 
-        // TIM2 erase time with overflow handling (microseconds)
-        uint32_t erase_tim2_us;
-        if (erase_tim2_end >= erase_tim2_start) {
-            erase_tim2_us = erase_tim2_end - erase_tim2_start;
-        } else {
-            // Handle 32-bit overflow
-            erase_tim2_us = (0xFFFFFFFF - erase_tim2_start) + erase_tim2_end + 1;
-        }
-
-        // Convert to nanoseconds
-        uint64_t erase_tim2_ns = (uint64_t)erase_tim2_us * 1000ULL;
-
-        // Calculate sub-millisecond precision for erase
-        uint32_t erase_sub_ms_us = erase_tim2_us % 1000;
 
         // ================================================================
         // STEP 2: WRITE MEASUREMENT (Both RTOS ticks and TIM2)
@@ -738,71 +724,124 @@ void StartTask08(void *argument)
         uint32_t write_rtos_start = osKernelGetTickCount();
         uint32_t write_tim2_start = __HAL_TIM_GET_COUNTER(&htim2);
 
-        // === Execute secure flash write operation ===
+         // === Execute secure flash write operation ===
+//        __disable_irq();
         Secure_WriteFlash_128KB(&success_words, &failed_words);
+//        __enable_irq();
 
         // Capture write end timestamps immediately
         uint32_t write_tim2_end = __HAL_TIM_GET_COUNTER(&htim2);
         uint32_t write_rtos_end = osKernelGetTickCount();
 
-        // ================================================================
-        // STEP 3: CALCULATE WRITE ELAPSED TIMES
-        // ================================================================
 
-        // RTOS tick time (milliseconds)
-        uint32_t write_rtos_ms = write_rtos_end - write_rtos_start;
-
-        // TIM2 time with overflow handling (microseconds)
-        uint32_t write_tim2_us;
-        if (write_tim2_end >= write_tim2_start) {
-            write_tim2_us = write_tim2_end - write_tim2_start;
-        } else {
-            // Handle 32-bit overflow
-            write_tim2_us = (0xFFFFFFFF - write_tim2_start) + write_tim2_end + 1;
-        }
-
-        // Convert to nanoseconds for comparison with Zephyr
-        uint64_t write_tim2_ns = (uint64_t)write_tim2_us * 1000ULL;
-
-        // Calculate sub-millisecond precision for write
-        uint32_t write_sub_ms_us = write_tim2_us % 1000;
+        uint32_t write_rtos_ticks = write_rtos_end - write_rtos_start;
+        uint32_t write_tim2_cycles = write_tim2_end - write_tim2_start;
 
         // ================================================================
-        // STEP 4: PRINT RESULTS
-        // ================================================================
-        if (xSemaphoreTake(uart_mutex, pdMS_TO_TICKS(100)) == pdTRUE)
-        {
-            printf("\r\n=== Hot Patch Timing Measurement ===\r\n");
-            printf("\n--- ERASE PHASE ---\n");
-            printf("Erase time:      %5lu ms  (RTOS)\r\n", erase_rtos_ms);
-            printf("Erase time:      %5lu us  (TIM2)\r\n", erase_tim2_us);
-            printf("Erase time:      %5llu ns  (TIM2)\r\n", erase_tim2_ns);
-            printf("Sub-ms detail:   %5lu us  (lost by RTOS)\r\n", erase_sub_ms_us);
+              // STEP 4: CONVERT TO REAL TIME UNITS (INTEGER MATH ONLY)
+              // ================================================================
 
-            printf("\n--- WRITE PHASE ---\n");
-            printf("Write time:      %5lu ms  (RTOS)\r\n", write_rtos_ms);
-            printf("Write time:      %5lu us  (TIM2)\r\n", write_tim2_us);
-            printf("Write time:      %5llu ns  (TIM2)\r\n", write_tim2_ns);
-            printf("Sub-ms detail:   %5lu us  (lost by RTOS)\r\n", write_sub_ms_us);
+              // === ERASE TIME CONVERSION ===
+              // SysTick: Tick rate is 10000 Hz = 100μs per tick
+              uint32_t erase_rtos_us = erase_rtos_ticks * 100;
+              uint32_t erase_rtos_ms = erase_rtos_us / 1000;
+              uint32_t erase_rtos_ms_frac = erase_rtos_us % 1000;
 
-            printf("\n--- TOTAL TIME ---\n");
-            uint32_t total_rtos_ms = erase_rtos_ms + write_rtos_ms;
-            uint32_t total_tim2_us = erase_tim2_us + write_tim2_us;
-            printf("Total time:      %5lu ms  (RTOS)\r\n", total_rtos_ms);
-            printf("Total time:      %5lu us  (TIM2)\r\n", total_tim2_us);
-            printf("Total time:      %5llu ns  (TIM2)\r\n", (uint64_t)total_tim2_us * 1000ULL);
+              // TIM2: (cycles × 800) / 110 = microseconds
+              uint32_t erase_tim2_us = (erase_tim2_cycles * 800) / 110;
+              uint32_t erase_tim2_ms = erase_tim2_us / 1000;
+              uint32_t erase_tim2_ms_frac = erase_tim2_us % 1000;
 
-            printf("\n--- STATUS ---\n");
-            if (success_words == total_words) {
-                printf("Status:          SUCCESS ✅\r\n");
-            } else {
-                printf("Status:          FAILED ❌\r\n");
-                printf("Success/Total:   %lu / %lu words\r\n", success_words, total_words);
-            }
+              // Erase difference
+              int32_t erase_diff_us = (int32_t)erase_tim2_us - (int32_t)erase_rtos_us;
 
-            printf("========================================\r\n\r\n");
-            xSemaphoreGive(uart_mutex);
-        }
+
+              // === WRITE TIME CONVERSION ===
+                    // SysTick: 10000 Hz = 100μs per tick
+                    uint32_t write_rtos_us = write_rtos_ticks * 100;
+                    uint32_t write_rtos_ms = write_rtos_us / 1000;
+                    uint32_t write_rtos_ms_frac = write_rtos_us % 1000;
+
+                    // TIM2: (cycles × 800) / 110 = microseconds
+                    uint32_t write_tim2_us = (write_tim2_cycles * 800) / 110;
+                    uint32_t write_tim2_ms = write_tim2_us / 1000;
+                    uint32_t write_tim2_ms_frac = write_tim2_us % 1000;
+
+                    int32_t write_diff_us = (int32_t)write_tim2_us - (int32_t)write_rtos_us;
+
+
+                    // === TOTAL TIME ===
+                           uint32_t total_rtos_us = erase_rtos_us + write_rtos_us;
+                           uint32_t total_rtos_ms = total_rtos_us / 1000;
+                           uint32_t total_rtos_ms_frac = total_rtos_us % 1000;
+
+                           uint32_t total_tim2_us = erase_tim2_us + write_tim2_us;
+                           uint32_t total_tim2_ms = total_tim2_us / 1000;
+                           uint32_t total_tim2_ms_frac = total_tim2_us % 1000;
+
+                           int32_t total_diff_us = (int32_t)total_tim2_us - (int32_t)total_rtos_us;
+
+                           // ================================================================
+                                  // STEP 5: PRINT RESULTS WITH COMPARISON
+                                  // ================================================================
+                           if (xSemaphoreTake(uart_mutex, pdMS_TO_TICKS(100)) == pdTRUE)
+                                   {
+                                       static int round = 1;
+
+                                       printf("\r\n========================================\r\n");
+                                       printf("Hot Patch Timing - Round %d\r\n", round);
+                                       printf("========================================\r\n");
+
+                                       // ============ ERASE PHASE ============
+                                       printf("\r\n--- ERASE PHASE ---\r\n");
+                                       printf("RAW DATA:\r\n");
+                                       printf("  SysTick: %lu ticks\r\n", erase_rtos_ticks);
+                                       printf("  TIM2:    %lu cycles\r\n", erase_tim2_cycles);
+                                       printf("========================================\r\n");
+                                       printf("CONVERTED TO MICROSECONDS (us):\r\n");
+                                       printf("  SysTick: %lu us\r\n", erase_rtos_us);
+                                       printf("  TIM2:    %lu us\r\n", erase_tim2_us);
+                                       printf("  Difference: %+ld us\r\n", erase_diff_us);
+                                       printf("========================================\r\n");
+                                       printf("CONVERTED TO MILLISECONDS (ms):\r\n");
+                                       printf("  SysTick: %lu.%03lu ms\r\n", erase_rtos_ms, erase_rtos_ms_frac);
+                                       printf("  TIM2:    %lu.%03lu ms\r\n", erase_tim2_ms, erase_tim2_ms_frac);
+
+
+                                       // ============ WRITE PHASE ============
+                                       printf("\r\n--- WRITE PHASE ---\r\n");
+                                       printf("RAW DATA:\r\n");
+                                       printf("  SysTick: %lu ticks\r\n", write_rtos_ticks);
+                                       printf("  TIM2:    %lu cycles\r\n", write_tim2_cycles);
+                                       printf("========================================\r\n");
+                                       printf("CONVERTED TO MICROSECONDS (us):\r\n");
+                                       printf("  SysTick: %lu us\r\n", write_rtos_us);
+                                       printf("  TIM2:    %lu us\r\n", write_tim2_us);
+                                       printf("  Difference: %+ld us\r\n", write_diff_us);
+                                       printf("========================================\r\n");
+                                       printf("CONVERTED TO MILLISECONDS (ms):\r\n");
+                                       printf("  SysTick: %lu.%03lu ms\r\n", write_rtos_ms, write_rtos_ms_frac);
+                                       printf("  TIM2:    %lu.%03lu ms\r\n", write_tim2_ms, write_tim2_ms_frac);
+
+
+                                       // ============ TOTAL TIME ============
+                                       printf("\r\n--- TOTAL TIME ---\r\n");
+                                       printf("CONVERTED TO MICROSECONDS (us):\r\n");
+                                       printf("  SysTick: %lu us\r\n", total_rtos_us);
+                                       printf("  TIM2:    %lu us\r\n", total_tim2_us);
+                                       printf("  Difference: %+ld us\r\n", total_diff_us);
+                                       printf("========================================\r\n");
+                                       printf("CONVERTED TO MILLISECONDS (ms):\r\n");
+                                       printf("  SysTick: %lu.%03lu ms\r\n", total_rtos_ms, total_rtos_ms_frac);
+                                       printf("  TIM2:    %lu.%03lu ms\r\n", total_tim2_ms, total_tim2_ms_frac);
+
+
+
+                                       printf("========================================\r\n\r\n");
+
+                                       round++;
+                                       xSemaphoreGive(uart_mutex);
+                                   }
 
         osDelay(10000);
     }
@@ -1206,48 +1245,81 @@ void LinearHmac(void *argument) {
 
 
     for(;;) {
-        osDelay(1000);  // Wait 1 second between measurements
+        osDelay(5000);  // Wait 1 second between measurements
+;
 
-
-//        uint32_t systick_before = HAL_GetTick();
         uint32_t systick_before = osKernelGetTickCount();
         uint32_t tim2_before = __HAL_TIM_GET_COUNTER(&htim2);
 
 //        __disable_irq();
         SECURE_LinearHMAC(digest, sizeof(digest));
 //        __enable_irq();
+
         uint32_t tim2_after = __HAL_TIM_GET_COUNTER(&htim2);
-//        uint32_t systick_after = HAL_GetTick();
         uint32_t systick_after = osKernelGetTickCount();
+
 
         uint32_t systick_elapsed = systick_after - systick_before;
 
-        // Handle TIM2 overflow (if counter wrapped around)
-        uint32_t tim2_elapsed;
-        if (tim2_after >= tim2_before) {
-            tim2_elapsed = tim2_after - tim2_before;
-        } else {
-            // Overflow occurred
-            tim2_elapsed = (0xFFFFFFFF - tim2_before) + tim2_after + 1;
-        }
+        uint32_t tim2_elapsed = tim2_after - tim2_before;
 
 
-        uint64_t tim2_elapsed_ns = (uint64_t)tim2_elapsed * 1000ULL;
+                // SysTick: Tick rate is configTICK_RATE_HZ (10000 Hz = 100μs per tick)
+                // 1 tick = 1000000 / 10000 = 100 μs
+                uint32_t systick_us = systick_elapsed * 100;    // 10000 Hz = 100μs per tick
+                uint32_t systick_ms = systick_us / 1000;        // Convert to milliseconds
+                uint32_t systick_ms_frac = systick_us % 1000;   // Fractional ms part
+
+                // TIM2: Each count = 7.272727 μs (with prescaler 799 @ 110MHz)
+                // Formula: time_us = (counts × 800) / 110
+                // To avoid float: multiply first, then divide
+                uint32_t tim2_us = (tim2_elapsed * 800) / 110;  // Microseconds (integer)
+                uint32_t tim2_ms = tim2_us / 1000;              // Milliseconds (integer)
+                uint32_t tim2_ms_frac = tim2_us % 1000;         // Fractional ms (last 3 digits of us)
+
+                // ===== CALCULATE DIFFERENCE =====
+                int32_t time_difference_us = (int32_t)tim2_us - (int32_t)systick_us;
+                int32_t time_difference_ms = (int32_t)tim2_ms - (int32_t)systick_ms;
+
+                // Accuracy calculation (in 0.01% units to avoid float)
+                // accuracy = (systick / tim2) × 10000 → gives accuracy in 0.01% units
+                uint32_t accuracy_x100 = 0;
+                uint32_t loss_x100 = 0;
+
+                if (tim2_us > 0) {
+                	accuracy_x100 = ((uint64_t)systick_us * 10000ULL) / tim2_us;
+                    loss_x100 = 10000 - accuracy_x100;               // Loss × 100
+                }
+
+                if (xSemaphoreTake(uart_mutex, pdMS_TO_TICKS(100)) == pdTRUE) {
+                    static int round = 1;
+
+                    printf("Round %d : \r\n", round);
+
+                    // Raw counts
+                    printf("RAW DATA:\r\n");
+                    printf("SysTick: %6lu ticks\r\n", systick_elapsed);
+                    printf("TIM2:    %6lu cycles\r\n", tim2_elapsed);
+                    printf("╠═══════════════════════════════════════╣\r\n");
+
+                    // Converted to same units - Microseconds
+                    printf("CONVERTED TO MICROSECONDS (us):\r\n");
+                    printf("SysTick: %10lu us \r\n", systick_us);
+                    printf("TIM2: %10lu us\r\n", tim2_us);
+                    printf("Difference: %+9ld us \r\n", time_difference_us);
+                    printf("╠═══════════════════════════════════════╣\r\n");
+
+                    // Converted to same units - Milliseconds
+                    printf("CONVERTED TO MILLISECONDS (ms):       ║\r\n");
+                    printf("SysTick: %10lu.%03lu ms\r\n", systick_ms, systick_ms_frac);
+                    printf("TIM2:    %10lu.%03lu ms  \r\n", tim2_ms, tim2_ms_frac);
+                    printf("Difference: %+9ld ms  \r\n", time_difference_ms);
+                    printf("╠═══════════════════════════════════════╣\r\n");
 
 
-        if (xSemaphoreTake(uart_mutex, pdMS_TO_TICKS(100)) == pdTRUE) {
-            static int round = 1;
-
-            printf("\r\n=== Round %d ===\r\n", round);
-            printf("SysTick elapsed: %lu ticks\r\n", systick_elapsed);
-            printf("TIM2 cycles: %lu cycles\r\n", tim2_elapsed);
-            printf("Time (ns): %llu ns\r\n", tim2_elapsed_ns);
-            printf("Time (us): %lu us\r\n", tim2_elapsed);
-            printf("Status: OK\r\n");
-
-            round++;
-            xSemaphoreGive(uart_mutex);
-        }
+                    round++;
+                    xSemaphoreGive(uart_mutex);
+                }
     }
 }
 
@@ -1280,7 +1352,7 @@ void StartTask02(void *argument)
 
   for(;;)
   {
-
+;
 
 	  	 osDelay(1000);
 	     uint32_t before = HAL_GetTick();

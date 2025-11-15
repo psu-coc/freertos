@@ -32,7 +32,7 @@
 #include "arm_cmse.h"
 
 #define SHA256_DIGEST_SIZE 32
-#define BLOCK_SIZE 1024 // 32 128 1024 4096
+#define BLOCK_SIZE 4096 // 32 128 1024 4096
 #define TOTAL_SIZE 0x40000
 #define BLOCKS (TOTAL_SIZE / BLOCK_SIZE)
 
@@ -246,7 +246,6 @@ void SECURE_LinearHMAC(uint8_t *output_digest, size_t maxlen)
 
 //    __disable_irq();
     if (!output_digest || maxlen < SHA256_DIGEST_SIZE) {
-        __enable_irq();
         return;
     }
 
@@ -260,16 +259,16 @@ void SECURE_LinearHMAC(uint8_t *output_digest, size_t maxlen)
 
 
     // Process blocks sequentially (not shuffled)
-    for (int i = 0; i < BLOCKS; i++) {
-        const uint8_t *block = &real_memory[i * BLOCK_SIZE];
-        hmac_sha256_update(&hmac, block, BLOCK_SIZE);
-    }
+    hmac_sha256_update(&hmac, real_memory, TOTAL_SIZE);
+//    for (int i = 0; i < BLOCKS; i++) {
+//        const uint8_t *block = &real_memory[i * BLOCK_SIZE];
+//        hmac_sha256_update(&hmac, block, BLOCK_SIZE);
+//    }
 
     hmac_sha256_finalize(&hmac, NULL, 0);
     memcpy(output_digest, hmac.digest, SHA256_DIGEST_SIZE);
 
 
-    __enable_irq();
 }
 
 //__attribute__((cmse_nonsecure_entry))
