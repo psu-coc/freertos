@@ -86,6 +86,8 @@ void StartTask05(void *argument);
 void StartTask06(void *argument);
 void StartTask07(void *argument);
 void StartTask08(void *argument);
+void StartTask09(void *argument);
+
 
 static uint32_t GetPage(uint32_t Address);
 static uint32_t GetBank(uint32_t Address);
@@ -145,7 +147,7 @@ void StartTask02(void *argument);
 /* USER CODE BEGIN PFP */
 void SecureFault_Callback(void);
 void SecureError_Callback(void);
-void LinearHmac(void *argument);
+void LinearHMAC(void *argument);
 
 UART_HandleTypeDef huart1;  // or whichever UART you're using
 
@@ -225,7 +227,7 @@ int main(void)
   /* creation of myTask02 */
 //  myTask02Handle = osThreadNew(StartTask02, NULL, &myTask02_attributes);
 
-  myTask02Handle = osThreadNew(StartTask08, NULL, &myTask02_attributes);
+  myTask02Handle = osThreadNew(LinearHMAC, NULL, &myTask02_attributes);
 
   /* USER CODE BEGIN RTOS_THREADS */
   /* add threads, ... */
@@ -582,7 +584,7 @@ uint32_t GetPage(uint32_t Addr)
 // ใน normal_code
 HAL_StatusTypeDef EraseFlashPages_256KB(void)
 {
-    FLASH_EraseInitTypeDef EraseInitStruct;
+	FLASH_EraseInitTypeDef EraseInitStruct;
     uint32_t PAGEError = 0;
     HAL_StatusTypeDef status;
 
@@ -668,6 +670,95 @@ void uint32_to_str(uint32_t value, char *buffer) {
 }
 
 
+void StartTask09(void *argument){
+
+
+		(void) argument;
+	    portALLOCATE_SECURE_CONTEXT(4096);
+	    osDelay(2000);
+
+	    // Freeze TIM2 when debugger halts (for debugging convenience)
+	    __HAL_DBGMCU_FREEZE_TIM2();
+
+	    // Ensure TIM2 is started
+	    HAL_TIM_Base_Start(&htim2);
+
+	    HAL_StatusTypeDef erase_status;
+	    uint32_t fixed_addr = 0x08048000;
+	    uint32_t fixed_page = GetPage(fixed_addr);  // Convert 0x08048000 → page number
+
+	    for(;;)
+	    {
+	    	for(int j=1;j<=5;j++){
+
+	    		printf("------------------------\r\n");
+	    		printf("Round %d\r\n", j);
+
+				uint32_t start_systick = osKernelGetTickCount();
+				uint32_t start_tim = __HAL_TIM_GET_COUNTER(&htim2);
+
+				__disable_irq();
+				for(int i=0;i<16;i++){
+
+
+					// erase
+					FLASH_EraseInitTypeDef EraseInitStruct;
+					uint32_t PAGEError = 0;
+					HAL_StatusTypeDef status;
+
+					HAL_FLASH_Unlock();
+
+					EraseInitStruct.TypeErase = FLASH_TYPEERASE_PAGES;
+					EraseInitStruct.Banks = FLASH_BANK_2;
+					EraseInitStruct.Page = fixed_page;
+					EraseInitStruct.NbPages = 4;
+
+					status = HAL_FLASHEx_Erase(&EraseInitStruct, &PAGEError);
+					HAL_FLASH_Lock();
+
+
+					uint32_t write_success = 0;
+					Simulate_flash_write_128KB(fixed_addr, (uint8_t)i, &write_success);
+
+
+
+				}
+				__enable_irq();
+
+				uint32_t end_tim = __HAL_TIM_GET_COUNTER(&htim2);
+				uint32_t end_systick = osKernelGetTickCount();
+
+				  // ========== Calculate elapsed time ==========
+
+				            // TIM2 cycles
+				            uint32_t timer_cycles = end_tim - start_tim;
+
+				            // Convert TIM2 cycles to microseconds: (cycles × 800) / 110
+				            uint32_t timer_us = (timer_cycles * 800) / 110;
+
+				            // Convert to milliseconds
+				            uint32_t timer_ms = timer_us / 1000;
+
+				            // SysTick ticks
+				            uint32_t systick_ticks = end_systick - start_systick;
+
+				            // Convert SysTick ticks to milliseconds: each tick = 100μs
+				            uint32_t systick_ms = (systick_ticks * 100) / 1000;
+
+				            // ========== Print results ==========
+				            printf("TIMER cycles: %lu\r\n", timer_cycles);
+				            printf("TIMER ms: %lu\r\n", timer_ms);
+				            printf("Systick tick: %lu\r\n", systick_ticks);
+				            printf("Systick ms: %lu\r\n", systick_ms);
+
+
+				osDelay(1000);
+	    	}
+			osDelay(10000);
+
+	    }
+
+}
 void StartTask08(void *argument)
 {
     (void) argument;
@@ -705,7 +796,7 @@ void StartTask08(void *argument)
 
         if (erase_status != HAL_OK) {
             if (xSemaphoreTake(uart_mutex, pdMS_TO_TICKS(100)) == pdTRUE) {
-                printf("❌ ERASE FAILED!\r\n");
+                printf("❌ ERASE FAILED !\r\n");
                 xSemaphoreGive(uart_mutex);
             }
             osDelay(10000);
@@ -725,9 +816,9 @@ void StartTask08(void *argument)
         uint32_t write_tim2_start = __HAL_TIM_GET_COUNTER(&htim2);
 
          // === Execute secure flash write operation ===
-//        __disable_irq();
+        __disable_irq();
         Secure_WriteFlash_128KB(&success_words, &failed_words);
-//        __enable_irq();
+        __enable_irq();
 
         // Capture write end timestamps immediately
         uint32_t write_tim2_end = __HAL_TIM_GET_COUNTER(&htim2);
@@ -850,94 +941,7 @@ void StartTask08(void *argument)
 
 
 
-//void StartTask08(void *argument)
-//{
-//    (void) argument;
-//
-//    portALLOCATE_SECURE_CONTEXT(4096);
-//
-//    osDelay(2000);
-//
-//
-//    __HAL_DBGMCU_FREEZE_TIM2();
-//
-//    FlashResult_t result = {0};
-//    char  timerdata[32];
-//    uint32_t start_tick, end_tick;
-//    uint32_t timer_start, timer_end;
-//    uint32_t systick_time, timer_time;
-//    HAL_StatusTypeDef flash_status; // Variable to store function result
-//
-//    uint32_t success_words = 0;
-//    uint32_t failed_words = 0;
-//    uint32_t total_words = 16384;  // (254KB / 8)
-//
-////    flash_status = EraseFlashPages_256KB();
-//    HAL_StatusTypeDef erase_status;
-//
-//
-//    for(;;)
-//    {
-//
-//        uint32_t erase_start = osKernelGetTickCount();
-//
-//        erase_status = EraseFlashPages_256KB();
-//
-//        uint32_t erase_time = osKernelGetTickCount() - erase_start;
-//
-//        if (erase_status != HAL_OK) {
-//              if (xSemaphoreTake(uart_mutex, pdMS_TO_TICKS(100)) == pdTRUE) {
-//                  printf("ERASE FAILED!\r\n");
-//                  xSemaphoreGive(uart_mutex);
-//              }
-//              osDelay(10000);
-//              continue;
-//          }
-//
-//        // Reset timer
-//        __HAL_TIM_SET_COUNTER(&htim2, 0);
-//
-//        // Start measurement
-//        start_tick = osKernelGetTickCount();
-//        timer_start = __HAL_TIM_GET_COUNTER(&htim2);
-//
-//        // === Run Flash Test ===
-//
-//        Secure_WriteFlash_128KB(&success_words, &failed_words);
-//
-//        // End measurement
-//
-//        end_tick = osKernelGetTickCount();
-//        timer_end = __HAL_TIM_GET_COUNTER(&htim2);
-//
-//        // Calculate
-//        systick_time = end_tick - start_tick;
-//        timer_time = timer_end - timer_start;
-//		uint32_to_str(timer_start, timerdata);
-//
-//
-//        if (xSemaphoreTake(uart_mutex, pdMS_TO_TICKS(100)) == pdTRUE)
-//             {
-//                 printf("\r\n--- Timing ---\r\n");
-//                 printf("Erase:  %lu \r\n", erase_time);
-//                 printf("Write:  %lu \r\n", systick_time);
-//                 printf("TIM2:   %lu \r\n", timer_time);
-//
-//                 if (success_words == total_words) {
-//                     printf("Status:      SUCCESS! ✅\r\n");
-//                 } else {
-//                     printf("Status:      FAILED! ❌\r\n");
-//                 }
-//
-//                 printf("========================================\r\n\r\n");
-//                 xSemaphoreGive(uart_mutex);
-//             }
-//
-//             osDelay(10000);
-//
-//
-//    }
-//}
+
 
 
 
@@ -1235,94 +1239,78 @@ test_end:
   }
 }
 
-void LinearHmac(void *argument) {
+void LinearHMAC(void *argument)
+{
     (void) argument;
     osDelay(1000);
     portALLOCATE_SECURE_CONTEXT(2048);
 
     uint8_t digest[32];
 
+    for(;;)
+    {
+
+    	for(int i = 1 ; i<=5 ;i++){
 
 
-    for(;;) {
-        osDelay(5000);  // Wait 1 second between measurements
-;
+			if (xSemaphoreTake(uart_mutex, pdMS_TO_TICKS(100)) == pdTRUE) {
+				printf("------------------------\r\n");
+				printf("Round %d\r\n", i);
+				xSemaphoreGive(uart_mutex);
+			}
 
-        uint32_t systick_before = osKernelGetTickCount();
-        uint32_t tim2_before = __HAL_TIM_GET_COUNTER(&htim2);
+			// Capture start timestamps
+			uint32_t systick_before = osKernelGetTickCount();
+			uint32_t tim2_before = __HAL_TIM_GET_COUNTER(&htim2);
 
-//        __disable_irq();
-        SECURE_LinearHMAC(digest, sizeof(digest));
-//        __enable_irq();
+			// Execute HMAC in secure world
+			__disable_irq();
+			SECURE_LinearHMAC(digest, sizeof(digest));
+			__enable_irq();
 
-        uint32_t tim2_after = __HAL_TIM_GET_COUNTER(&htim2);
-        uint32_t systick_after = osKernelGetTickCount();
+			// Capture end timestamps
+			uint32_t tim2_after = __HAL_TIM_GET_COUNTER(&htim2);
+			uint32_t systick_after = osKernelGetTickCount();
 
+			// ========== Calculate elapsed time ==========
+			uint32_t systick_elapsed = systick_after - systick_before;
+			uint32_t tim2_elapsed = tim2_after - tim2_before;
 
-        uint32_t systick_elapsed = systick_after - systick_before;
+			// SysTick: Tick rate is 10000 Hz = 100μs per tick
+			uint32_t systick_us = systick_elapsed * 100;
+			uint32_t systick_ms = systick_us / 1000;
 
-        uint32_t tim2_elapsed = tim2_after - tim2_before;
+			// TIM2: Each count = 7.272727 μs (with prescaler 799 @ 110MHz)
+			// Formula: time_us = (counts × 800) / 110
+			uint32_t tim2_us = (tim2_elapsed * 800) / 110;
+			uint32_t tim2_ms = tim2_us / 1000;
 
+			// ===== CALCULATE DIFFERENCE =====
+			int32_t time_difference_us = (int32_t)tim2_us - (int32_t)systick_us;
 
-                // SysTick: Tick rate is configTICK_RATE_HZ (10000 Hz = 100μs per tick)
-                // 1 tick = 1000000 / 10000 = 100 μs
-                uint32_t systick_us = systick_elapsed * 100;    // 10000 Hz = 100μs per tick
-                uint32_t systick_ms = systick_us / 1000;        // Convert to milliseconds
-                uint32_t systick_ms_frac = systick_us % 1000;   // Fractional ms part
+			// Accuracy calculation (in 0.01% units to avoid float)
+			// accuracy = (systick / tim2) × 10000 → gives accuracy in 0.01% units
+			uint32_t accuracy_x100 = 0;
+			uint32_t loss_x100 = 0;
 
-                // TIM2: Each count = 7.272727 μs (with prescaler 799 @ 110MHz)
-                // Formula: time_us = (counts × 800) / 110
-                // To avoid float: multiply first, then divide
-                uint32_t tim2_us = (tim2_elapsed * 800) / 110;  // Microseconds (integer)
-                uint32_t tim2_ms = tim2_us / 1000;              // Milliseconds (integer)
-                uint32_t tim2_ms_frac = tim2_us % 1000;         // Fractional ms (last 3 digits of us)
+			if (tim2_us > 0) {
+				accuracy_x100 = ((uint64_t)systick_us * 10000ULL) / tim2_us;
+				loss_x100 = 10000 - accuracy_x100;  // Loss × 100
+			}
 
-                // ===== CALCULATE DIFFERENCE =====
-                int32_t time_difference_us = (int32_t)tim2_us - (int32_t)systick_us;
-                int32_t time_difference_ms = (int32_t)tim2_ms - (int32_t)systick_ms;
-
-                // Accuracy calculation (in 0.01% units to avoid float)
-                // accuracy = (systick / tim2) × 10000 → gives accuracy in 0.01% units
-                uint32_t accuracy_x100 = 0;
-                uint32_t loss_x100 = 0;
-
-                if (tim2_us > 0) {
-                	accuracy_x100 = ((uint64_t)systick_us * 10000ULL) / tim2_us;
-                    loss_x100 = 10000 - accuracy_x100;               // Loss × 100
-                }
-
-                if (xSemaphoreTake(uart_mutex, pdMS_TO_TICKS(100)) == pdTRUE) {
-                    static int round = 1;
-
-                    printf("Round %d : \r\n", round);
-
-                    // Raw counts
-                    printf("RAW DATA:\r\n");
-                    printf("SysTick: %6lu ticks\r\n", systick_elapsed);
-                    printf("TIM2:    %6lu cycles\r\n", tim2_elapsed);
-                    printf("╠═══════════════════════════════════════╣\r\n");
-
-                    // Converted to same units - Microseconds
-                    printf("CONVERTED TO MICROSECONDS (us):\r\n");
-                    printf("SysTick: %10lu us \r\n", systick_us);
-                    printf("TIM2: %10lu us\r\n", tim2_us);
-                    printf("Difference: %+9ld us \r\n", time_difference_us);
-                    printf("╠═══════════════════════════════════════╣\r\n");
-
-                    // Converted to same units - Milliseconds
-                    printf("CONVERTED TO MILLISECONDS (ms):       ║\r\n");
-                    printf("SysTick: %10lu.%03lu ms\r\n", systick_ms, systick_ms_frac);
-                    printf("TIM2:    %10lu.%03lu ms  \r\n", tim2_ms, tim2_ms_frac);
-                    printf("Difference: %+9ld ms  \r\n", time_difference_ms);
-                    printf("╠═══════════════════════════════════════╣\r\n");
-
-
-                    round++;
-                    xSemaphoreGive(uart_mutex);
-                }
+			// ========== Print results ==========
+			if (xSemaphoreTake(uart_mutex, pdMS_TO_TICKS(100)) == pdTRUE) {
+				printf("TIMER cycles: %lu\r\n", tim2_elapsed);
+				printf("TIMER ms: %lu\r\n", tim2_ms);
+				printf("Systick tick: %lu\r\n", systick_elapsed);
+				printf("Systick ms: %lu\r\n", systick_ms);
+				xSemaphoreGive(uart_mutex);
+			}
+			osDelay(1000);
+    	}
+    	osDelay(10000);
     }
 }
-
 
 /* USER CODE BEGIN Header_StartTask02 */
 	/**

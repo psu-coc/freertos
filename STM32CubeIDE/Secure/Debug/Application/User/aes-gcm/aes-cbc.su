@@ -1,2 +1,2 @@
-../Application/User/aes-gcm/aes-cbc.c:20:5:aes_128_cbc_encrypt	72	static
-../Application/User/aes-gcm/aes-cbc.c:53:5:aes_128_cbc_decrypt	88	static
+../Application/User/aes-gcm/aes-cbc.c:20:5:aes_128_cbc_encrypt	48	static
+../Application/User/aes-gcm/aes-cbc.c:53:5:aes_128_cbc_decrypt	64	static

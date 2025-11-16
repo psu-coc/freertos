@@ -1,10 +1,6 @@
-../Application/User/aes-gcm/aes-common.h:152:20:AES_PUT_BE16	16	static
-../Application/User/aes-gcm/aes-ccm.c:13:13:xor_aes_block	24	static
-../Application/User/aes-gcm/aes-ccm.c:24:13:aes_ccm_auth_start	72	static
-../Application/User/aes-gcm/aes-ccm.c:60:13:aes_ccm_auth	32	static
-../Application/User/aes-gcm/aes-ccm.c:80:13:aes_ccm_encr_start	24	static
-../Application/User/aes-gcm/aes-ccm.c:88:13:aes_ccm_encr	32	static
-../Application/User/aes-gcm/aes-ccm.c:113:13:aes_ccm_encr_auth	48	static
-../Application/User/aes-gcm/aes-ccm.c:128:13:aes_ccm_decr_auth	48	static
-../Application/User/aes-gcm/aes-ccm.c:144:5:aes_ccm_ae	80	static
-../Application/User/aes-gcm/aes-ccm.c:174:5:aes_ccm_ad	96	static
+../Application/User/aes-gcm/aes-ccm.c:13:13:xor_aes_block	0	static
+../Application/User/aes-gcm/aes-ccm.c:60:13:aes_ccm_auth	24	static
+../Application/User/aes-gcm/aes-ccm.c:88:13:aes_ccm_encr.constprop	48	static
+../Application/User/aes-gcm/aes-ccm.c:24:13:aes_ccm_auth_start.constprop	72	static
+../Application/User/aes-gcm/aes-ccm.c:144:5:aes_ccm_ae	96	static
+../Application/User/aes-gcm/aes-ccm.c:174:5:aes_ccm_ad	104	static

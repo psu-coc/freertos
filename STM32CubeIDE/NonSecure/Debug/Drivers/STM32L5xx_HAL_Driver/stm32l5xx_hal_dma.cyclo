@@ -1,5 +1,7 @@
-C:/Users/laoam/OneDrive/Documents/stm32/workspace/freertostrustzone-master/freertostrustzone-master/Drivers/STM32L5xx_HAL_Driver/Src/stm32l5xx_hal_dma.c:151:19:HAL_DMA_Init	6
-C:/Users/laoam/OneDrive/Documents/stm32/workspace/freertostrustzone-master/freertostrustzone-master/Drivers/STM32L5xx_HAL_Driver/Src/stm32l5xx_hal_dma.c:263:19:HAL_DMA_DeInit	5
+C:/Users/laoam/OneDrive/Documents/stm32/workspace/freertostrustzone-master/freertostrustzone-master/Drivers/STM32L5xx_HAL_Driver/Src/stm32l5xx_hal_dma.c:1270:13:DMA_SetConfig	3
+C:/Users/laoam/OneDrive/Documents/stm32/workspace/freertostrustzone-master/freertostrustzone-master/Drivers/STM32L5xx_HAL_Driver/Src/stm32l5xx_hal_dma.c:1313:13:DMA_CalcDMAMUXChannelBaseAndMask	2
+C:/Users/laoam/OneDrive/Documents/stm32/workspace/freertostrustzone-master/freertostrustzone-master/Drivers/STM32L5xx_HAL_Driver/Src/stm32l5xx_hal_dma.c:151:19:HAL_DMA_Init	5
+C:/Users/laoam/OneDrive/Documents/stm32/workspace/freertostrustzone-master/freertostrustzone-master/Drivers/STM32L5xx_HAL_Driver/Src/stm32l5xx_hal_dma.c:263:19:HAL_DMA_DeInit	4
 C:/Users/laoam/OneDrive/Documents/stm32/workspace/freertostrustzone-master/freertostrustzone-master/Drivers/STM32L5xx_HAL_Driver/Src/stm32l5xx_hal_dma.c:380:19:HAL_DMA_Start	3
 C:/Users/laoam/OneDrive/Documents/stm32/workspace/freertostrustzone-master/freertostrustzone-master/Drivers/STM32L5xx_HAL_Driver/Src/stm32l5xx_hal_dma.c:423:19:HAL_DMA_Start_IT	6
 C:/Users/laoam/OneDrive/Documents/stm32/workspace/freertostrustzone-master/freertostrustzone-master/Drivers/STM32L5xx_HAL_Driver/Src/stm32l5xx_hal_dma.c:492:19:HAL_DMA_Abort	3
@@ -11,7 +13,4 @@ C:/Users/laoam/OneDrive/Documents/stm32/workspace/freertostrustzone-master/freer
 C:/Users/laoam/OneDrive/Documents/stm32/workspace/freertostrustzone-master/freertostrustzone-master/Drivers/STM32L5xx_HAL_Driver/Src/stm32l5xx_hal_dma.c:1033:22:HAL_DMA_GetState	1
 C:/Users/laoam/OneDrive/Documents/stm32/workspace/freertostrustzone-master/freertostrustzone-master/Drivers/STM32L5xx_HAL_Driver/Src/stm32l5xx_hal_dma.c:1045:10:HAL_DMA_GetError	1
 C:/Users/laoam/OneDrive/Documents/stm32/workspace/freertostrustzone-master/freertostrustzone-master/Drivers/STM32L5xx_HAL_Driver/Src/stm32l5xx_hal_dma.c:1087:19:HAL_DMA_ConfigChannelAttributes	4
-C:/Users/laoam/OneDrive/Documents/stm32/workspace/freertostrustzone-master/freertostrustzone-master/Drivers/STM32L5xx_HAL_Driver/Src/stm32l5xx_hal_dma.c:1217:19:HAL_DMA_GetConfigChannelAttributes	4
-C:/Users/laoam/OneDrive/Documents/stm32/workspace/freertostrustzone-master/freertostrustzone-master/Drivers/STM32L5xx_HAL_Driver/Src/stm32l5xx_hal_dma.c:1270:13:DMA_SetConfig	3
-C:/Users/laoam/OneDrive/Documents/stm32/workspace/freertostrustzone-master/freertostrustzone-master/Drivers/STM32L5xx_HAL_Driver/Src/stm32l5xx_hal_dma.c:1313:13:DMA_CalcDMAMUXChannelBaseAndMask	2
-C:/Users/laoam/OneDrive/Documents/stm32/workspace/freertostrustzone-master/freertostrustzone-master/Drivers/STM32L5xx_HAL_Driver/Src/stm32l5xx_hal_dma.c:1341:13:DMA_CalcDMAMUXRequestGenBaseAndMask	1
+C:/Users/laoam/OneDrive/Documents/stm32/workspace/freertostrustzone-master/freertostrustzone-master/Drivers/STM32L5xx_HAL_Driver/Src/stm32l5xx_hal_dma.c:1217:19:HAL_DMA_GetConfigChannelAttributes	3

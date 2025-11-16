@@ -250,9 +250,9 @@ void SECURE_LinearHMAC(uint8_t *output_digest, size_t maxlen)
     }
 
     // Optional: Fill real_memory with known data for consistent testing
-    for (int i = 0; i < TOTAL_SIZE; i++) {
-        real_memory[i] = i & 0xFF;  // test pattern
-    }
+//    for (int i = 0; i < TOTAL_SIZE; i++) {
+//        real_memory[i] = i & 0xFF;  // test pattern
+//    }
 
 //    hmac_sha256_initialize(&hmac, key, strlen((const char *)key));
     hmac_sha256_initialize(&hmac, key, sizeof(key));
@@ -260,6 +260,7 @@ void SECURE_LinearHMAC(uint8_t *output_digest, size_t maxlen)
 
     // Process blocks sequentially (not shuffled)
     hmac_sha256_update(&hmac, real_memory, TOTAL_SIZE);
+
 //    for (int i = 0; i < BLOCKS; i++) {
 //        const uint8_t *block = &real_memory[i * BLOCK_SIZE];
 //        hmac_sha256_update(&hmac, block, BLOCK_SIZE);
@@ -1256,6 +1257,108 @@ void Secure_EraseWriteVerify(void)
     }
 }
 
+
+
+
+
+__attribute__((cmse_nonsecure_entry))
+void Simulate_flash_write_128KB(uint32_t start_addr, uint8_t start_val, uint32_t *success)
+{
+    int num_pages = 4;
+    uint32_t page_size = FLASH_PAGE_SIZE;  // 2KB = 0x800
+
+    // Initialize as failed
+    *success = 0;
+
+    static  uint8_t data[FLASH_PAGE_SIZE];
+    for(int i = 0; i < 2048; i++) {
+        data[i] = i + start_val;
+    }
+    HAL_ICACHE_Disable();
+
+    // Unlock NS Flash
+    FLASH->NSKEYR = FLASH_KEY1;
+    FLASH->NSKEYR = FLASH_KEY2;
+
+    if (FLASH->NSCR & FLASH_NSCR_NSLOCK) {
+        HAL_ICACHE_Enable();
+        return;  // Flash unlock failed
+    }
+
+    // Force Non-Secure operation
+    extern FLASH_ProcessTypeDef pFlash;
+    pFlash.ProcedureOnGoing = FLASH_TYPEERASE_PAGES;
+
+    FLASH->NSSR = 0xFFFFFFFF;
+    __DSB();
+    __ISB();
+
+    // ========== Write 4 pages (8KB total) ==========
+
+
+    	uint32_t end_addr = start_addr + (num_pages * page_size) - 8;  // 8KB - 8 bytes
+       uint32_t word_index = 0;
+
+       for (uint32_t addr = start_addr; addr <= end_addr; addr += 8) {
+           // Prepare 8-byte value from data buffer
+           uint32_t offset = (addr - start_addr) % page_size;  // Offset within current page
+           uint64_t value = 0;
+           for (int b = 0; b < 8; b++) {
+               value |= ((uint64_t)data[offset + b]) << (b * 8);
+           }
+
+           while (FLASH->NSSR & FLASH_NSSR_NSBSY);
+           FLASH->NSSR = 0xFFFFFFFF;
+           SET_BIT(FLASH->NSCR, FLASH_NSCR_NSPG);
+
+           *(volatile uint32_t*)addr = (uint32_t)(value);
+           __ISB();
+           *(volatile uint32_t*)(addr + 4) = (uint32_t)(value >> 32);
+
+           while (FLASH->NSSR & FLASH_NSSR_NSBSY);
+           CLEAR_BIT(FLASH->NSCR, FLASH_NSCR_NSPG);
+
+           word_index++;
+       }
+
+    __DSB();
+    __ISB();
+
+    // Lock flash
+    SET_BIT(FLASH->NSCR, FLASH_NSCR_NSLOCK);
+
+    // Invalidate Cache
+    HAL_ICACHE_Invalidate();
+    __DSB();
+    __ISB();
+
+    HAL_ICACHE_Enable();
+
+    // ========== Verify written data ==========
+    static uint8_t buf[FLASH_PAGE_SIZE];
+
+    for (int page = 0; page < num_pages; page++) {
+        uint32_t page_addr = start_addr + (page * page_size);
+
+        // Read back one page
+        for (uint32_t i = 0; i < page_size; i++) {
+            buf[i] = *(volatile uint8_t*)(page_addr + i);
+        }
+
+        // Verify
+        for (uint32_t i = 0; i < page_size; i++) {
+            if (buf[i] != data[i]) {
+                // Data mismatch - return failure
+                return;  // success is still 0
+            }
+        }
+    }
+
+    // All verification passed
+    *success = 1;
+}
+
+
 __attribute__((cmse_nonsecure_entry))
 void Secure_WriteFlash_128KB(uint32_t *success_words, uint32_t *failed_words)
 {
@@ -1342,164 +1445,9 @@ void Secure_WriteFlash_128KB(uint32_t *success_words, uint32_t *failed_words)
 }
 
 
-__attribute__((cmse_nonsecure_entry))
-void Secure_WriteFlash_128KB_2(uint32_t *success_words, uint32_t *failed_words)
-{
-    uint64_t test_value = 0x123456789ABCDEF0ULL;
-
-    // ✅ Pages 64-127 (128KB)
-    uint32_t start_addr = 0x08060000;  // Page 64
-    uint32_t end_addr   = 0x0807FFFF;  // Page 127
-    uint32_t total_words = (end_addr - start_addr + 1) / 8;  // 16,384 words
-
-    uint32_t success = 0;
-    uint32_t failed = 0;
-
-    HAL_ICACHE_Disable();
-
-    // Unlock NS Flash
-    FLASH->NSKEYR = FLASH_KEY1;
-    FLASH->NSKEYR = FLASH_KEY2;
-
-    if (FLASH->NSCR & FLASH_NSCR_NSLOCK) {
-        HAL_ICACHE_Enable();
-        *success_words = 0;
-        *failed_words = total_words;
-        return;
-    }
-
-    // Force Non-Secure operation
-    extern FLASH_ProcessTypeDef pFlash;
-    pFlash.ProcedureOnGoing = FLASH_TYPEERASE_PAGES;
-
-    FLASH->NSSR = 0xFFFFFFFF;
-    __DSB();
-    __ISB();
-
-    // ========== Write 128KB ==========
-    uint32_t word_index = 0;
-
-    for (uint32_t addr = start_addr; addr <= end_addr; addr += 8) {
-        uint64_t value = test_value + word_index;
-
-        while (FLASH->NSSR & FLASH_NSSR_NSBSY);
-        FLASH->NSSR = 0xFFFFFFFF;
-        SET_BIT(FLASH->NSCR, FLASH_NSCR_NSPG);
-
-        *(volatile uint32_t*)addr = (uint32_t)(test_value);
-        __ISB();
-        *(volatile uint32_t*)(addr + 4) = (uint32_t)(test_value >> 32);
-
-        while (FLASH->NSSR & FLASH_NSSR_NSBSY);
-        CLEAR_BIT(FLASH->NSCR, FLASH_NSCR_NSPG);
-
-        word_index++;
-    }
-
-    __DSB();
-    __ISB();
-
-    // Invalidate Cache
-    HAL_ICACHE_Invalidate();
-    __DSB();
-    __ISB();
-
-    // ========== Verify ==========
-    word_index = 0;
-
-    for (uint32_t addr = start_addr; addr <= end_addr; addr += 8) {
-        uint64_t expected = test_value + word_index;
-        uint64_t actual = *(volatile uint64_t*)addr;
-
-        if (actual == expected) {
-            success++;
-        } else {
-            failed++;
-        }
-
-        word_index++;
-    }
-
-    SET_BIT(FLASH->NSCR, FLASH_NSCR_NSLOCK);
-    HAL_ICACHE_Enable();
-
-    *success_words = success;
-    *failed_words = failed;
-}
 
 
-// Ben flash erase version 1 using hal
-//__attribute__((cmse_nonsecure_entry))
-//void Secure_EraseWriteVerify(void)
-//{
-//    HAL_StatusTypeDef status;
-//    FLASH_EraseInitTypeDef EraseInitStruct = {0};
-//    uint32_t PageError = 0;
-//    uint64_t test_value = 0x12345678;
-//    uint32_t target_addr = 0x0807F800;
-//
-//
-//    EraseInitStruct.TypeErase = FLASH_TYPEERASE_PAGES;
-//    EraseInitStruct.Page = 255;
-//    EraseInitStruct.NbPages = 1;
-//    EraseInitStruct.Banks = 2;
-//
-//    status = HAL_FLASHEx_Erase(&EraseInitStruct, &PageError);
-//
-//    if (status != HAL_OK || PageError != 0xFFFFFFFF) {
-//        printf("❌ Erase FAIL status=%d PageError=0x%08lX\r\n", status, PageError);
-//        HAL_FLASH_Lock();
-//        return;
-//    }
-//    printf("✅ Erase OK! Page %d Bank 2\r\n", SAFE_FLASH_PAGE);
-//
-//    __DSB();
-//    __ISB();
-//
-//    uint64_t after_erase = *(volatile uint64_t*)target_addr;
-//    printf("After Erase: 0x%08lX%08lX\r\n",
-//           (uint32_t)(after_erase >> 32),
-//           (uint32_t)(after_erase & 0xFFFFFFFF));
-//
-//
-//
-//    	 status = HAL_FLASH_Program(
-//    	        FLASH_TYPEPROGRAM_DOUBLEWORD,
-//				target_addr,
-//    	        test_value
-//    	    );
-//
-//
-//    uint32_t flash_error = HAL_FLASH_GetError();
-//    if (status != HAL_OK) {
-//        printf("❌ Program FAIL! status=%d error=0x%08lX\r\n", status, flash_error);
-//        HAL_FLASH_Lock();
-//        return;
-//    }
-//    printf("Program status=%d error=0x%08lX\r\n", status, flash_error);
-//
-//    __DSB();
-//    __ISB();
-//
-//    uint64_t verify_value = *(volatile uint64_t*)target_addr;
-//    if (verify_value == test_value) {
-//        printf("✅ Write+Verify OK!\r\n");
-//        printf("   Expected: 0x%08lX%08lX\r\n",
-//               (uint32_t)(test_value >> 32),
-//               (uint32_t)(test_value & 0xFFFFFFFF));
-//        printf("   Read:     0x%08lX%08lX\r\n",
-//               (uint32_t)(verify_value >> 32),
-//               (uint32_t)(verify_value & 0xFFFFFFFF));
-//    } else {
-//        printf("❌ Verify FAIL!\r\n");
-//        printf("   Expected: 0x%08lX%08lX\r\n",
-//               (uint32_t)(test_value >> 32),
-//               (uint32_t)(test_value & 0xFFFFFFFF));
-//        printf("   Read:     0x%08lX%08lX\r\n",
-//               (uint32_t)(verify_value >> 32),
-//               (uint32_t)(verify_value & 0xFFFFFFFF));
-//    }
-//}
+
 
 __attribute__((cmse_nonsecure_entry))
 void Secure_Flash256KB(FlashResult_t *result)

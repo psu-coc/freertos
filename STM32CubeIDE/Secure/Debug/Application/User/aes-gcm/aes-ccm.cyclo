@@ -1,10 +1,6 @@
-../Application/User/aes-gcm/aes-common.h:152:20:AES_PUT_BE16	1
 ../Application/User/aes-gcm/aes-ccm.c:13:13:xor_aes_block	1
-../Application/User/aes-gcm/aes-ccm.c:24:13:aes_ccm_auth_start	4
 ../Application/User/aes-gcm/aes-ccm.c:60:13:aes_ccm_auth	4
-../Application/User/aes-gcm/aes-ccm.c:80:13:aes_ccm_encr_start	1
-../Application/User/aes-gcm/aes-ccm.c:88:13:aes_ccm_encr	4
-../Application/User/aes-gcm/aes-ccm.c:113:13:aes_ccm_encr_auth	2
-../Application/User/aes-gcm/aes-ccm.c:128:13:aes_ccm_decr_auth	2
-../Application/User/aes-gcm/aes-ccm.c:144:5:aes_ccm_ae	4
-../Application/User/aes-gcm/aes-ccm.c:174:5:aes_ccm_ad	5
+../Application/User/aes-gcm/aes-ccm.c:88:13:aes_ccm_encr.constprop	4
+../Application/User/aes-gcm/aes-ccm.c:24:13:aes_ccm_auth_start.constprop	4
+../Application/User/aes-gcm/aes-ccm.c:144:5:aes_ccm_ae	6
+../Application/User/aes-gcm/aes-ccm.c:174:5:aes_ccm_ad	6

@@ -1,5 +1,4 @@
-../Application/User/aes-gcm/aes-internal.h:65:24:rotr	1
-../Application/User/aes-gcm/aes-internal-enc.c:25:5:aes_rijndael_key_setup_enc	9
+../Application/User/aes-gcm/aes-internal-enc.c:25:5:aes_rijndael_key_setup_enc	7
 ../Application/User/aes-gcm/aes-internal-enc.c:93:6:aes_rijndael_encrypt	3
 ../Application/User/aes-gcm/aes-internal-enc.c:170:8:aes_encrypt_init	3
 ../Application/User/aes-gcm/aes-internal-enc.c:187:6:aes_encrypt	1

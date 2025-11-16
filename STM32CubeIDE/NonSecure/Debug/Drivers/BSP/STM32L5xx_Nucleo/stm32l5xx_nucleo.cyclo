@@ -11,11 +11,9 @@ C:/Users/laoam/OneDrive/Documents/stm32/workspace/freertostrustzone-master/freer
 C:/Users/laoam/OneDrive/Documents/stm32/workspace/freertostrustzone-master/freertostrustzone-master/Drivers/BSP/STM32L5xx_Nucleo/stm32l5xx_nucleo.c:349:9:BSP_PB_DeInit	1
 C:/Users/laoam/OneDrive/Documents/stm32/workspace/freertostrustzone-master/freertostrustzone-master/Drivers/BSP/STM32L5xx_Nucleo/stm32l5xx_nucleo.c:366:9:BSP_PB_GetState	1
 C:/Users/laoam/OneDrive/Documents/stm32/workspace/freertostrustzone-master/freertostrustzone-master/Drivers/BSP/STM32L5xx_Nucleo/stm32l5xx_nucleo.c:380:13:BSP_PB_Callback	1
+C:/Users/laoam/OneDrive/Documents/stm32/workspace/freertostrustzone-master/freertostrustzone-master/Drivers/BSP/STM32L5xx_Nucleo/stm32l5xx_nucleo.c:644:13:BUTTON_USER_EXTI_Callback	1
 C:/Users/laoam/OneDrive/Documents/stm32/workspace/freertostrustzone-master/freertostrustzone-master/Drivers/BSP/STM32L5xx_Nucleo/stm32l5xx_nucleo.c:396:6:BSP_PB_IRQHandler	1
-C:/Users/laoam/OneDrive/Documents/stm32/workspace/freertostrustzone-master/freertostrustzone-master/Drivers/BSP/STM32L5xx_Nucleo/stm32l5xx_nucleo.c:418:9:BSP_COM_Init	6
-C:/Users/laoam/OneDrive/Documents/stm32/workspace/freertostrustzone-master/freertostrustzone-master/Drivers/BSP/STM32L5xx_Nucleo/stm32l5xx_nucleo.c:472:9:BSP_COM_DeInit	2
+C:/Users/laoam/OneDrive/Documents/stm32/workspace/freertostrustzone-master/freertostrustzone-master/Drivers/BSP/STM32L5xx_Nucleo/stm32l5xx_nucleo.c:472:9:BSP_COM_DeInit	3
 C:/Users/laoam/OneDrive/Documents/stm32/workspace/freertostrustzone-master/freertostrustzone-master/Drivers/BSP/STM32L5xx_Nucleo/stm32l5xx_nucleo.c:589:26:MX_LPUART1_Init	1
 C:/Users/laoam/OneDrive/Documents/stm32/workspace/freertostrustzone-master/freertostrustzone-master/Drivers/BSP/STM32L5xx_Nucleo/stm32l5xx_nucleo.c:611:26:MX_USART3_Init	1
-C:/Users/laoam/OneDrive/Documents/stm32/workspace/freertostrustzone-master/freertostrustzone-master/Drivers/BSP/STM32L5xx_Nucleo/stm32l5xx_nucleo.c:644:13:BUTTON_USER_EXTI_Callback	1
-C:/Users/laoam/OneDrive/Documents/stm32/workspace/freertostrustzone-master/freertostrustzone-master/Drivers/BSP/STM32L5xx_Nucleo/stm32l5xx_nucleo.c:655:13:UART_MspInit	2
-C:/Users/laoam/OneDrive/Documents/stm32/workspace/freertostrustzone-master/freertostrustzone-master/Drivers/BSP/STM32L5xx_Nucleo/stm32l5xx_nucleo.c:705:13:UART_MspDeInit	3
+C:/Users/laoam/OneDrive/Documents/stm32/workspace/freertostrustzone-master/freertostrustzone-master/Drivers/BSP/STM32L5xx_Nucleo/stm32l5xx_nucleo.c:418:9:BSP_COM_Init	6

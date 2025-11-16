@@ -1,7 +1,6 @@
-C:/Users/laoam/OneDrive/Documents/stm32/workspace/freertostrustzone-master/freertostrustzone-master/Middlewares/Third_Party/FreeRTOS/Source/portable/GCC/ARM_CM33/secure/secure_heap.c:131:13:prvHeapInit	2
 C:/Users/laoam/OneDrive/Documents/stm32/workspace/freertostrustzone-master/freertostrustzone-master/Middlewares/Third_Party/FreeRTOS/Source/portable/GCC/ARM_CM33/secure/secure_heap.c:179:13:prvInsertBlockIntoFreeList	6
 C:/Users/laoam/OneDrive/Documents/stm32/workspace/freertostrustzone-master/freertostrustzone-master/Middlewares/Third_Party/FreeRTOS/Source/portable/GCC/ARM_CM33/secure/secure_heap.c:240:7:pvPortMalloc	15
-C:/Users/laoam/OneDrive/Documents/stm32/workspace/freertostrustzone-master/freertostrustzone-master/Middlewares/Third_Party/FreeRTOS/Source/portable/GCC/ARM_CM33/secure/secure_heap.c:386:6:vPortFree	6
+C:/Users/laoam/OneDrive/Documents/stm32/workspace/freertostrustzone-master/freertostrustzone-master/Middlewares/Third_Party/FreeRTOS/Source/portable/GCC/ARM_CM33/secure/secure_heap.c:386:6:vPortFree	4
 C:/Users/laoam/OneDrive/Documents/stm32/workspace/freertostrustzone-master/freertostrustzone-master/Middlewares/Third_Party/FreeRTOS/Source/portable/GCC/ARM_CM33/secure/secure_heap.c:434:8:xPortGetFreeHeapSize	1
 C:/Users/laoam/OneDrive/Documents/stm32/workspace/freertostrustzone-master/freertostrustzone-master/Middlewares/Third_Party/FreeRTOS/Source/portable/GCC/ARM_CM33/secure/secure_heap.c:440:8:xPortGetMinimumEverFreeHeapSize	1
 C:/Users/laoam/OneDrive/Documents/stm32/workspace/freertostrustzone-master/freertostrustzone-master/Middlewares/Third_Party/FreeRTOS/Source/portable/GCC/ARM_CM33/secure/secure_heap.c:446:6:vPortInitialiseBlocks	1
