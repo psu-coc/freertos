@@ -32,7 +32,7 @@
 #include "arm_cmse.h"
 
 #define SHA256_DIGEST_SIZE 32
-#define BLOCK_SIZE 4096 // 32 128 1024 4096
+#define BLOCK_SIZE 4096 // // <--- แก้ตัวเลขตรงนี้ครับ (256, 512, 1024, 2048, 4096)
 #define TOTAL_SIZE 0x40000
 #define BLOCKS (TOTAL_SIZE / BLOCK_SIZE)
 
@@ -272,29 +272,6 @@ void SECURE_LinearHMAC(uint8_t *output_digest, size_t maxlen)
 
 }
 
-//__attribute__((cmse_nonsecure_entry))
-//void SECURE_LinearHMAC(uint8_t *output_digest, size_t maxlen)
-//{
-//    if (!output_digest || maxlen < SHA256_DIGEST_SIZE) return;
-//
-//
-//
-//    // Fill memory with test data
-//    for (int i = 0; i < sizeof(memory_region); i++) {
-//        memory_region[i] = i & 0xFF;
-//    }
-//
-//    hmac_sha256_initialize(&hmac, key, strlen((const char*)key));
-//    hmac_sha256_update(&hmac, memory_region, sizeof(memory_region));
-//    hmac_sha256_finalize(&hmac, NULL, 0);
-//
-//    memcpy(secure_digest_1, hmac.digest, SHA256_DIGEST_SIZE);
-//
-//    memcpy(output_digest,secure_digest_1, SHA256_DIGEST_SIZE);
-//}
-
-
-
 
 __attribute__((cmse_nonsecure_entry))
 void SECURE_ShuffledHMAC(uint8_t *output_digest, size_t maxlen)
@@ -319,9 +296,9 @@ void SECURE_ShuffledHMAC(uint8_t *output_digest, size_t maxlen)
 	    hmac_sha256_initialize(&hmac, key, strlen((const char *)key));
 	    for (int i = 0; i < BLOCKS; i++) {
 	        const uint8_t *block = &real_memory[indices[i] * BLOCK_SIZE];
-//	        __disable_irq();
+	        __disable_irq();
 	        hmac_sha256_update(&hmac, block, BLOCK_SIZE);
-//	        __enable_irq();
+	        __enable_irq();
 	    }
 	    hmac_sha256_finalize(&hmac, NULL, 0);
 	    memcpy(output_digest, hmac.digest, SHA256_DIGEST_SIZE);

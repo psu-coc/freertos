@@ -31,27 +31,27 @@ Idx Name          Size      VMA       LMA       File off  Algn
                   ALLOC
  13 .ARM.attributes 00000036  00000000  00000000  0000e0c0  2**0
                   CONTENTS, READONLY
- 14 .debug_line   0001b679  00000000  00000000  0000e0f6  2**0
+ 14 .debug_line   0001b677  00000000  00000000  0000e0f6  2**0
                   CONTENTS, READONLY, DEBUGGING, OCTETS
- 15 .debug_line_str 000000ae  00000000  00000000  0002976f  2**0
+ 15 .debug_line_str 000000ae  00000000  00000000  0002976d  2**0
                   CONTENTS, READONLY, DEBUGGING, OCTETS
- 16 .debug_info   00019970  00000000  00000000  0002981d  2**0
+ 16 .debug_info   00019970  00000000  00000000  0002981b  2**0
                   CONTENTS, READONLY, DEBUGGING, OCTETS
- 17 .debug_abbrev 0000471f  00000000  00000000  0004318d  2**0
+ 17 .debug_abbrev 0000471f  00000000  00000000  0004318b  2**0
                   CONTENTS, READONLY, DEBUGGING, OCTETS
  18 .debug_aranges 000003b0  00000000  00000000  000478b0  2**3
                   CONTENTS, READONLY, DEBUGGING, OCTETS
- 19 .debug_str    00112ac6  00000000  00000000  00047c60  2**0
+ 19 .debug_str    00112ac7  00000000  00000000  00047c60  2**0
                   CONTENTS, READONLY, DEBUGGING, OCTETS
- 20 .debug_rnglists 0000059b  00000000  00000000  0015a726  2**0
+ 20 .debug_rnglists 0000059b  00000000  00000000  0015a727  2**0
                   CONTENTS, READONLY, DEBUGGING, OCTETS
- 21 .debug_loclists 0000a6f3  00000000  00000000  0015acc1  2**0
+ 21 .debug_loclists 0000a6f3  00000000  00000000  0015acc2  2**0
                   CONTENTS, READONLY, DEBUGGING, OCTETS
- 22 .debug_macro  0002c13d  00000000  00000000  001653b4  2**0
+ 22 .debug_macro  0002c13d  00000000  00000000  001653b5  2**0
                   CONTENTS, READONLY, DEBUGGING, OCTETS
- 23 .comment      00000043  00000000  00000000  001914f1  2**0
+ 23 .comment      00000043  00000000  00000000  001914f2  2**0
                   CONTENTS, READONLY
- 24 .debug_frame  00003454  00000000  00000000  00191534  2**2
+ 24 .debug_frame  00003454  00000000  00000000  00191538  2**2
                   CONTENTS, READONLY, DEBUGGING, OCTETS
 
 Disassembly of section .text:
@@ -2124,7 +2124,6 @@ void SECURE_LinearHMAC(uint8_t *output_digest, size_t maxlen)
  c000f88:	30000000 	.word	0x30000000
 
 0c000f8c <__acle_se_SECURE_ShuffledHMAC>:
-
 
 
 __attribute__((cmse_nonsecure_entry))

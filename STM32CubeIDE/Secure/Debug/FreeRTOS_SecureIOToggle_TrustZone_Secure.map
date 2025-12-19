@@ -6279,36 +6279,36 @@ LOAD C:/ST/STM32CubeIDE_1.18.1/STM32CubeIDE/plugins/com.st.stm32cube.ide.mcu.ext
 LOAD C:/ST/STM32CubeIDE_1.18.1/STM32CubeIDE/plugins/com.st.stm32cube.ide.mcu.externaltools.gnu-tools-for-stm32.13.3.rel1.win32_1.0.0.202411081344/tools/bin/../lib/gcc/arm-none-eabi/13.3.1/../../../../arm-none-eabi/lib/thumb/v8-m.main+fp/hard\libm.a
 LOAD C:/ST/STM32CubeIDE_1.18.1/STM32CubeIDE/plugins/com.st.stm32cube.ide.mcu.externaltools.gnu-tools-for-stm32.13.3.rel1.win32_1.0.0.202411081344/tools/bin/../lib/gcc/arm-none-eabi/13.3.1/thumb/v8-m.main+fp/hard\libgcc.a
 
-.debug_line     0x00000000    0x1b679
+.debug_line     0x00000000    0x1b677
  .debug_line    0x00000000       0x77 ./Application/Startup/startup_stm32l552zetxq.o
  .debug_line    0x00000077      0xd70 ./Application/User/Aesnew/aes.o
  .debug_line    0x00000de7      0xbd0 ./Application/User/Crypto/hmac-sha256/hmac-sha256.o
  .debug_line    0x000019b7      0xbab ./Application/User/main.o
- .debug_line    0x00002562     0x1f48 ./Application/User/secure_nsc.o
- .debug_line    0x000044aa      0x8f8 ./Application/User/stm32l5xx_hal_msp.o
- .debug_line    0x00004da2      0x98c ./Application/User/stm32l5xx_it.o
- .debug_line    0x0000572e      0x89d ./Application/User/syscalls.o
- .debug_line    0x00005fcb      0x5c0 ./Application/User/sysmem.o
- .debug_line    0x0000658b      0xd52 ./Drivers/BSP/STM32L5xx_Nucleo/stm32l5xx_nucleo.o
- .debug_line    0x000072dd      0x9fc ./Drivers/CMSIS/system_stm32l5xx_s.o
- .debug_line    0x00007cd9      0xc3e ./Drivers/STM32L5xx_HAL_Driver/stm32l5xx_hal.o
- .debug_line    0x00008917      0xf60 ./Drivers/STM32L5xx_HAL_Driver/stm32l5xx_hal_cortex.o
- .debug_line    0x00009877     0x13b1 ./Drivers/STM32L5xx_HAL_Driver/stm32l5xx_hal_dma.o
- .debug_line    0x0000ac28      0xec0 ./Drivers/STM32L5xx_HAL_Driver/stm32l5xx_hal_exti.o
- .debug_line    0x0000bae8      0xd11 ./Drivers/STM32L5xx_HAL_Driver/stm32l5xx_hal_flash.o
- .debug_line    0x0000c7f9     0x1347 ./Drivers/STM32L5xx_HAL_Driver/stm32l5xx_hal_flash_ex.o
- .debug_line    0x0000db40      0xd7f ./Drivers/STM32L5xx_HAL_Driver/stm32l5xx_hal_gpio.o
- .debug_line    0x0000e8bf     0x147d ./Drivers/STM32L5xx_HAL_Driver/stm32l5xx_hal_gtzc.o
- .debug_line    0x0000fd3c      0xb0c ./Drivers/STM32L5xx_HAL_Driver/stm32l5xx_hal_icache.o
- .debug_line    0x00010848      0xa53 ./Drivers/STM32L5xx_HAL_Driver/stm32l5xx_hal_pwr.o
- .debug_line    0x0001129b      0xeca ./Drivers/STM32L5xx_HAL_Driver/stm32l5xx_hal_pwr_ex.o
- .debug_line    0x00012165     0x1931 ./Drivers/STM32L5xx_HAL_Driver/stm32l5xx_hal_rcc.o
- .debug_line    0x00013a96     0x5070 ./Drivers/STM32L5xx_HAL_Driver/stm32l5xx_hal_uart.o
- .debug_line    0x00018b06     0x107f ./Drivers/STM32L5xx_HAL_Driver/stm32l5xx_hal_uart_ex.o
- .debug_line    0x00019b85      0x74e ./Middlewares/FreeRTOS/secure_context.o
- .debug_line    0x0001a2d3      0x51a ./Middlewares/FreeRTOS/secure_context_port.o
- .debug_line    0x0001a7ed      0x979 ./Middlewares/FreeRTOS/secure_heap.o
- .debug_line    0x0001b166      0x513 ./Middlewares/FreeRTOS/secure_init.o
+ .debug_line    0x00002562     0x1f46 ./Application/User/secure_nsc.o
+ .debug_line    0x000044a8      0x8f8 ./Application/User/stm32l5xx_hal_msp.o
+ .debug_line    0x00004da0      0x98c ./Application/User/stm32l5xx_it.o
+ .debug_line    0x0000572c      0x89d ./Application/User/syscalls.o
+ .debug_line    0x00005fc9      0x5c0 ./Application/User/sysmem.o
+ .debug_line    0x00006589      0xd52 ./Drivers/BSP/STM32L5xx_Nucleo/stm32l5xx_nucleo.o
+ .debug_line    0x000072db      0x9fc ./Drivers/CMSIS/system_stm32l5xx_s.o
+ .debug_line    0x00007cd7      0xc3e ./Drivers/STM32L5xx_HAL_Driver/stm32l5xx_hal.o
+ .debug_line    0x00008915      0xf60 ./Drivers/STM32L5xx_HAL_Driver/stm32l5xx_hal_cortex.o
+ .debug_line    0x00009875     0x13b1 ./Drivers/STM32L5xx_HAL_Driver/stm32l5xx_hal_dma.o
+ .debug_line    0x0000ac26      0xec0 ./Drivers/STM32L5xx_HAL_Driver/stm32l5xx_hal_exti.o
+ .debug_line    0x0000bae6      0xd11 ./Drivers/STM32L5xx_HAL_Driver/stm32l5xx_hal_flash.o
+ .debug_line    0x0000c7f7     0x1347 ./Drivers/STM32L5xx_HAL_Driver/stm32l5xx_hal_flash_ex.o
+ .debug_line    0x0000db3e      0xd7f ./Drivers/STM32L5xx_HAL_Driver/stm32l5xx_hal_gpio.o
+ .debug_line    0x0000e8bd     0x147d ./Drivers/STM32L5xx_HAL_Driver/stm32l5xx_hal_gtzc.o
+ .debug_line    0x0000fd3a      0xb0c ./Drivers/STM32L5xx_HAL_Driver/stm32l5xx_hal_icache.o
+ .debug_line    0x00010846      0xa53 ./Drivers/STM32L5xx_HAL_Driver/stm32l5xx_hal_pwr.o
+ .debug_line    0x00011299      0xeca ./Drivers/STM32L5xx_HAL_Driver/stm32l5xx_hal_pwr_ex.o
+ .debug_line    0x00012163     0x1931 ./Drivers/STM32L5xx_HAL_Driver/stm32l5xx_hal_rcc.o
+ .debug_line    0x00013a94     0x5070 ./Drivers/STM32L5xx_HAL_Driver/stm32l5xx_hal_uart.o
+ .debug_line    0x00018b04     0x107f ./Drivers/STM32L5xx_HAL_Driver/stm32l5xx_hal_uart_ex.o
+ .debug_line    0x00019b83      0x74e ./Middlewares/FreeRTOS/secure_context.o
+ .debug_line    0x0001a2d1      0x51a ./Middlewares/FreeRTOS/secure_context_port.o
+ .debug_line    0x0001a7eb      0x979 ./Middlewares/FreeRTOS/secure_heap.o
+ .debug_line    0x0001b164      0x513 ./Middlewares/FreeRTOS/secure_init.o
 
 .debug_line_str
                 0x00000000       0xae
@@ -6437,37 +6437,37 @@ LOAD C:/ST/STM32CubeIDE_1.18.1/STM32CubeIDE/plugins/com.st.stm32cube.ide.mcu.ext
  .debug_aranges
                 0x00000390       0x20 ./Middlewares/FreeRTOS/secure_init.o
 
-.debug_str      0x00000000   0x112ac6
- .debug_str     0x00000000   0x112ac6 ./Application/Startup/startup_stm32l552zetxq.o
+.debug_str      0x00000000   0x112ac7
+ .debug_str     0x00000000   0x112ac7 ./Application/Startup/startup_stm32l552zetxq.o
                                  0xca (size before relaxing)
- .debug_str     0x00112ac6     0x767e ./Application/User/Aesnew/aes.o
- .debug_str     0x00112ac6     0x83ae ./Application/User/Crypto/hmac-sha256/hmac-sha256.o
- .debug_str     0x00112ac6   0x107326 ./Application/User/main.o
- .debug_str     0x00112ac6   0x10a62b ./Application/User/secure_nsc.o
- .debug_str     0x00112ac6   0x103def ./Application/User/stm32l5xx_hal_msp.o
- .debug_str     0x00112ac6   0x1036ed ./Application/User/stm32l5xx_it.o
- .debug_str     0x00112ac6     0x9a8a ./Application/User/syscalls.o
- .debug_str     0x00112ac6     0x77f0 ./Application/User/sysmem.o
- .debug_str     0x00112ac6   0x104967 ./Drivers/BSP/STM32L5xx_Nucleo/stm32l5xx_nucleo.o
- .debug_str     0x00112ac6   0x1036a4 ./Drivers/CMSIS/system_stm32l5xx_s.o
- .debug_str     0x00112ac6   0x103bce ./Drivers/STM32L5xx_HAL_Driver/stm32l5xx_hal.o
- .debug_str     0x00112ac6   0x103a4b ./Drivers/STM32L5xx_HAL_Driver/stm32l5xx_hal_cortex.o
- .debug_str     0x00112ac6   0x103380 ./Drivers/STM32L5xx_HAL_Driver/stm32l5xx_hal_dma.o
- .debug_str     0x00112ac6   0x103085 ./Drivers/STM32L5xx_HAL_Driver/stm32l5xx_hal_exti.o
- .debug_str     0x00112ac6   0x1030d3 ./Drivers/STM32L5xx_HAL_Driver/stm32l5xx_hal_flash.o
- .debug_str     0x00112ac6   0x1033db ./Drivers/STM32L5xx_HAL_Driver/stm32l5xx_hal_flash_ex.o
- .debug_str     0x00112ac6   0x102fe8 ./Drivers/STM32L5xx_HAL_Driver/stm32l5xx_hal_gpio.o
- .debug_str     0x00112ac6   0x10376a ./Drivers/STM32L5xx_HAL_Driver/stm32l5xx_hal_gtzc.o
- .debug_str     0x00112ac6   0x1033e1 ./Drivers/STM32L5xx_HAL_Driver/stm32l5xx_hal_icache.o
- .debug_str     0x00112ac6   0x103413 ./Drivers/STM32L5xx_HAL_Driver/stm32l5xx_hal_pwr.o
- .debug_str     0x00112ac6   0x10376a ./Drivers/STM32L5xx_HAL_Driver/stm32l5xx_hal_pwr_ex.o
- .debug_str     0x00112ac6   0x10361f ./Drivers/STM32L5xx_HAL_Driver/stm32l5xx_hal_rcc.o
- .debug_str     0x00112ac6   0x103f56 ./Drivers/STM32L5xx_HAL_Driver/stm32l5xx_hal_uart.o
- .debug_str     0x00112ac6   0x1036d3 ./Drivers/STM32L5xx_HAL_Driver/stm32l5xx_hal_uart_ex.o
- .debug_str     0x00112ac6     0x8459 ./Middlewares/FreeRTOS/secure_context.o
- .debug_str     0x00112ac6     0x4d5b ./Middlewares/FreeRTOS/secure_context_port.o
- .debug_str     0x00112ac6     0x7db7 ./Middlewares/FreeRTOS/secure_heap.o
- .debug_str     0x00112ac6     0x4867 ./Middlewares/FreeRTOS/secure_init.o
+ .debug_str     0x00112ac7     0x767e ./Application/User/Aesnew/aes.o
+ .debug_str     0x00112ac7     0x83ae ./Application/User/Crypto/hmac-sha256/hmac-sha256.o
+ .debug_str     0x00112ac7   0x107326 ./Application/User/main.o
+ .debug_str     0x00112ac7   0x10a62b ./Application/User/secure_nsc.o
+ .debug_str     0x00112ac7   0x103def ./Application/User/stm32l5xx_hal_msp.o
+ .debug_str     0x00112ac7   0x1036ed ./Application/User/stm32l5xx_it.o
+ .debug_str     0x00112ac7     0x9a8a ./Application/User/syscalls.o
+ .debug_str     0x00112ac7     0x77f0 ./Application/User/sysmem.o
+ .debug_str     0x00112ac7   0x104967 ./Drivers/BSP/STM32L5xx_Nucleo/stm32l5xx_nucleo.o
+ .debug_str     0x00112ac7   0x1036a4 ./Drivers/CMSIS/system_stm32l5xx_s.o
+ .debug_str     0x00112ac7   0x103bce ./Drivers/STM32L5xx_HAL_Driver/stm32l5xx_hal.o
+ .debug_str     0x00112ac7   0x103a4b ./Drivers/STM32L5xx_HAL_Driver/stm32l5xx_hal_cortex.o
+ .debug_str     0x00112ac7   0x103380 ./Drivers/STM32L5xx_HAL_Driver/stm32l5xx_hal_dma.o
+ .debug_str     0x00112ac7   0x103085 ./Drivers/STM32L5xx_HAL_Driver/stm32l5xx_hal_exti.o
+ .debug_str     0x00112ac7   0x1030d3 ./Drivers/STM32L5xx_HAL_Driver/stm32l5xx_hal_flash.o
+ .debug_str     0x00112ac7   0x1033db ./Drivers/STM32L5xx_HAL_Driver/stm32l5xx_hal_flash_ex.o
+ .debug_str     0x00112ac7   0x102fe8 ./Drivers/STM32L5xx_HAL_Driver/stm32l5xx_hal_gpio.o
+ .debug_str     0x00112ac7   0x10376a ./Drivers/STM32L5xx_HAL_Driver/stm32l5xx_hal_gtzc.o
+ .debug_str     0x00112ac7   0x1033e1 ./Drivers/STM32L5xx_HAL_Driver/stm32l5xx_hal_icache.o
+ .debug_str     0x00112ac7   0x103413 ./Drivers/STM32L5xx_HAL_Driver/stm32l5xx_hal_pwr.o
+ .debug_str     0x00112ac7   0x10376a ./Drivers/STM32L5xx_HAL_Driver/stm32l5xx_hal_pwr_ex.o
+ .debug_str     0x00112ac7   0x10361f ./Drivers/STM32L5xx_HAL_Driver/stm32l5xx_hal_rcc.o
+ .debug_str     0x00112ac7   0x103f56 ./Drivers/STM32L5xx_HAL_Driver/stm32l5xx_hal_uart.o
+ .debug_str     0x00112ac7   0x1036d3 ./Drivers/STM32L5xx_HAL_Driver/stm32l5xx_hal_uart_ex.o
+ .debug_str     0x00112ac7     0x845a ./Middlewares/FreeRTOS/secure_context.o
+ .debug_str     0x00112ac7     0x4d5c ./Middlewares/FreeRTOS/secure_context_port.o
+ .debug_str     0x00112ac7     0x7db7 ./Middlewares/FreeRTOS/secure_heap.o
+ .debug_str     0x00112ac7     0x4867 ./Middlewares/FreeRTOS/secure_init.o
 
 .debug_rnglists
                 0x00000000      0x59b

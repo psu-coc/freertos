@@ -938,13 +938,6 @@ void StartTask08(void *argument)
     }
 }
 
-
-
-
-
-
-
-
 void StartTask07(void *argument)
 {
     (void) argument;
@@ -1242,7 +1235,7 @@ test_end:
 void LinearHMAC(void *argument)
 {
     (void) argument;
-    osDelay(1000);
+//    osDelay(1000);
     portALLOCATE_SECURE_CONTEXT(2048);
 
     uint8_t digest[32];
@@ -1264,9 +1257,12 @@ void LinearHMAC(void *argument)
 			uint32_t tim2_before = __HAL_TIM_GET_COUNTER(&htim2);
 
 			// Execute HMAC in secure world
-			__disable_irq();
-			SECURE_LinearHMAC(digest, sizeof(digest));
-			__enable_irq();
+//			__disable_irq();
+//			osDelay(5);
+//			SECURE_LinearHMAC(digest, sizeof(digest));
+			SECURE_ShuffledHMAC(digest, sizeof(digest));
+
+//			__enable_irq();
 
 			// Capture end timestamps
 			uint32_t tim2_after = __HAL_TIM_GET_COUNTER(&htim2);
@@ -1306,7 +1302,7 @@ void LinearHMAC(void *argument)
 				printf("Systick ms: %lu\r\n", systick_ms);
 				xSemaphoreGive(uart_mutex);
 			}
-			osDelay(1000);
+//			osDelay(1000);
     	}
     	osDelay(10000);
     }
@@ -1354,12 +1350,12 @@ void StartTask02(void *argument)
 //	     SECURE_LinearHMAC(digest, sizeof(digest));
 //	     SECURE_ShuffledHMAC(digest, sizeof(digest));
 
-	     for (int i = 0; i < 4; i++) {
-	         uint32_t w = HAL_GetTick() ^ (0x9E3779B9u * i);
-	         memcpy(&challenge[4*i], &w, 4);
-	     }
+//	     for (int i = 0; i < 4; i++) {
+//	         uint32_t w = HAL_GetTick() ^ (0x9E3779B9u * i);
+//	         memcpy(&challenge[4*i], &w, 4);
+//	     }
 
-	     SECURE_ShuffledHMAC_secure(digest, sizeof(digest), challenge, sizeof(challenge));
+//	     SECURE_ShuffledHMAC_secure(digest, sizeof(digest), challenge, sizeof(challenge));
 
 
 	     uint32_t after = HAL_GetTick();
