@@ -1,5 +1,5 @@
 Drivers/CMSIS/system_stm32l5xx_s.o: \
- C:/Users/laoam/OneDrive/Documents/stm32/workspace/freertostrustzone-master/freertostrustzone-master/Secure/Src/system_stm32l5xx_s.c \
+ C:/Users/PC/STM32CubeIDE/workspace_2.0.0/freertos/Secure/Src/system_stm32l5xx_s.c \
  ../../../Drivers/CMSIS/Device/ST/STM32L5xx/Include/stm32l5xx.h \
  ../../../Drivers/CMSIS/Device/ST/STM32L5xx/Include/stm32l552xx.h \
  ../../../Drivers/CMSIS/Include/core_cm33.h \

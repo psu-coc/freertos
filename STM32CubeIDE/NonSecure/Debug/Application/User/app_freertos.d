@@ -1,5 +1,5 @@
 Application/User/app_freertos.o: \
- C:/Users/laoam/OneDrive/Documents/stm32/workspace/freertostrustzone-master/freertostrustzone-master/NonSecure/Src/app_freertos.c \
+ C:/Users/PC/STM32CubeIDE/workspace_2.0.0/freertos/NonSecure/Src/app_freertos.c \
  ../../../Middlewares/Third_Party/FreeRTOS/Source/include/FreeRTOS.h \
  ../../../NonSecure/Inc/FreeRTOSConfig.h \
  ../../../Middlewares/Third_Party/FreeRTOS/Source/include/projdefs.h \

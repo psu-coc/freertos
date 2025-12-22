@@ -63,11 +63,11 @@ all: main-build
 main-build: FreeRTOS_SecureIOToggle_TrustZone_NonSecure.elf secondary-outputs
 
 dependents:
-	-cd C:/Users/laoam/OneDrive/Documents/stm32/workspace/freertostrustzone-master/freertostrustzone-master/STM32CubeIDE/Secure/Debug && $(MAKE) clean all
+	-cd C:/Users/PC/STM32CubeIDE/workspace_2.0.0/freertos/STM32CubeIDE/Secure/Debug && $(MAKE) clean all
 
 # Tool invocations
-FreeRTOS_SecureIOToggle_TrustZone_NonSecure.elf FreeRTOS_SecureIOToggle_TrustZone_NonSecure.map: $(OBJS) $(USER_OBJS) C:/Users/laoam/OneDrive/Documents/stm32/workspace/freertostrustzone-master/freertostrustzone-master/STM32CubeIDE/Secure/Debug/FreeRTOS_SecureIOToggle_TrustZone_Secure.elf C:\Users\laoam\OneDrive\Documents\stm32\workspace\freertostrustzone-master\freertostrustzone-master\STM32CubeIDE\NonSecure\STM32L552ZETXQ_FLASH.ld makefile objects.list $(OPTIONAL_TOOL_DEPS)
-	arm-none-eabi-gcc -o "FreeRTOS_SecureIOToggle_TrustZone_NonSecure.elf" @"objects.list" $(USER_OBJS) $(LIBS) -mcpu=cortex-m33 -T"C:\Users\laoam\OneDrive\Documents\stm32\workspace\freertostrustzone-master\freertostrustzone-master\STM32CubeIDE\NonSecure\STM32L552ZETXQ_FLASH.ld" --specs=nosys.specs -Wl,-Map="FreeRTOS_SecureIOToggle_TrustZone_NonSecure.map" -Wl,--gc-sections -static --specs=nano.specs -mfpu=fpv5-sp-d16 -mfloat-abi=hard -mthumb -Wl,--start-group -lc -lm -Wl,--end-group
+FreeRTOS_SecureIOToggle_TrustZone_NonSecure.elf FreeRTOS_SecureIOToggle_TrustZone_NonSecure.map: $(OBJS) $(USER_OBJS) C:/Users/PC/STM32CubeIDE/workspace_2.0.0/freertos/STM32CubeIDE/Secure/Debug/FreeRTOS_SecureIOToggle_TrustZone_Secure.elf C:\Users\PC\STM32CubeIDE\workspace_2.0.0\freertos\STM32CubeIDE\NonSecure\STM32L552ZETXQ_FLASH.ld makefile objects.list $(OPTIONAL_TOOL_DEPS)
+	arm-none-eabi-gcc -o "FreeRTOS_SecureIOToggle_TrustZone_NonSecure.elf" @"objects.list" $(USER_OBJS) $(LIBS) -mcpu=cortex-m33 -T"C:\Users\PC\STM32CubeIDE\workspace_2.0.0\freertos\STM32CubeIDE\NonSecure\STM32L552ZETXQ_FLASH.ld" --specs=nosys.specs -Wl,-Map="FreeRTOS_SecureIOToggle_TrustZone_NonSecure.map" -Wl,--gc-sections -static --specs=nano.specs -mfpu=fpv5-sp-d16 -mfloat-abi=hard -mthumb -Wl,--start-group -lc -lm -Wl,--end-group
 	@echo 'Finished building target: $@'
 	@echo ' '
 
@@ -96,6 +96,6 @@ warn-no-linker-script-specified:
 	@echo 'Warning: No linker script specified. Check the linker settings in the build configuration.'
 
 .PHONY: all clean dependents main-build fail-specified-linker-script-missing warn-no-linker-script-specified
-C:/Users/laoam/OneDrive/Documents/stm32/workspace/freertostrustzone-master/freertostrustzone-master/STM32CubeIDE/Secure/Debug/FreeRTOS_SecureIOToggle_TrustZone_Secure.elf:
+C:/Users/PC/STM32CubeIDE/workspace_2.0.0/freertos/STM32CubeIDE/Secure/Debug/FreeRTOS_SecureIOToggle_TrustZone_Secure.elf:
 
 -include ../makefile.targets

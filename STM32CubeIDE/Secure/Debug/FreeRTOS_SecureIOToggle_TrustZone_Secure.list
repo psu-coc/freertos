@@ -23,35 +23,35 @@ Idx Name          Size      VMA       LMA       File off  Algn
                   CONTENTS, ALLOC, LOAD, DATA
   9 .gnu.sgstubs  000000c0  0c03e000  0c03e000  0000e000  2**5
                   CONTENTS, ALLOC, LOAD, READONLY, CODE
- 10 .bss          00003eb8  30000088  30000088  0000f088  2**2
+ 10 .bss          000044b8  30000088  30000088  0000f088  2**2
                   ALLOC
- 11 .gnu.linkonce.b._ns_work_buffer 00000100  30003f40  30003f40  0000f088  2**3
+ 11 .gnu.linkonce.b._ns_work_buffer 00000100  30004540  30004540  0000f088  2**3
                   ALLOC, LINK_ONCE_DISCARD
- 12 ._user_heap_stack 00000600  30004040  30004040  0000f088  2**0
+ 12 ._user_heap_stack 00000600  30004640  30004640  0000f088  2**0
                   ALLOC
  13 .ARM.attributes 00000036  00000000  00000000  0000e0c0  2**0
                   CONTENTS, READONLY
- 14 .debug_line   0001b677  00000000  00000000  0000e0f6  2**0
+ 14 .debug_line   0001b261  00000000  00000000  0000e0f6  2**0
                   CONTENTS, READONLY, DEBUGGING, OCTETS
- 15 .debug_line_str 000000ae  00000000  00000000  0002976d  2**0
+ 15 .debug_line_str 0000007c  00000000  00000000  00029357  2**0
                   CONTENTS, READONLY, DEBUGGING, OCTETS
- 16 .debug_info   00019970  00000000  00000000  0002981b  2**0
+ 16 .debug_info   0001995a  00000000  00000000  000293d3  2**0
                   CONTENTS, READONLY, DEBUGGING, OCTETS
- 17 .debug_abbrev 0000471f  00000000  00000000  0004318b  2**0
+ 17 .debug_abbrev 00004733  00000000  00000000  00042d2d  2**0
                   CONTENTS, READONLY, DEBUGGING, OCTETS
- 18 .debug_aranges 000003b0  00000000  00000000  000478b0  2**3
+ 18 .debug_aranges 000003b0  00000000  00000000  00047460  2**3
                   CONTENTS, READONLY, DEBUGGING, OCTETS
- 19 .debug_str    00112ac7  00000000  00000000  00047c60  2**0
+ 19 .debug_str    001125e4  00000000  00000000  00047810  2**0
                   CONTENTS, READONLY, DEBUGGING, OCTETS
- 20 .debug_rnglists 0000059b  00000000  00000000  0015a727  2**0
+ 20 .debug_rnglists 000005af  00000000  00000000  00159df4  2**0
                   CONTENTS, READONLY, DEBUGGING, OCTETS
- 21 .debug_loclists 0000a6f3  00000000  00000000  0015acc2  2**0
+ 21 .debug_loclists 0000a71b  00000000  00000000  0015a3a3  2**0
                   CONTENTS, READONLY, DEBUGGING, OCTETS
- 22 .debug_macro  0002c13d  00000000  00000000  001653b5  2**0
+ 22 .debug_macro  0002c13d  00000000  00000000  00164abe  2**0
                   CONTENTS, READONLY, DEBUGGING, OCTETS
- 23 .comment      00000043  00000000  00000000  001914f2  2**0
+ 23 .comment      00000043  00000000  00000000  00190bfb  2**0
                   CONTENTS, READONLY
- 24 .debug_frame  00003454  00000000  00000000  00191538  2**2
+ 24 .debug_frame  00003450  00000000  00000000  00190c40  2**2
                   CONTENTS, READONLY, DEBUGGING, OCTETS
 
 Disassembly of section .text:
@@ -1684,7 +1684,7 @@ CMSE_NS_ENTRY void SECURE_RegisterPrintCallback(void *callback)
  c000bd2:	bc10      	pop	{r4}
  c000bd4:	46f4      	mov	ip, lr
  c000bd6:	4774      	bxns	lr
- c000bd8:	30001494 	.word	0x30001494
+ c000bd8:	30001a94 	.word	0x30001a94
 
 0c000bdc <__acle_se_SECURE_Print>:
 
@@ -1732,7 +1732,7 @@ CMSE_NS_ENTRY void SECURE_Print(const char *msg)
  c000c4e:	46f4      	mov	ip, lr
  c000c50:	4774      	bxns	lr
  c000c52:	bf00      	nop
- c000c54:	30001494 	.word	0x30001494
+ c000c54:	30001a94 	.word	0x30001a94
 
 0c000c58 <__acle_se_SECURE_RegisterCallback>:
   * @param  CallbackId  callback identifier
@@ -1794,8 +1794,8 @@ CMSE_NS_ENTRY void SECURE_RegisterCallback(SECURE_CallbackIDTypeDef CallbackId, 
         pSecureErrorCallback = func;
  c000cd0:	4b01      	ldr	r3, [pc, #4]	@ (c000cd8 <__acle_se_SECURE_RegisterCallback+0x80>)
  c000cd2:	e7fb      	b.n	c000ccc <__acle_se_SECURE_RegisterCallback+0x74>
- c000cd4:	3000149c 	.word	0x3000149c
- c000cd8:	30001498 	.word	0x30001498
+ c000cd4:	30001a9c 	.word	0x30001a9c
+ c000cd8:	30001a98 	.word	0x30001a98
 
 0c000cdc <__acle_se_SECURE_LEDToggle>:
 /**
@@ -2022,8 +2022,8 @@ __STATIC_FORCEINLINE void __disable_irq(void)
  c000eba:	e7a7      	b.n	c000e0c <__acle_se_SECURE_ComputeHMAC+0x34>
  c000ebc:	00989680 	.word	0x00989680
  c000ec0:	0c00b343 	.word	0x0c00b343
- c000ec4:	300013ac 	.word	0x300013ac
- c000ec8:	3000138c 	.word	0x3000138c
+ c000ec4:	300019ac 	.word	0x300019ac
+ c000ec8:	3000198c 	.word	0x3000198c
 
 0c000ecc <__acle_se_SECURE_LinearHMAC>:
 
@@ -2033,682 +2033,683 @@ __attribute__((cmse_nonsecure_entry))
 void SECURE_LinearHMAC(uint8_t *output_digest, size_t maxlen)
 {
  c000ecc:	b538      	push	{r3, r4, r5, lr}
-
-
-//    __disable_irq();
-    if (!output_digest || maxlen < SHA256_DIGEST_SIZE) {
  c000ece:	4604      	mov	r4, r0
- c000ed0:	b1f8      	cbz	r0, c000f12 <__acle_se_SECURE_LinearHMAC+0x46>
- c000ed2:	291f      	cmp	r1, #31
- c000ed4:	d91d      	bls.n	c000f12 <__acle_se_SECURE_LinearHMAC+0x46>
+  __ASM volatile ("cpsid i" : : : "memory");
+ c000ed0:	b672      	cpsid	i
+
+
+    __disable_irq();
+    if (!output_digest || maxlen < SHA256_DIGEST_SIZE) {
+ c000ed2:	b300      	cbz	r0, c000f16 <__acle_se_SECURE_LinearHMAC+0x4a>
+ c000ed4:	291f      	cmp	r1, #31
+ c000ed6:	d91e      	bls.n	c000f16 <__acle_se_SECURE_LinearHMAC+0x4a>
 //    for (int i = 0; i < TOTAL_SIZE; i++) {
 //        real_memory[i] = i & 0xFF;  // test pattern
 //    }
 
 //    hmac_sha256_initialize(&hmac, key, strlen((const char *)key));
     hmac_sha256_initialize(&hmac, key, sizeof(key));
- c000ed6:	220f      	movs	r2, #15
- c000ed8:	4929      	ldr	r1, [pc, #164]	@ (c000f80 <__acle_se_SECURE_LinearHMAC+0xb4>)
- c000eda:	482a      	ldr	r0, [pc, #168]	@ (c000f84 <__acle_se_SECURE_LinearHMAC+0xb8>)
- c000edc:	f7ff fda7 	bl	c000a2e <hmac_sha256_initialize>
+ c000ed8:	220f      	movs	r2, #15
+ c000eda:	492a      	ldr	r1, [pc, #168]	@ (c000f84 <__acle_se_SECURE_LinearHMAC+0xb8>)
+ c000edc:	482a      	ldr	r0, [pc, #168]	@ (c000f88 <__acle_se_SECURE_LinearHMAC+0xbc>)
+ c000ede:	f7ff fda6 	bl	c000a2e <hmac_sha256_initialize>
 
 
     // Process blocks sequentially (not shuffled)
     hmac_sha256_update(&hmac, real_memory, TOTAL_SIZE);
- c000ee0:	4b29      	ldr	r3, [pc, #164]	@ (c000f88 <__acle_se_SECURE_LinearHMAC+0xbc>)
- c000ee2:	f44f 2280 	mov.w	r2, #262144	@ 0x40000
- c000ee6:	6819      	ldr	r1, [r3, #0]
- c000ee8:	4826      	ldr	r0, [pc, #152]	@ (c000f84 <__acle_se_SECURE_LinearHMAC+0xb8>)
- c000eea:	f7ff fde9 	bl	c000ac0 <hmac_sha256_update>
+ c000ee2:	4b2a      	ldr	r3, [pc, #168]	@ (c000f8c <__acle_se_SECURE_LinearHMAC+0xc0>)
+ c000ee4:	f44f 2200 	mov.w	r2, #524288	@ 0x80000
+ c000ee8:	6819      	ldr	r1, [r3, #0]
+ c000eea:	4827      	ldr	r0, [pc, #156]	@ (c000f88 <__acle_se_SECURE_LinearHMAC+0xbc>)
+ c000eec:	f7ff fde8 	bl	c000ac0 <hmac_sha256_update>
 //    for (int i = 0; i < BLOCKS; i++) {
 //        const uint8_t *block = &real_memory[i * BLOCK_SIZE];
 //        hmac_sha256_update(&hmac, block, BLOCK_SIZE);
 //    }
 
     hmac_sha256_finalize(&hmac, NULL, 0);
- c000eee:	2200      	movs	r2, #0
+ c000ef0:	2200      	movs	r2, #0
     memcpy(output_digest, hmac.digest, SHA256_DIGEST_SIZE);
- c000ef0:	4d24      	ldr	r5, [pc, #144]	@ (c000f84 <__acle_se_SECURE_LinearHMAC+0xb8>)
+ c000ef2:	4d25      	ldr	r5, [pc, #148]	@ (c000f88 <__acle_se_SECURE_LinearHMAC+0xbc>)
     hmac_sha256_finalize(&hmac, NULL, 0);
- c000ef2:	4611      	mov	r1, r2
- c000ef4:	4823      	ldr	r0, [pc, #140]	@ (c000f84 <__acle_se_SECURE_LinearHMAC+0xb8>)
- c000ef6:	f7ff fde6 	bl	c000ac6 <hmac_sha256_finalize>
+ c000ef4:	4611      	mov	r1, r2
+ c000ef6:	4824      	ldr	r0, [pc, #144]	@ (c000f88 <__acle_se_SECURE_LinearHMAC+0xbc>)
+ c000ef8:	f7ff fde5 	bl	c000ac6 <hmac_sha256_finalize>
     memcpy(output_digest, hmac.digest, SHA256_DIGEST_SIZE);
- c000efa:	4623      	mov	r3, r4
- c000efc:	f105 0420 	add.w	r4, r5, #32
- c000f00:	462a      	mov	r2, r5
- c000f02:	ca03      	ldmia	r2!, {r0, r1}
- c000f04:	42a2      	cmp	r2, r4
- c000f06:	6018      	str	r0, [r3, #0]
- c000f08:	6059      	str	r1, [r3, #4]
- c000f0a:	4615      	mov	r5, r2
- c000f0c:	f103 0308 	add.w	r3, r3, #8
- c000f10:	d1f6      	bne.n	c000f00 <__acle_se_SECURE_LinearHMAC+0x34>
+ c000efc:	4623      	mov	r3, r4
+ c000efe:	f105 0420 	add.w	r4, r5, #32
+ c000f02:	462a      	mov	r2, r5
+ c000f04:	ca03      	ldmia	r2!, {r0, r1}
+ c000f06:	42a2      	cmp	r2, r4
+ c000f08:	6018      	str	r0, [r3, #0]
+ c000f0a:	6059      	str	r1, [r3, #4]
+ c000f0c:	4615      	mov	r5, r2
+ c000f0e:	f103 0308 	add.w	r3, r3, #8
+ c000f12:	d1f6      	bne.n	c000f02 <__acle_se_SECURE_LinearHMAC+0x36>
+  __ASM volatile ("cpsie i" : : : "memory");
+ c000f14:	b662      	cpsie	i
 
-
+    __enable_irq();
 }
- c000f12:	e8bd 4038 	ldmia.w	sp!, {r3, r4, r5, lr}
- c000f16:	4670      	mov	r0, lr
- c000f18:	4671      	mov	r1, lr
- c000f1a:	4672      	mov	r2, lr
- c000f1c:	4673      	mov	r3, lr
- c000f1e:	eeb7 0a00 	vmov.f32	s0, #112	@ 0x3f800000  1.0
- c000f22:	eef7 0a00 	vmov.f32	s1, #112	@ 0x3f800000  1.0
- c000f26:	eeb7 1a00 	vmov.f32	s2, #112	@ 0x3f800000  1.0
- c000f2a:	eef7 1a00 	vmov.f32	s3, #112	@ 0x3f800000  1.0
- c000f2e:	eeb7 2a00 	vmov.f32	s4, #112	@ 0x3f800000  1.0
- c000f32:	eef7 2a00 	vmov.f32	s5, #112	@ 0x3f800000  1.0
- c000f36:	eeb7 3a00 	vmov.f32	s6, #112	@ 0x3f800000  1.0
- c000f3a:	eef7 3a00 	vmov.f32	s7, #112	@ 0x3f800000  1.0
- c000f3e:	eeb7 4a00 	vmov.f32	s8, #112	@ 0x3f800000  1.0
- c000f42:	eef7 4a00 	vmov.f32	s9, #112	@ 0x3f800000  1.0
- c000f46:	eeb7 5a00 	vmov.f32	s10, #112	@ 0x3f800000  1.0
- c000f4a:	eef7 5a00 	vmov.f32	s11, #112	@ 0x3f800000  1.0
- c000f4e:	eeb7 6a00 	vmov.f32	s12, #112	@ 0x3f800000  1.0
- c000f52:	eef7 6a00 	vmov.f32	s13, #112	@ 0x3f800000  1.0
- c000f56:	eeb7 7a00 	vmov.f32	s14, #112	@ 0x3f800000  1.0
- c000f5a:	eef7 7a00 	vmov.f32	s15, #112	@ 0x3f800000  1.0
- c000f5e:	f38e 8c00 	msr	CPSR_fs, lr
- c000f62:	b410      	push	{r4}
- c000f64:	eef1 ca10 	vmrs	ip, fpscr
- c000f68:	f64f 7460 	movw	r4, #65376	@ 0xff60
- c000f6c:	f6c0 74ff 	movt	r4, #4095	@ 0xfff
- c000f70:	ea0c 0c04 	and.w	ip, ip, r4
- c000f74:	eee1 ca10 	vmsr	fpscr, ip
- c000f78:	bc10      	pop	{r4}
- c000f7a:	46f4      	mov	ip, lr
- c000f7c:	4774      	bxns	lr
- c000f7e:	bf00      	nop
- c000f80:	0c00b334 	.word	0x0c00b334
- c000f84:	300012a4 	.word	0x300012a4
- c000f88:	30000000 	.word	0x30000000
+ c000f16:	e8bd 4038 	ldmia.w	sp!, {r3, r4, r5, lr}
+ c000f1a:	4670      	mov	r0, lr
+ c000f1c:	4671      	mov	r1, lr
+ c000f1e:	4672      	mov	r2, lr
+ c000f20:	4673      	mov	r3, lr
+ c000f22:	eeb7 0a00 	vmov.f32	s0, #112	@ 0x3f800000  1.0
+ c000f26:	eef7 0a00 	vmov.f32	s1, #112	@ 0x3f800000  1.0
+ c000f2a:	eeb7 1a00 	vmov.f32	s2, #112	@ 0x3f800000  1.0
+ c000f2e:	eef7 1a00 	vmov.f32	s3, #112	@ 0x3f800000  1.0
+ c000f32:	eeb7 2a00 	vmov.f32	s4, #112	@ 0x3f800000  1.0
+ c000f36:	eef7 2a00 	vmov.f32	s5, #112	@ 0x3f800000  1.0
+ c000f3a:	eeb7 3a00 	vmov.f32	s6, #112	@ 0x3f800000  1.0
+ c000f3e:	eef7 3a00 	vmov.f32	s7, #112	@ 0x3f800000  1.0
+ c000f42:	eeb7 4a00 	vmov.f32	s8, #112	@ 0x3f800000  1.0
+ c000f46:	eef7 4a00 	vmov.f32	s9, #112	@ 0x3f800000  1.0
+ c000f4a:	eeb7 5a00 	vmov.f32	s10, #112	@ 0x3f800000  1.0
+ c000f4e:	eef7 5a00 	vmov.f32	s11, #112	@ 0x3f800000  1.0
+ c000f52:	eeb7 6a00 	vmov.f32	s12, #112	@ 0x3f800000  1.0
+ c000f56:	eef7 6a00 	vmov.f32	s13, #112	@ 0x3f800000  1.0
+ c000f5a:	eeb7 7a00 	vmov.f32	s14, #112	@ 0x3f800000  1.0
+ c000f5e:	eef7 7a00 	vmov.f32	s15, #112	@ 0x3f800000  1.0
+ c000f62:	f38e 8c00 	msr	CPSR_fs, lr
+ c000f66:	b410      	push	{r4}
+ c000f68:	eef1 ca10 	vmrs	ip, fpscr
+ c000f6c:	f64f 7460 	movw	r4, #65376	@ 0xff60
+ c000f70:	f6c0 74ff 	movt	r4, #4095	@ 0xfff
+ c000f74:	ea0c 0c04 	and.w	ip, ip, r4
+ c000f78:	eee1 ca10 	vmsr	fpscr, ip
+ c000f7c:	bc10      	pop	{r4}
+ c000f7e:	46f4      	mov	ip, lr
+ c000f80:	4774      	bxns	lr
+ c000f82:	bf00      	nop
+ c000f84:	0c00b334 	.word	0x0c00b334
+ c000f88:	300018a4 	.word	0x300018a4
+ c000f8c:	30000000 	.word	0x30000000
 
-0c000f8c <__acle_se_SECURE_ShuffledHMAC>:
+0c000f90 <__acle_se_SECURE_ShuffledHMAC>:
 
 
 __attribute__((cmse_nonsecure_entry))
 void SECURE_ShuffledHMAC(uint8_t *output_digest, size_t maxlen)
 {
- c000f8c:	e92d 41f0 	stmdb	sp!, {r4, r5, r6, r7, r8, lr}
+ c000f90:	e92d 41f0 	stmdb	sp!, {r4, r5, r6, r7, r8, lr}
 
 	  if (!output_digest || maxlen < SHA256_DIGEST_SIZE) return;
- c000f90:	4605      	mov	r5, r0
- c000f92:	2800      	cmp	r0, #0
- c000f94:	d047      	beq.n	c001026 <__acle_se_SECURE_ShuffledHMAC+0x9a>
- c000f96:	291f      	cmp	r1, #31
- c000f98:	d945      	bls.n	c001026 <__acle_se_SECURE_ShuffledHMAC+0x9a>
- c000f9a:	4e3e      	ldr	r6, [pc, #248]	@ (c001094 <__acle_se_SECURE_ShuffledHMAC+0x108>)
+ c000f94:	4605      	mov	r5, r0
+ c000f96:	2800      	cmp	r0, #0
+ c000f98:	d04b      	beq.n	c001032 <__acle_se_SECURE_ShuffledHMAC+0xa2>
+ c000f9a:	291f      	cmp	r1, #31
+ c000f9c:	d949      	bls.n	c001032 <__acle_se_SECURE_ShuffledHMAC+0xa2>
+ c000f9e:	4e40      	ldr	r6, [pc, #256]	@ (c0010a0 <__acle_se_SECURE_ShuffledHMAC+0x110>)
 
 	    static int indices[BLOCKS];
 	    for (int i = 0; i < BLOCKS; i++) indices[i] = i;
- c000f9c:	2400      	movs	r4, #0
+ c000fa0:	2400      	movs	r4, #0
 	  if (!output_digest || maxlen < SHA256_DIGEST_SIZE) return;
- c000f9e:	4633      	mov	r3, r6
- c000fa0:	46b0      	mov	r8, r6
+ c000fa2:	4633      	mov	r3, r6
+ c000fa4:	46b0      	mov	r8, r6
 	    for (int i = 0; i < BLOCKS; i++) indices[i] = i;
- c000fa2:	f843 4b04 	str.w	r4, [r3], #4
- c000fa6:	3401      	adds	r4, #1
- c000fa8:	2c40      	cmp	r4, #64	@ 0x40
- c000faa:	d1fa      	bne.n	c000fa2 <__acle_se_SECURE_ShuffledHMAC+0x16>
+ c000fa6:	f843 4b04 	str.w	r4, [r3], #4
+ c000faa:	3401      	adds	r4, #1
+ c000fac:	f5b4 7f80 	cmp.w	r4, #256	@ 0x100
+ c000fb0:	d1f9      	bne.n	c000fa6 <__acle_se_SECURE_ShuffledHMAC+0x16>
 	    // Simple shuffle without srand for now
 
 
 	      srand(42);
- c000fac:	202a      	movs	r0, #42	@ 0x2a
- c000fae:	f008 fdcd 	bl	c009b4c <srand>
+ c000fb2:	202a      	movs	r0, #42	@ 0x2a
+ c000fb4:	f008 fdca 	bl	c009b4c <srand>
 
 	      for (int i = BLOCKS - 1; i > 0; i--) {
- c000fb2:	4f39      	ldr	r7, [pc, #228]	@ (c001098 <__acle_se_SECURE_ShuffledHMAC+0x10c>)
+ c000fb8:	4f3a      	ldr	r7, [pc, #232]	@ (c0010a4 <__acle_se_SECURE_ShuffledHMAC+0x114>)
 	          int j = rand() % (i + 1);
- c000fb4:	f008 fdf8 	bl	c009ba8 <rand>
- c000fb8:	fb90 f3f4 	sdiv	r3, r0, r4
- c000fbc:	fb03 0014 	mls	r0, r3, r4, r0
+ c000fba:	f008 fdf5 	bl	c009ba8 <rand>
+ c000fbe:	fb90 f3f4 	sdiv	r3, r0, r4
+ c000fc2:	fb03 0014 	mls	r0, r3, r4, r0
 	          int tmp = indices[i];
- c000fc0:	f857 3d04 	ldr.w	r3, [r7, #-4]!
+ c000fc6:	f857 3d04 	ldr.w	r3, [r7, #-4]!
 	          indices[i] = indices[j];
- c000fc4:	f858 2020 	ldr.w	r2, [r8, r0, lsl #2]
+ c000fca:	f858 2020 	ldr.w	r2, [r8, r0, lsl #2]
 	      for (int i = BLOCKS - 1; i > 0; i--) {
- c000fc8:	3c01      	subs	r4, #1
- c000fca:	2c01      	cmp	r4, #1
+ c000fce:	3c01      	subs	r4, #1
+ c000fd0:	2c01      	cmp	r4, #1
 	          indices[i] = indices[j];
- c000fcc:	603a      	str	r2, [r7, #0]
+ c000fd2:	603a      	str	r2, [r7, #0]
 	          indices[j] = tmp;
- c000fce:	f848 3020 	str.w	r3, [r8, r0, lsl #2]
+ c000fd4:	f848 3020 	str.w	r3, [r8, r0, lsl #2]
 	      for (int i = BLOCKS - 1; i > 0; i--) {
- c000fd2:	d1ef      	bne.n	c000fb4 <__acle_se_SECURE_ShuffledHMAC+0x28>
+ c000fd8:	d1ef      	bne.n	c000fba <__acle_se_SECURE_ShuffledHMAC+0x2a>
 	      }
 
 	    hmac_sha256_initialize(&hmac, key, strlen((const char *)key));
- c000fd4:	220e      	movs	r2, #14
- c000fd6:	4931      	ldr	r1, [pc, #196]	@ (c00109c <__acle_se_SECURE_ShuffledHMAC+0x110>)
- c000fd8:	4831      	ldr	r0, [pc, #196]	@ (c0010a0 <__acle_se_SECURE_ShuffledHMAC+0x114>)
- c000fda:	f7ff fd28 	bl	c000a2e <hmac_sha256_initialize>
+ c000fda:	220e      	movs	r2, #14
+ c000fdc:	4932      	ldr	r1, [pc, #200]	@ (c0010a8 <__acle_se_SECURE_ShuffledHMAC+0x118>)
+ c000fde:	4833      	ldr	r0, [pc, #204]	@ (c0010ac <__acle_se_SECURE_ShuffledHMAC+0x11c>)
+ c000fe0:	f7ff fd25 	bl	c000a2e <hmac_sha256_initialize>
 	    for (int i = 0; i < BLOCKS; i++) {
- c000fde:	2400      	movs	r4, #0
+ c000fe4:	2400      	movs	r4, #0
 	        const uint8_t *block = &real_memory[indices[i] * BLOCK_SIZE];
- c000fe0:	f8df 80c0 	ldr.w	r8, [pc, #192]	@ c0010a4 <__acle_se_SECURE_ShuffledHMAC+0x118>
-//	        __disable_irq();
+ c000fe6:	f8df 80c8 	ldr.w	r8, [pc, #200]	@ c0010b0 <__acle_se_SECURE_ShuffledHMAC+0x120>
+	        __disable_irq();
 	        hmac_sha256_update(&hmac, block, BLOCK_SIZE);
- c000fe4:	4f2e      	ldr	r7, [pc, #184]	@ (c0010a0 <__acle_se_SECURE_ShuffledHMAC+0x114>)
+ c000fea:	4f30      	ldr	r7, [pc, #192]	@ (c0010ac <__acle_se_SECURE_ShuffledHMAC+0x11c>)
 	        const uint8_t *block = &real_memory[indices[i] * BLOCK_SIZE];
- c000fe6:	f856 1b04 	ldr.w	r1, [r6], #4
- c000fea:	f8d8 3000 	ldr.w	r3, [r8]
+ c000fec:	f856 3b04 	ldr.w	r3, [r6], #4
+ c000ff0:	f8d8 1000 	ldr.w	r1, [r8]
+ c000ff4:	eb01 21c3 	add.w	r1, r1, r3, lsl #11
+  __ASM volatile ("cpsid i" : : : "memory");
+ c000ff8:	b672      	cpsid	i
 	        hmac_sha256_update(&hmac, block, BLOCK_SIZE);
- c000fee:	f44f 5280 	mov.w	r2, #4096	@ 0x1000
- c000ff2:	4638      	mov	r0, r7
- c000ff4:	eb03 3101 	add.w	r1, r3, r1, lsl #12
+ c000ffa:	f44f 6200 	mov.w	r2, #2048	@ 0x800
+ c000ffe:	4638      	mov	r0, r7
+ c001000:	f7ff fd5e 	bl	c000ac0 <hmac_sha256_update>
+  __ASM volatile ("cpsie i" : : : "memory");
+ c001004:	b662      	cpsie	i
 	    for (int i = 0; i < BLOCKS; i++) {
- c000ff8:	3401      	adds	r4, #1
-	        hmac_sha256_update(&hmac, block, BLOCK_SIZE);
- c000ffa:	f7ff fd61 	bl	c000ac0 <hmac_sha256_update>
-	    for (int i = 0; i < BLOCKS; i++) {
- c000ffe:	2c40      	cmp	r4, #64	@ 0x40
- c001000:	d1f1      	bne.n	c000fe6 <__acle_se_SECURE_ShuffledHMAC+0x5a>
-//	        __enable_irq();
+ c001006:	3401      	adds	r4, #1
+ c001008:	f5b4 7f80 	cmp.w	r4, #256	@ 0x100
+ c00100c:	d1ee      	bne.n	c000fec <__acle_se_SECURE_ShuffledHMAC+0x5c>
+	        __enable_irq();
 	    }
 	    hmac_sha256_finalize(&hmac, NULL, 0);
- c001002:	2200      	movs	r2, #0
+ c00100e:	2200      	movs	r2, #0
 	    memcpy(output_digest, hmac.digest, SHA256_DIGEST_SIZE);
- c001004:	4c26      	ldr	r4, [pc, #152]	@ (c0010a0 <__acle_se_SECURE_ShuffledHMAC+0x114>)
+ c001010:	4c26      	ldr	r4, [pc, #152]	@ (c0010ac <__acle_se_SECURE_ShuffledHMAC+0x11c>)
 	    hmac_sha256_finalize(&hmac, NULL, 0);
- c001006:	4611      	mov	r1, r2
- c001008:	4825      	ldr	r0, [pc, #148]	@ (c0010a0 <__acle_se_SECURE_ShuffledHMAC+0x114>)
- c00100a:	f7ff fd5c 	bl	c000ac6 <hmac_sha256_finalize>
+ c001012:	4611      	mov	r1, r2
+ c001014:	4825      	ldr	r0, [pc, #148]	@ (c0010ac <__acle_se_SECURE_ShuffledHMAC+0x11c>)
+ c001016:	f7ff fd56 	bl	c000ac6 <hmac_sha256_finalize>
 	    memcpy(output_digest, hmac.digest, SHA256_DIGEST_SIZE);
- c00100e:	462b      	mov	r3, r5
- c001010:	f104 0520 	add.w	r5, r4, #32
- c001014:	4622      	mov	r2, r4
- c001016:	ca03      	ldmia	r2!, {r0, r1}
- c001018:	42aa      	cmp	r2, r5
- c00101a:	6018      	str	r0, [r3, #0]
- c00101c:	6059      	str	r1, [r3, #4]
- c00101e:	4614      	mov	r4, r2
- c001020:	f103 0308 	add.w	r3, r3, #8
- c001024:	d1f6      	bne.n	c001014 <__acle_se_SECURE_ShuffledHMAC+0x88>
+ c00101a:	462b      	mov	r3, r5
+ c00101c:	f104 0520 	add.w	r5, r4, #32
+ c001020:	4622      	mov	r2, r4
+ c001022:	ca03      	ldmia	r2!, {r0, r1}
+ c001024:	42aa      	cmp	r2, r5
+ c001026:	6018      	str	r0, [r3, #0]
+ c001028:	6059      	str	r1, [r3, #4]
+ c00102a:	4614      	mov	r4, r2
+ c00102c:	f103 0308 	add.w	r3, r3, #8
+ c001030:	d1f6      	bne.n	c001020 <__acle_se_SECURE_ShuffledHMAC+0x90>
 
 
 
 }
- c001026:	e8bd 41f0 	ldmia.w	sp!, {r4, r5, r6, r7, r8, lr}
- c00102a:	4670      	mov	r0, lr
- c00102c:	4671      	mov	r1, lr
- c00102e:	4672      	mov	r2, lr
- c001030:	4673      	mov	r3, lr
- c001032:	eeb7 0a00 	vmov.f32	s0, #112	@ 0x3f800000  1.0
- c001036:	eef7 0a00 	vmov.f32	s1, #112	@ 0x3f800000  1.0
- c00103a:	eeb7 1a00 	vmov.f32	s2, #112	@ 0x3f800000  1.0
- c00103e:	eef7 1a00 	vmov.f32	s3, #112	@ 0x3f800000  1.0
- c001042:	eeb7 2a00 	vmov.f32	s4, #112	@ 0x3f800000  1.0
- c001046:	eef7 2a00 	vmov.f32	s5, #112	@ 0x3f800000  1.0
- c00104a:	eeb7 3a00 	vmov.f32	s6, #112	@ 0x3f800000  1.0
- c00104e:	eef7 3a00 	vmov.f32	s7, #112	@ 0x3f800000  1.0
- c001052:	eeb7 4a00 	vmov.f32	s8, #112	@ 0x3f800000  1.0
- c001056:	eef7 4a00 	vmov.f32	s9, #112	@ 0x3f800000  1.0
- c00105a:	eeb7 5a00 	vmov.f32	s10, #112	@ 0x3f800000  1.0
- c00105e:	eef7 5a00 	vmov.f32	s11, #112	@ 0x3f800000  1.0
- c001062:	eeb7 6a00 	vmov.f32	s12, #112	@ 0x3f800000  1.0
- c001066:	eef7 6a00 	vmov.f32	s13, #112	@ 0x3f800000  1.0
- c00106a:	eeb7 7a00 	vmov.f32	s14, #112	@ 0x3f800000  1.0
- c00106e:	eef7 7a00 	vmov.f32	s15, #112	@ 0x3f800000  1.0
- c001072:	f38e 8c00 	msr	CPSR_fs, lr
- c001076:	b410      	push	{r4}
- c001078:	eef1 ca10 	vmrs	ip, fpscr
- c00107c:	f64f 7460 	movw	r4, #65376	@ 0xff60
- c001080:	f6c0 74ff 	movt	r4, #4095	@ 0xfff
- c001084:	ea0c 0c04 	and.w	ip, ip, r4
- c001088:	eee1 ca10 	vmsr	fpscr, ip
- c00108c:	bc10      	pop	{r4}
- c00108e:	46f4      	mov	ip, lr
- c001090:	4774      	bxns	lr
- c001092:	bf00      	nop
- c001094:	300011a4 	.word	0x300011a4
- c001098:	300012a4 	.word	0x300012a4
- c00109c:	0c00b334 	.word	0x0c00b334
- c0010a0:	300012a4 	.word	0x300012a4
- c0010a4:	30000000 	.word	0x30000000
+ c001032:	e8bd 41f0 	ldmia.w	sp!, {r4, r5, r6, r7, r8, lr}
+ c001036:	4670      	mov	r0, lr
+ c001038:	4671      	mov	r1, lr
+ c00103a:	4672      	mov	r2, lr
+ c00103c:	4673      	mov	r3, lr
+ c00103e:	eeb7 0a00 	vmov.f32	s0, #112	@ 0x3f800000  1.0
+ c001042:	eef7 0a00 	vmov.f32	s1, #112	@ 0x3f800000  1.0
+ c001046:	eeb7 1a00 	vmov.f32	s2, #112	@ 0x3f800000  1.0
+ c00104a:	eef7 1a00 	vmov.f32	s3, #112	@ 0x3f800000  1.0
+ c00104e:	eeb7 2a00 	vmov.f32	s4, #112	@ 0x3f800000  1.0
+ c001052:	eef7 2a00 	vmov.f32	s5, #112	@ 0x3f800000  1.0
+ c001056:	eeb7 3a00 	vmov.f32	s6, #112	@ 0x3f800000  1.0
+ c00105a:	eef7 3a00 	vmov.f32	s7, #112	@ 0x3f800000  1.0
+ c00105e:	eeb7 4a00 	vmov.f32	s8, #112	@ 0x3f800000  1.0
+ c001062:	eef7 4a00 	vmov.f32	s9, #112	@ 0x3f800000  1.0
+ c001066:	eeb7 5a00 	vmov.f32	s10, #112	@ 0x3f800000  1.0
+ c00106a:	eef7 5a00 	vmov.f32	s11, #112	@ 0x3f800000  1.0
+ c00106e:	eeb7 6a00 	vmov.f32	s12, #112	@ 0x3f800000  1.0
+ c001072:	eef7 6a00 	vmov.f32	s13, #112	@ 0x3f800000  1.0
+ c001076:	eeb7 7a00 	vmov.f32	s14, #112	@ 0x3f800000  1.0
+ c00107a:	eef7 7a00 	vmov.f32	s15, #112	@ 0x3f800000  1.0
+ c00107e:	f38e 8c00 	msr	CPSR_fs, lr
+ c001082:	b410      	push	{r4}
+ c001084:	eef1 ca10 	vmrs	ip, fpscr
+ c001088:	f64f 7460 	movw	r4, #65376	@ 0xff60
+ c00108c:	f6c0 74ff 	movt	r4, #4095	@ 0xfff
+ c001090:	ea0c 0c04 	and.w	ip, ip, r4
+ c001094:	eee1 ca10 	vmsr	fpscr, ip
+ c001098:	bc10      	pop	{r4}
+ c00109a:	46f4      	mov	ip, lr
+ c00109c:	4774      	bxns	lr
+ c00109e:	bf00      	nop
+ c0010a0:	300014a4 	.word	0x300014a4
+ c0010a4:	300018a4 	.word	0x300018a4
+ c0010a8:	0c00b334 	.word	0x0c00b334
+ c0010ac:	300018a4 	.word	0x300018a4
+ c0010b0:	30000000 	.word	0x30000000
 
-0c0010a8 <__acle_se_SECURE_ShuffledHMAC_secure>:
+0c0010b4 <__acle_se_SECURE_ShuffledHMAC_secure>:
 
 // ---- Non-secure callable: secure shuffle + HMAC over blocks
 __attribute__((cmse_nonsecure_entry))
 void SECURE_ShuffledHMAC_secure(uint8_t *out_digest, size_t out_len,
                                 const uint8_t *challenge, size_t challenge_len)
 {
- c0010a8:	e92d 4ff0 	stmdb	sp!, {r4, r5, r6, r7, r8, r9, sl, fp, lr}
- c0010ac:	f5ad 5d81 	sub.w	sp, sp, #4128	@ 0x1020
- c0010b0:	4615      	mov	r5, r2
- c0010b2:	4698      	mov	r8, r3
+ c0010b4:	e92d 4ff0 	stmdb	sp!, {r4, r5, r6, r7, r8, r9, sl, fp, lr}
+ c0010b8:	4615      	mov	r5, r2
+ c0010ba:	461f      	mov	r7, r3
+
     if (!out_digest || out_len < SHA256_DIGEST_SIZE) return;
- c0010b4:	4604      	mov	r4, r0
+ c0010bc:	4604      	mov	r4, r0
 {
- c0010b6:	b085      	sub	sp, #20
+ c0010be:	b0c5      	sub	sp, #276	@ 0x114
     if (!out_digest || out_len < SHA256_DIGEST_SIZE) return;
- c0010b8:	2800      	cmp	r0, #0
- c0010ba:	f000 80a0 	beq.w	c0011fe <__acle_se_SECURE_ShuffledHMAC_secure+0x156>
- c0010be:	291f      	cmp	r1, #31
- c0010c0:	f240 809d 	bls.w	c0011fe <__acle_se_SECURE_ShuffledHMAC_secure+0x156>
- c0010c4:	4f6e      	ldr	r7, [pc, #440]	@ (c001280 <__acle_se_SECURE_ShuffledHMAC_secure+0x1d8>)
+ c0010c0:	2800      	cmp	r0, #0
+ c0010c2:	f000 809a 	beq.w	c0011fa <__acle_se_SECURE_ShuffledHMAC_secure+0x146>
+ c0010c6:	291f      	cmp	r1, #31
+ c0010c8:	f240 8097 	bls.w	c0011fa <__acle_se_SECURE_ShuffledHMAC_secure+0x146>
+ c0010cc:	f8df 81b8 	ldr.w	r8, [pc, #440]	@ c001288 <__acle_se_SECURE_ShuffledHMAC_secure+0x1d4>
 
     // 1) indices = 0..BLOCKS-1
     static int indices[BLOCKS];
     for (int i = 0; i < BLOCKS; i++) indices[i] = i;
- c0010c6:	2300      	movs	r3, #0
+ c0010d0:	2300      	movs	r3, #0
     if (!out_digest || out_len < SHA256_DIGEST_SIZE) return;
- c0010c8:	463a      	mov	r2, r7
- c0010ca:	46bb      	mov	fp, r7
+ c0010d2:	4642      	mov	r2, r8
+ c0010d4:	46c2      	mov	sl, r8
     for (int i = 0; i < BLOCKS; i++) indices[i] = i;
- c0010cc:	f842 3b04 	str.w	r3, [r2], #4
- c0010d0:	3301      	adds	r3, #1
- c0010d2:	2b40      	cmp	r3, #64	@ 0x40
- c0010d4:	d1fa      	bne.n	c0010cc <__acle_se_SECURE_ShuffledHMAC_secure+0x24>
+ c0010d6:	f842 3b04 	str.w	r3, [r2], #4
+ c0010da:	3301      	adds	r3, #1
+ c0010dc:	f5b3 7f80 	cmp.w	r3, #256	@ 0x100
+ c0010e0:	d1f9      	bne.n	c0010d6 <__acle_se_SECURE_ShuffledHMAC_secure+0x22>
     hmac_sha256_initialize(&hmac, (const uint8_t*)key, strlen(key));
- c0010d6:	220e      	movs	r2, #14
- c0010d8:	496a      	ldr	r1, [pc, #424]	@ (c001284 <__acle_se_SECURE_ShuffledHMAC_secure+0x1dc>)
- c0010da:	486b      	ldr	r0, [pc, #428]	@ (c001288 <__acle_se_SECURE_ShuffledHMAC_secure+0x1e0>)
- c0010dc:	f7ff fca7 	bl	c000a2e <hmac_sha256_initialize>
+ c0010e2:	220e      	movs	r2, #14
+ c0010e4:	4964      	ldr	r1, [pc, #400]	@ (c001278 <__acle_se_SECURE_ShuffledHMAC_secure+0x1c4>)
+ c0010e6:	4865      	ldr	r0, [pc, #404]	@ (c00127c <__acle_se_SECURE_ShuffledHMAC_secure+0x1c8>)
+ c0010e8:	f7ff fca1 	bl	c000a2e <hmac_sha256_initialize>
     if (challenge && clen) {
- c0010e0:	4e69      	ldr	r6, [pc, #420]	@ (c001288 <__acle_se_SECURE_ShuffledHMAC_secure+0x1e0>)
- c0010e2:	2d00      	cmp	r5, #0
- c0010e4:	f000 80c4 	beq.w	c001270 <__acle_se_SECURE_ShuffledHMAC_secure+0x1c8>
- c0010e8:	f1b8 0f00 	cmp.w	r8, #0
- c0010ec:	f000 80c0 	beq.w	c001270 <__acle_se_SECURE_ShuffledHMAC_secure+0x1c8>
+ c0010ec:	4e63      	ldr	r6, [pc, #396]	@ (c00127c <__acle_se_SECURE_ShuffledHMAC_secure+0x1c8>)
+ c0010ee:	2d00      	cmp	r5, #0
+ c0010f0:	f000 80ba 	beq.w	c001268 <__acle_se_SECURE_ShuffledHMAC_secure+0x1b4>
+ c0010f4:	2f00      	cmp	r7, #0
+ c0010f6:	f000 80b7 	beq.w	c001268 <__acle_se_SECURE_ShuffledHMAC_secure+0x1b4>
         hmac_sha256_update(&hmac, challenge, clen);
- c0010f0:	4642      	mov	r2, r8
- c0010f2:	4629      	mov	r1, r5
- c0010f4:	4630      	mov	r0, r6
+ c0010fa:	463a      	mov	r2, r7
+ c0010fc:	4629      	mov	r1, r5
+ c0010fe:	4630      	mov	r0, r6
         hmac_sha256_update(&hmac, (uint8_t*)&tick, sizeof(tick));
- c0010f6:	f7ff fce3 	bl	c000ac0 <hmac_sha256_update>
+ c001100:	f7ff fcde 	bl	c000ac0 <hmac_sha256_update>
     hmac_sha256_finalize(&hmac, NULL, 0);
- c0010fa:	2200      	movs	r2, #0
+ c001104:	2200      	movs	r2, #0
     memcpy(key16, hmac.digest, 16);
- c0010fc:	466d      	mov	r5, sp
+ c001106:	ad03      	add	r5, sp, #12
     hmac_sha256_finalize(&hmac, NULL, 0);
- c0010fe:	4611      	mov	r1, r2
- c001100:	4861      	ldr	r0, [pc, #388]	@ (c001288 <__acle_se_SECURE_ShuffledHMAC_secure+0x1e0>)
- c001102:	f7ff fce0 	bl	c000ac6 <hmac_sha256_finalize>
+ c001108:	4611      	mov	r1, r2
+ c00110a:	485c      	ldr	r0, [pc, #368]	@ (c00127c <__acle_se_SECURE_ShuffledHMAC_secure+0x1c8>)
+ c00110c:	f7ff fcdb 	bl	c000ac6 <hmac_sha256_finalize>
     memcpy(key16, hmac.digest, 16);
- c001106:	e896 000f 	ldmia.w	r6, {r0, r1, r2, r3}
- c00110a:	e885 000f 	stmia.w	r5, {r0, r1, r2, r3}
-    memcpy(iv16,  hmac.digest + 16, 16);
- c00110e:	4b5f      	ldr	r3, [pc, #380]	@ (c00128c <__acle_se_SECURE_ShuffledHMAC_secure+0x1e4>)
- c001110:	ad04      	add	r5, sp, #16
- c001112:	cb0f      	ldmia	r3, {r0, r1, r2, r3}
+ c001110:	e896 000f 	ldmia.w	r6, {r0, r1, r2, r3}
  c001114:	e885 000f 	stmia.w	r5, {r0, r1, r2, r3}
+    memcpy(iv16,  hmac.digest + 16, 16);
+ c001118:	4b59      	ldr	r3, [pc, #356]	@ (c001280 <__acle_se_SECURE_ShuffledHMAC_secure+0x1cc>)
+ c00111a:	ae07      	add	r6, sp, #28
+ c00111c:	cb0f      	ldmia	r3, {r0, r1, r2, r3}
+ c00111e:	e886 000f 	stmia.w	r6, {r0, r1, r2, r3}
     AES_init_ctx_iv(&p->ctx, key16, iv16);
- c001118:	462a      	mov	r2, r5
+ c001122:	4629      	mov	r1, r5
     memset(p->buf, 0, sizeof(p->buf));
- c00111a:	2510      	movs	r5, #16
+ c001124:	2510      	movs	r5, #16
     AES_init_ctx_iv(&p->ctx, key16, iv16);
- c00111c:	4669      	mov	r1, sp
- c00111e:	a80c      	add	r0, sp, #48	@ 0x30
+ c001126:	4632      	mov	r2, r6
+ c001128:	a80f      	add	r0, sp, #60	@ 0x3c
     memset(p->buf, 0, sizeof(p->buf));
- c001120:	f10d 08f0 	add.w	r8, sp, #240	@ 0xf0
+ c00112a:	ae3f      	add	r6, sp, #252	@ 0xfc
     AES_init_ctx_iv(&p->ctx, key16, iv16);
- c001124:	f7ff fa37 	bl	c000596 <AES_init_ctx_iv>
+ c00112c:	f7ff fa33 	bl	c000596 <AES_init_ctx_iv>
     memset(p->buf, 0, sizeof(p->buf));
- c001128:	462a      	mov	r2, r5
- c00112a:	2100      	movs	r1, #0
- c00112c:	4640      	mov	r0, r8
- c00112e:	f008 ff83 	bl	c00a038 <memset>
-    p->idx = 16; // force refill on first use
- c001132:	9540      	str	r5, [sp, #256]	@ 0x100
- c001134:	2540      	movs	r5, #64	@ 0x40
- c001136:	f8df 9158 	ldr.w	r9, [pc, #344]	@ c001290 <__acle_se_SECURE_ShuffledHMAC_secure+0x1e8>
+ c001130:	462a      	mov	r2, r5
+ c001132:	2100      	movs	r1, #0
+ c001134:	4630      	mov	r0, r6
+ c001136:	f008 ff7f 	bl	c00a038 <memset>
     const uint32_t lim = 0xFFFFFFFFu - (0xFFFFFFFFu % (uint32_t)n);
- c00113a:	f04f 33ff 	mov.w	r3, #4294967295
- c00113e:	fbb3 faf5 	udiv	sl, r3, r5
- c001142:	fb05 fa0a 	mul.w	sl, r5, sl
+ c00113a:	f04f 3bff 	mov.w	fp, #4294967295
+    p->idx = 16; // force refill on first use
+ c00113e:	9543      	str	r5, [sp, #268]	@ 0x10c
+ c001140:	f44f 7580 	mov.w	r5, #256	@ 0x100
+ c001144:	f8df 9144 	ldr.w	r9, [pc, #324]	@ c00128c <__acle_se_SECURE_ShuffledHMAC_secure+0x1d8>
     uint8_t zero[16] = {0};
- c001146:	ae08      	add	r6, sp, #32
+ c001148:	af0b      	add	r7, sp, #44	@ 0x2c
+    const uint32_t lim = 0xFFFFFFFFu - (0xFFFFFFFFu % (uint32_t)n);
+ c00114a:	fbbb f3f5 	udiv	r3, fp, r5
+ c00114e:	436b      	muls	r3, r5
+ c001150:	9301      	str	r3, [sp, #4]
     if (p->idx > 12) {           // not enough bytes left → refill
- c001148:	9b40      	ldr	r3, [sp, #256]	@ 0x100
- c00114a:	2b0c      	cmp	r3, #12
- c00114c:	dd11      	ble.n	c001172 <__acle_se_SECURE_ShuffledHMAC_secure+0xca>
+ c001152:	9b43      	ldr	r3, [sp, #268]	@ 0x10c
+ c001154:	2b0c      	cmp	r3, #12
+ c001156:	dd0f      	ble.n	c001178 <__acle_se_SECURE_ShuffledHMAC_secure+0xc4>
     uint8_t zero[16] = {0};
- c00114e:	2210      	movs	r2, #16
- c001150:	2100      	movs	r1, #0
- c001152:	4630      	mov	r0, r6
- c001154:	f008 ff70 	bl	c00a038 <memset>
+ c001158:	2210      	movs	r2, #16
+ c00115a:	2100      	movs	r1, #0
+ c00115c:	4638      	mov	r0, r7
+ c00115e:	f008 ff6b 	bl	c00a038 <memset>
     memcpy(p->buf, zero, 16);
- c001158:	e896 000f 	ldmia.w	r6, {r0, r1, r2, r3}
- c00115c:	f10d 0cf0 	add.w	ip, sp, #240	@ 0xf0
- c001160:	e88c 000f 	stmia.w	ip, {r0, r1, r2, r3}
+ c001162:	e897 000f 	ldmia.w	r7, {r0, r1, r2, r3}
+ c001166:	e886 000f 	stmia.w	r6, {r0, r1, r2, r3}
     AES_CTR_xcrypt_buffer(&p->ctx, p->buf, 16); // p->ctx.Iv auto-increments
- c001164:	2210      	movs	r2, #16
- c001166:	4641      	mov	r1, r8
- c001168:	a80c      	add	r0, sp, #48	@ 0x30
- c00116a:	f7ff fa9d 	bl	c0006a8 <AES_CTR_xcrypt_buffer>
+ c00116a:	2210      	movs	r2, #16
+ c00116c:	4631      	mov	r1, r6
+ c00116e:	a80f      	add	r0, sp, #60	@ 0x3c
+ c001170:	f7ff fa9a 	bl	c0006a8 <AES_CTR_xcrypt_buffer>
     p->idx = 0;
- c00116e:	2300      	movs	r3, #0
- c001170:	9340      	str	r3, [sp, #256]	@ 0x100
+ c001174:	2300      	movs	r3, #0
+ c001176:	9343      	str	r3, [sp, #268]	@ 0x10c
     memcpy(&v, &p->buf[p->idx], 4);
- c001172:	9a40      	ldr	r2, [sp, #256]	@ 0x100
- c001174:	f858 3002 	ldr.w	r3, [r8, r2]
+ c001178:	9a43      	ldr	r2, [sp, #268]	@ 0x10c
+ c00117a:	f502 7388 	add.w	r3, r2, #272	@ 0x110
+ c00117e:	446b      	add	r3, sp
     p->idx += 4;
- c001178:	3204      	adds	r2, #4
-        if (r < lim) return (int)(r % (uint32_t)n);
- c00117a:	459a      	cmp	sl, r3
+ c001180:	3204      	adds	r2, #4
+    memcpy(&v, &p->buf[p->idx], 4);
+ c001182:	f853 3c14 	ldr.w	r3, [r3, #-20]
     p->idx += 4;
- c00117c:	9240      	str	r2, [sp, #256]	@ 0x100
+ c001186:	9243      	str	r2, [sp, #268]	@ 0x10c
         if (r < lim) return (int)(r % (uint32_t)n);
- c00117e:	d9e3      	bls.n	c001148 <__acle_se_SECURE_ShuffledHMAC_secure+0xa0>
- c001180:	fbb3 f1f5 	udiv	r1, r3, r5
- c001184:	fb05 3311 	mls	r3, r5, r1, r3
+ c001188:	9a01      	ldr	r2, [sp, #4]
+ c00118a:	429a      	cmp	r2, r3
+ c00118c:	d9e1      	bls.n	c001152 <__acle_se_SECURE_ShuffledHMAC_secure+0x9e>
+ c00118e:	fbb3 f1f5 	udiv	r1, r3, r5
+ c001192:	fb05 3311 	mls	r3, r5, r1, r3
         int tmp = arr[i]; arr[i] = arr[j]; arr[j] = tmp;
- c001188:	f859 2d04 	ldr.w	r2, [r9, #-4]!
- c00118c:	f85b 1023 	ldr.w	r1, [fp, r3, lsl #2]
+ c001196:	f859 2d04 	ldr.w	r2, [r9, #-4]!
+ c00119a:	f85a 1023 	ldr.w	r1, [sl, r3, lsl #2]
     for (int i = n - 1; i > 0; i--) {
- c001190:	3d01      	subs	r5, #1
- c001192:	2d01      	cmp	r5, #1
+ c00119e:	3d01      	subs	r5, #1
+ c0011a0:	2d01      	cmp	r5, #1
         int tmp = arr[i]; arr[i] = arr[j]; arr[j] = tmp;
- c001194:	f8c9 1000 	str.w	r1, [r9]
- c001198:	f84b 2023 	str.w	r2, [fp, r3, lsl #2]
+ c0011a2:	f8c9 1000 	str.w	r1, [r9]
+ c0011a6:	f84a 2023 	str.w	r2, [sl, r3, lsl #2]
     for (int i = n - 1; i > 0; i--) {
- c00119c:	d1cd      	bne.n	c00113a <__acle_se_SECURE_ShuffledHMAC_secure+0x92>
+ c0011aa:	d1ce      	bne.n	c00114a <__acle_se_SECURE_ShuffledHMAC_secure+0x96>
 
     // 3) secure shuffle
     shuffle_secure_aes_ctr(indices, BLOCKS, key16, iv16);
 
     // 4) HMAC over shuffled blocks
     hmac_sha256_initialize(&hmac, (const uint8_t*)key, strlen(key));
- c00119e:	220e      	movs	r2, #14
- c0011a0:	4938      	ldr	r1, [pc, #224]	@ (c001284 <__acle_se_SECURE_ShuffledHMAC_secure+0x1dc>)
- c0011a2:	4839      	ldr	r0, [pc, #228]	@ (c001288 <__acle_se_SECURE_ShuffledHMAC_secure+0x1e0>)
- c0011a4:	f7ff fc43 	bl	c000a2e <hmac_sha256_initialize>
+ c0011ac:	220e      	movs	r2, #14
+ c0011ae:	4932      	ldr	r1, [pc, #200]	@ (c001278 <__acle_se_SECURE_ShuffledHMAC_secure+0x1c4>)
+ c0011b0:	4832      	ldr	r0, [pc, #200]	@ (c00127c <__acle_se_SECURE_ShuffledHMAC_secure+0x1c8>)
+ c0011b2:	f7ff fc3c 	bl	c000a2e <hmac_sha256_initialize>
     uint8_t copy[BLOCK_SIZE];
     for (int i = 0; i < BLOCKS; i++) {
- c0011a8:	2500      	movs	r5, #0
+ c0011b6:	2500      	movs	r5, #0
         const uint8_t *blk = &real_memory[(size_t)indices[i] * BLOCK_SIZE];
- c0011aa:	f8df 80e8 	ldr.w	r8, [pc, #232]	@ c001294 <__acle_se_SECURE_ShuffledHMAC_secure+0x1ec>
-        __disable_irq();
-        memcpy(copy, blk, BLOCK_SIZE);
-//        hmac_sha256_update(&hmac, blk, BLOCK_SIZE);
-        __enable_irq();
-        hmac_sha256_update(&hmac, copy, BLOCK_SIZE);
- c0011ae:	4e36      	ldr	r6, [pc, #216]	@ (c001288 <__acle_se_SECURE_ShuffledHMAC_secure+0x1e0>)
+ c0011b8:	4f32      	ldr	r7, [pc, #200]	@ (c001284 <__acle_se_SECURE_ShuffledHMAC_secure+0x1d0>)
+//        __disable_irq();
+//        memcpy(copy, blk, BLOCK_SIZE);
+        hmac_sha256_update(&hmac, blk, BLOCK_SIZE);
+ c0011ba:	4e30      	ldr	r6, [pc, #192]	@ (c00127c <__acle_se_SECURE_ShuffledHMAC_secure+0x1c8>)
         const uint8_t *blk = &real_memory[(size_t)indices[i] * BLOCK_SIZE];
- c0011b0:	f857 3b04 	ldr.w	r3, [r7], #4
- c0011b4:	f8d8 1000 	ldr.w	r1, [r8]
- c0011b8:	eb01 3103 	add.w	r1, r1, r3, lsl #12
-  __ASM volatile ("cpsid i" : : : "memory");
- c0011bc:	b672      	cpsid	i
-        memcpy(copy, blk, BLOCK_SIZE);
- c0011be:	f44f 5280 	mov.w	r2, #4096	@ 0x1000
- c0011c2:	a80c      	add	r0, sp, #48	@ 0x30
- c0011c4:	f008 ffd7 	bl	c00a176 <memcpy>
-  __ASM volatile ("cpsie i" : : : "memory");
- c0011c8:	b662      	cpsie	i
-        hmac_sha256_update(&hmac, copy, BLOCK_SIZE);
- c0011ca:	f44f 5280 	mov.w	r2, #4096	@ 0x1000
- c0011ce:	4630      	mov	r0, r6
- c0011d0:	a90c      	add	r1, sp, #48	@ 0x30
+ c0011bc:	f858 1b04 	ldr.w	r1, [r8], #4
+ c0011c0:	683b      	ldr	r3, [r7, #0]
+        hmac_sha256_update(&hmac, blk, BLOCK_SIZE);
+ c0011c2:	f44f 6200 	mov.w	r2, #2048	@ 0x800
+ c0011c6:	4630      	mov	r0, r6
+ c0011c8:	eb03 21c1 	add.w	r1, r3, r1, lsl #11
     for (int i = 0; i < BLOCKS; i++) {
- c0011d2:	3501      	adds	r5, #1
-        hmac_sha256_update(&hmac, copy, BLOCK_SIZE);
- c0011d4:	f7ff fc74 	bl	c000ac0 <hmac_sha256_update>
+ c0011cc:	3501      	adds	r5, #1
+        hmac_sha256_update(&hmac, blk, BLOCK_SIZE);
+ c0011ce:	f7ff fc77 	bl	c000ac0 <hmac_sha256_update>
     for (int i = 0; i < BLOCKS; i++) {
- c0011d8:	2d40      	cmp	r5, #64	@ 0x40
- c0011da:	d1e9      	bne.n	c0011b0 <__acle_se_SECURE_ShuffledHMAC_secure+0x108>
+ c0011d2:	f5b5 7f80 	cmp.w	r5, #256	@ 0x100
+ c0011d6:	d1f1      	bne.n	c0011bc <__acle_se_SECURE_ShuffledHMAC_secure+0x108>
+//        __enable_irq();
+//        hmac_sha256_update(&hmac, copy, BLOCK_SIZE);
     }
     hmac_sha256_finalize(&hmac, NULL, 0);
- c0011dc:	2200      	movs	r2, #0
- c0011de:	482a      	ldr	r0, [pc, #168]	@ (c001288 <__acle_se_SECURE_ShuffledHMAC_secure+0x1e0>)
- c0011e0:	4611      	mov	r1, r2
- c0011e2:	f7ff fc70 	bl	c000ac6 <hmac_sha256_finalize>
+ c0011d8:	2200      	movs	r2, #0
+ c0011da:	4828      	ldr	r0, [pc, #160]	@ (c00127c <__acle_se_SECURE_ShuffledHMAC_secure+0x1c8>)
+ c0011dc:	4611      	mov	r1, r2
+ c0011de:	f7ff fc72 	bl	c000ac6 <hmac_sha256_finalize>
     memcpy(out_digest, hmac.digest, SHA256_DIGEST_SIZE);
- c0011e6:	4a28      	ldr	r2, [pc, #160]	@ (c001288 <__acle_se_SECURE_ShuffledHMAC_secure+0x1e0>)
- c0011e8:	f102 0520 	add.w	r5, r2, #32
- c0011ec:	4613      	mov	r3, r2
- c0011ee:	cb03      	ldmia	r3!, {r0, r1}
- c0011f0:	42ab      	cmp	r3, r5
- c0011f2:	6020      	str	r0, [r4, #0]
- c0011f4:	6061      	str	r1, [r4, #4]
- c0011f6:	461a      	mov	r2, r3
- c0011f8:	f104 0408 	add.w	r4, r4, #8
- c0011fc:	d1f6      	bne.n	c0011ec <__acle_se_SECURE_ShuffledHMAC_secure+0x144>
+ c0011e2:	4a26      	ldr	r2, [pc, #152]	@ (c00127c <__acle_se_SECURE_ShuffledHMAC_secure+0x1c8>)
+ c0011e4:	f102 0520 	add.w	r5, r2, #32
+ c0011e8:	4613      	mov	r3, r2
+ c0011ea:	cb03      	ldmia	r3!, {r0, r1}
+ c0011ec:	42ab      	cmp	r3, r5
+ c0011ee:	6020      	str	r0, [r4, #0]
+ c0011f0:	6061      	str	r1, [r4, #4]
+ c0011f2:	461a      	mov	r2, r3
+ c0011f4:	f104 0408 	add.w	r4, r4, #8
+ c0011f8:	d1f6      	bne.n	c0011e8 <__acle_se_SECURE_ShuffledHMAC_secure+0x134>
 }
- c0011fe:	f50d 5d81 	add.w	sp, sp, #4128	@ 0x1020
- c001202:	b005      	add	sp, #20
- c001204:	eeb7 0a00 	vmov.f32	s0, #112	@ 0x3f800000  1.0
- c001208:	e8bd 4ff0 	ldmia.w	sp!, {r4, r5, r6, r7, r8, r9, sl, fp, lr}
- c00120c:	4670      	mov	r0, lr
- c00120e:	4671      	mov	r1, lr
- c001210:	4672      	mov	r2, lr
- c001212:	4673      	mov	r3, lr
- c001214:	eef7 0a00 	vmov.f32	s1, #112	@ 0x3f800000  1.0
- c001218:	eeb7 1a00 	vmov.f32	s2, #112	@ 0x3f800000  1.0
- c00121c:	eef7 1a00 	vmov.f32	s3, #112	@ 0x3f800000  1.0
- c001220:	eeb7 2a00 	vmov.f32	s4, #112	@ 0x3f800000  1.0
- c001224:	eef7 2a00 	vmov.f32	s5, #112	@ 0x3f800000  1.0
- c001228:	eeb7 3a00 	vmov.f32	s6, #112	@ 0x3f800000  1.0
- c00122c:	eef7 3a00 	vmov.f32	s7, #112	@ 0x3f800000  1.0
- c001230:	eeb7 4a00 	vmov.f32	s8, #112	@ 0x3f800000  1.0
- c001234:	eef7 4a00 	vmov.f32	s9, #112	@ 0x3f800000  1.0
- c001238:	eeb7 5a00 	vmov.f32	s10, #112	@ 0x3f800000  1.0
- c00123c:	eef7 5a00 	vmov.f32	s11, #112	@ 0x3f800000  1.0
- c001240:	eeb7 6a00 	vmov.f32	s12, #112	@ 0x3f800000  1.0
- c001244:	eef7 6a00 	vmov.f32	s13, #112	@ 0x3f800000  1.0
- c001248:	eeb7 7a00 	vmov.f32	s14, #112	@ 0x3f800000  1.0
- c00124c:	eef7 7a00 	vmov.f32	s15, #112	@ 0x3f800000  1.0
- c001250:	f38e 8c00 	msr	CPSR_fs, lr
- c001254:	b410      	push	{r4}
- c001256:	eef1 ca10 	vmrs	ip, fpscr
- c00125a:	f64f 7460 	movw	r4, #65376	@ 0xff60
- c00125e:	f6c0 74ff 	movt	r4, #4095	@ 0xfff
- c001262:	ea0c 0c04 	and.w	ip, ip, r4
- c001266:	eee1 ca10 	vmsr	fpscr, ip
- c00126a:	bc10      	pop	{r4}
- c00126c:	46f4      	mov	ip, lr
- c00126e:	4774      	bxns	lr
+ c0011fa:	b045      	add	sp, #276	@ 0x114
+ c0011fc:	eeb7 0a00 	vmov.f32	s0, #112	@ 0x3f800000  1.0
+ c001200:	e8bd 4ff0 	ldmia.w	sp!, {r4, r5, r6, r7, r8, r9, sl, fp, lr}
+ c001204:	4670      	mov	r0, lr
+ c001206:	4671      	mov	r1, lr
+ c001208:	4672      	mov	r2, lr
+ c00120a:	4673      	mov	r3, lr
+ c00120c:	eef7 0a00 	vmov.f32	s1, #112	@ 0x3f800000  1.0
+ c001210:	eeb7 1a00 	vmov.f32	s2, #112	@ 0x3f800000  1.0
+ c001214:	eef7 1a00 	vmov.f32	s3, #112	@ 0x3f800000  1.0
+ c001218:	eeb7 2a00 	vmov.f32	s4, #112	@ 0x3f800000  1.0
+ c00121c:	eef7 2a00 	vmov.f32	s5, #112	@ 0x3f800000  1.0
+ c001220:	eeb7 3a00 	vmov.f32	s6, #112	@ 0x3f800000  1.0
+ c001224:	eef7 3a00 	vmov.f32	s7, #112	@ 0x3f800000  1.0
+ c001228:	eeb7 4a00 	vmov.f32	s8, #112	@ 0x3f800000  1.0
+ c00122c:	eef7 4a00 	vmov.f32	s9, #112	@ 0x3f800000  1.0
+ c001230:	eeb7 5a00 	vmov.f32	s10, #112	@ 0x3f800000  1.0
+ c001234:	eef7 5a00 	vmov.f32	s11, #112	@ 0x3f800000  1.0
+ c001238:	eeb7 6a00 	vmov.f32	s12, #112	@ 0x3f800000  1.0
+ c00123c:	eef7 6a00 	vmov.f32	s13, #112	@ 0x3f800000  1.0
+ c001240:	eeb7 7a00 	vmov.f32	s14, #112	@ 0x3f800000  1.0
+ c001244:	eef7 7a00 	vmov.f32	s15, #112	@ 0x3f800000  1.0
+ c001248:	f38e 8c00 	msr	CPSR_fs, lr
+ c00124c:	b410      	push	{r4}
+ c00124e:	eef1 ca10 	vmrs	ip, fpscr
+ c001252:	f64f 7460 	movw	r4, #65376	@ 0xff60
+ c001256:	f6c0 74ff 	movt	r4, #4095	@ 0xfff
+ c00125a:	ea0c 0c04 	and.w	ip, ip, r4
+ c00125e:	eee1 ca10 	vmsr	fpscr, ip
+ c001262:	bc10      	pop	{r4}
+ c001264:	46f4      	mov	ip, lr
+ c001266:	4774      	bxns	lr
         uint32_t tick = (uint32_t)SysTick->VAL;
- c001270:	f04f 23e0 	mov.w	r3, #3758153728	@ 0xe000e000
- c001274:	699b      	ldr	r3, [r3, #24]
+ c001268:	f04f 23e0 	mov.w	r3, #3758153728	@ 0xe000e000
+ c00126c:	699b      	ldr	r3, [r3, #24]
         hmac_sha256_update(&hmac, (uint8_t*)&tick, sizeof(tick));
- c001276:	2204      	movs	r2, #4
- c001278:	4803      	ldr	r0, [pc, #12]	@ (c001288 <__acle_se_SECURE_ShuffledHMAC_secure+0x1e0>)
+ c00126e:	2204      	movs	r2, #4
+ c001270:	4802      	ldr	r0, [pc, #8]	@ (c00127c <__acle_se_SECURE_ShuffledHMAC_secure+0x1c8>)
         uint32_t tick = (uint32_t)SysTick->VAL;
- c00127a:	930c      	str	r3, [sp, #48]	@ 0x30
+ c001272:	930f      	str	r3, [sp, #60]	@ 0x3c
         hmac_sha256_update(&hmac, (uint8_t*)&tick, sizeof(tick));
- c00127c:	a90c      	add	r1, sp, #48	@ 0x30
- c00127e:	e73a      	b.n	c0010f6 <__acle_se_SECURE_ShuffledHMAC_secure+0x4e>
- c001280:	300010a4 	.word	0x300010a4
- c001284:	0c00b334 	.word	0x0c00b334
- c001288:	300012a4 	.word	0x300012a4
- c00128c:	300012b4 	.word	0x300012b4
- c001290:	300011a4 	.word	0x300011a4
- c001294:	30000000 	.word	0x30000000
+ c001274:	a90f      	add	r1, sp, #60	@ 0x3c
+ c001276:	e743      	b.n	c001100 <__acle_se_SECURE_ShuffledHMAC_secure+0x4c>
+ c001278:	0c00b334 	.word	0x0c00b334
+ c00127c:	300018a4 	.word	0x300018a4
+ c001280:	300018b4 	.word	0x300018b4
+ c001284:	30000000 	.word	0x30000000
+ c001288:	300010a4 	.word	0x300010a4
+ c00128c:	300014a4 	.word	0x300014a4
 
-0c001298 <__acle_se_SECURE_SMARM>:
+0c001290 <__acle_se_SECURE_SMARM>:
 
 
 __attribute__((cmse_nonsecure_entry))
 void SECURE_SMARM(uint8_t *output_digest, size_t maxlen)
 {
- c001298:	e92d 41f0 	stmdb	sp!, {r4, r5, r6, r7, r8, lr}
+ c001290:	e92d 41f0 	stmdb	sp!, {r4, r5, r6, r7, r8, lr}
 	if (!output_digest || maxlen < SHA256_DIGEST_SIZE) return;
- c00129c:	4604      	mov	r4, r0
+ c001294:	4604      	mov	r4, r0
 {
- c00129e:	f5ad 1d80 	sub.w	sp, sp, #1048576	@ 0x100000
+ c001296:	f5ad 1d00 	sub.w	sp, sp, #2097152	@ 0x200000
 	if (!output_digest || maxlen < SHA256_DIGEST_SIZE) return;
- c0012a2:	2800      	cmp	r0, #0
- c0012a4:	d048      	beq.n	c001338 <__acle_se_SECURE_SMARM+0xa0>
- c0012a6:	291f      	cmp	r1, #31
- c0012a8:	d946      	bls.n	c001338 <__acle_se_SECURE_SMARM+0xa0>
+ c00129a:	2800      	cmp	r0, #0
+ c00129c:	d049      	beq.n	c001332 <__acle_se_SECURE_SMARM+0xa2>
+ c00129e:	291f      	cmp	r1, #31
+ c0012a0:	d947      	bls.n	c001332 <__acle_se_SECURE_SMARM+0xa2>
 
     srand(42);  // Use fixed seed or hardware-derived one like SysTick->VAL
- c0012aa:	202a      	movs	r0, #42	@ 0x2a
- c0012ac:	f008 fc4e 	bl	c009b4c <srand>
- c0012b0:	f44f 2580 	mov.w	r5, #262144	@ 0x40000
- c0012b4:	f50d 1680 	add.w	r6, sp, #1048576	@ 0x100000
+ c0012a2:	202a      	movs	r0, #42	@ 0x2a
+ c0012a4:	f008 fc52 	bl	c009b4c <srand>
+ c0012a8:	f44f 2500 	mov.w	r5, #524288	@ 0x80000
+ c0012ac:	f50d 1600 	add.w	r6, sp, #2097152	@ 0x200000
 
 	// ben shuffle_aes_ctr ลองใช้ตัวนี้อยู๋ใน main.c -> shuffle.c
 
 	for (int i = TOTAL_SIZE - 1; i > 0; i--) {
 
 	int j = rand() % (i + 1);
- c0012b8:	f008 fc76 	bl	c009ba8 <rand>
- c0012bc:	fb90 f3f5 	sdiv	r3, r0, r5
- c0012c0:	fb03 0015 	mls	r0, r3, r5, r0
+ c0012b0:	f008 fc7a 	bl	c009ba8 <rand>
+ c0012b4:	fb90 f3f5 	sdiv	r3, r0, r5
+ c0012b8:	fb03 0015 	mls	r0, r3, r5, r0
 
 	int tmp = indices[i];
- c0012c4:	f856 3d04 	ldr.w	r3, [r6, #-4]!
+ c0012bc:	f856 3d04 	ldr.w	r3, [r6, #-4]!
 
 	indices[i] = indices[j];
- c0012c8:	f85d 2020 	ldr.w	r2, [sp, r0, lsl #2]
+ c0012c0:	f85d 2020 	ldr.w	r2, [sp, r0, lsl #2]
 	for (int i = TOTAL_SIZE - 1; i > 0; i--) {
- c0012cc:	3d01      	subs	r5, #1
- c0012ce:	2d01      	cmp	r5, #1
+ c0012c4:	3d01      	subs	r5, #1
+ c0012c6:	2d01      	cmp	r5, #1
 	indices[i] = indices[j];
- c0012d0:	6032      	str	r2, [r6, #0]
+ c0012c8:	6032      	str	r2, [r6, #0]
 
 	indices[j] = tmp;
- c0012d2:	f84d 3020 	str.w	r3, [sp, r0, lsl #2]
+ c0012ca:	f84d 3020 	str.w	r3, [sp, r0, lsl #2]
 	for (int i = TOTAL_SIZE - 1; i > 0; i--) {
- c0012d6:	d1ef      	bne.n	c0012b8 <__acle_se_SECURE_SMARM+0x20>
+ c0012ce:	d1ef      	bne.n	c0012b0 <__acle_se_SECURE_SMARM+0x20>
 
 	}
 
 	hmac_sha256_initialize(&hmac, key, strlen((const char )key));
- c0012d8:	4d33      	ldr	r5, [pc, #204]	@ (c0013a8 <__acle_se_SECURE_SMARM+0x110>)
+ c0012d0:	4d34      	ldr	r5, [pc, #208]	@ (c0013a4 <__acle_se_SECURE_SMARM+0x114>)
 
 	for (int i = 0; i < BLOCKS; i++) {
- c0012da:	2600      	movs	r6, #0
+ c0012d2:	2600      	movs	r6, #0
 	hmac_sha256_initialize(&hmac, key, strlen((const char )key));
- c0012dc:	b2e8      	uxtb	r0, r5
- c0012de:	f008 f84a 	bl	c009376 <strlen>
- c0012e2:	4629      	mov	r1, r5
- c0012e4:	4602      	mov	r2, r0
- c0012e6:	4831      	ldr	r0, [pc, #196]	@ (c0013ac <__acle_se_SECURE_SMARM+0x114>)
- c0012e8:	f7ff fba1 	bl	c000a2e <hmac_sha256_initialize>
+ c0012d4:	b2e8      	uxtb	r0, r5
+ c0012d6:	f008 f84e 	bl	c009376 <strlen>
+ c0012da:	4629      	mov	r1, r5
+ c0012dc:	4602      	mov	r2, r0
+ c0012de:	4832      	ldr	r0, [pc, #200]	@ (c0013a8 <__acle_se_SECURE_SMARM+0x118>)
+ c0012e0:	f7ff fba5 	bl	c000a2e <hmac_sha256_initialize>
 	for (int i = 0; i < BLOCKS; i++) {
- c0012ec:	466d      	mov	r5, sp
+ c0012e4:	466d      	mov	r5, sp
 
 	const uint8_t *block = &real_memory[indices[i] * BLOCK_SIZE];
- c0012ee:	f8df 80c0 	ldr.w	r8, [pc, #192]	@ c0013b0 <__acle_se_SECURE_SMARM+0x118>
+ c0012e6:	f8df 80c4 	ldr.w	r8, [pc, #196]	@ c0013ac <__acle_se_SECURE_SMARM+0x11c>
 
 		__disable_irq();
 		hmac_sha256_update(&hmac, block, BLOCK_SIZE);
- c0012f2:	4f2e      	ldr	r7, [pc, #184]	@ (c0013ac <__acle_se_SECURE_SMARM+0x114>)
+ c0012ea:	4f2f      	ldr	r7, [pc, #188]	@ (c0013a8 <__acle_se_SECURE_SMARM+0x118>)
 	const uint8_t *block = &real_memory[indices[i] * BLOCK_SIZE];
- c0012f4:	f855 3b04 	ldr.w	r3, [r5], #4
- c0012f8:	f8d8 1000 	ldr.w	r1, [r8]
- c0012fc:	eb01 3103 	add.w	r1, r1, r3, lsl #12
+ c0012ec:	f855 3b04 	ldr.w	r3, [r5], #4
+ c0012f0:	f8d8 1000 	ldr.w	r1, [r8]
+ c0012f4:	eb01 21c3 	add.w	r1, r1, r3, lsl #11
   __ASM volatile ("cpsid i" : : : "memory");
- c001300:	b672      	cpsid	i
+ c0012f8:	b672      	cpsid	i
 		hmac_sha256_update(&hmac, block, BLOCK_SIZE);
- c001302:	f44f 5280 	mov.w	r2, #4096	@ 0x1000
- c001306:	4638      	mov	r0, r7
- c001308:	f7ff fbda 	bl	c000ac0 <hmac_sha256_update>
+ c0012fa:	f44f 6200 	mov.w	r2, #2048	@ 0x800
+ c0012fe:	4638      	mov	r0, r7
+ c001300:	f7ff fbde 	bl	c000ac0 <hmac_sha256_update>
   __ASM volatile ("cpsie i" : : : "memory");
- c00130c:	b662      	cpsie	i
+ c001304:	b662      	cpsie	i
 	for (int i = 0; i < BLOCKS; i++) {
- c00130e:	3601      	adds	r6, #1
- c001310:	2e40      	cmp	r6, #64	@ 0x40
- c001312:	d1ef      	bne.n	c0012f4 <__acle_se_SECURE_SMARM+0x5c>
+ c001306:	3601      	adds	r6, #1
+ c001308:	f5b6 7f80 	cmp.w	r6, #256	@ 0x100
+ c00130c:	d1ee      	bne.n	c0012ec <__acle_se_SECURE_SMARM+0x5c>
 		__enable_irq();
 
 	}
 
 	hmac_sha256_finalize(&hmac, NULL, 0);
- c001314:	2200      	movs	r2, #0
+ c00130e:	2200      	movs	r2, #0
 
 	memcpy(output_digest,hmac.digest, SHA256_DIGEST_SIZE);
- c001316:	4d25      	ldr	r5, [pc, #148]	@ (c0013ac <__acle_se_SECURE_SMARM+0x114>)
+ c001310:	4d25      	ldr	r5, [pc, #148]	@ (c0013a8 <__acle_se_SECURE_SMARM+0x118>)
 	hmac_sha256_finalize(&hmac, NULL, 0);
- c001318:	4611      	mov	r1, r2
- c00131a:	4824      	ldr	r0, [pc, #144]	@ (c0013ac <__acle_se_SECURE_SMARM+0x114>)
- c00131c:	f7ff fbd3 	bl	c000ac6 <hmac_sha256_finalize>
+ c001312:	4611      	mov	r1, r2
+ c001314:	4824      	ldr	r0, [pc, #144]	@ (c0013a8 <__acle_se_SECURE_SMARM+0x118>)
+ c001316:	f7ff fbd6 	bl	c000ac6 <hmac_sha256_finalize>
 	memcpy(output_digest,hmac.digest, SHA256_DIGEST_SIZE);
- c001320:	4623      	mov	r3, r4
- c001322:	f105 0420 	add.w	r4, r5, #32
- c001326:	462a      	mov	r2, r5
- c001328:	ca03      	ldmia	r2!, {r0, r1}
- c00132a:	42a2      	cmp	r2, r4
- c00132c:	6018      	str	r0, [r3, #0]
- c00132e:	6059      	str	r1, [r3, #4]
- c001330:	4615      	mov	r5, r2
- c001332:	f103 0308 	add.w	r3, r3, #8
- c001336:	d1f6      	bne.n	c001326 <__acle_se_SECURE_SMARM+0x8e>
+ c00131a:	4623      	mov	r3, r4
+ c00131c:	f105 0420 	add.w	r4, r5, #32
+ c001320:	462a      	mov	r2, r5
+ c001322:	ca03      	ldmia	r2!, {r0, r1}
+ c001324:	42a2      	cmp	r2, r4
+ c001326:	6018      	str	r0, [r3, #0]
+ c001328:	6059      	str	r1, [r3, #4]
+ c00132a:	4615      	mov	r5, r2
+ c00132c:	f103 0308 	add.w	r3, r3, #8
+ c001330:	d1f6      	bne.n	c001320 <__acle_se_SECURE_SMARM+0x90>
 }
- c001338:	f50d 1d80 	add.w	sp, sp, #1048576	@ 0x100000
- c00133c:	eeb7 0a00 	vmov.f32	s0, #112	@ 0x3f800000  1.0
- c001340:	e8bd 41f0 	ldmia.w	sp!, {r4, r5, r6, r7, r8, lr}
- c001344:	4670      	mov	r0, lr
- c001346:	4671      	mov	r1, lr
- c001348:	4672      	mov	r2, lr
- c00134a:	4673      	mov	r3, lr
- c00134c:	eef7 0a00 	vmov.f32	s1, #112	@ 0x3f800000  1.0
- c001350:	eeb7 1a00 	vmov.f32	s2, #112	@ 0x3f800000  1.0
- c001354:	eef7 1a00 	vmov.f32	s3, #112	@ 0x3f800000  1.0
- c001358:	eeb7 2a00 	vmov.f32	s4, #112	@ 0x3f800000  1.0
- c00135c:	eef7 2a00 	vmov.f32	s5, #112	@ 0x3f800000  1.0
- c001360:	eeb7 3a00 	vmov.f32	s6, #112	@ 0x3f800000  1.0
- c001364:	eef7 3a00 	vmov.f32	s7, #112	@ 0x3f800000  1.0
- c001368:	eeb7 4a00 	vmov.f32	s8, #112	@ 0x3f800000  1.0
- c00136c:	eef7 4a00 	vmov.f32	s9, #112	@ 0x3f800000  1.0
- c001370:	eeb7 5a00 	vmov.f32	s10, #112	@ 0x3f800000  1.0
- c001374:	eef7 5a00 	vmov.f32	s11, #112	@ 0x3f800000  1.0
- c001378:	eeb7 6a00 	vmov.f32	s12, #112	@ 0x3f800000  1.0
- c00137c:	eef7 6a00 	vmov.f32	s13, #112	@ 0x3f800000  1.0
- c001380:	eeb7 7a00 	vmov.f32	s14, #112	@ 0x3f800000  1.0
- c001384:	eef7 7a00 	vmov.f32	s15, #112	@ 0x3f800000  1.0
- c001388:	f38e 8c00 	msr	CPSR_fs, lr
- c00138c:	b410      	push	{r4}
- c00138e:	eef1 ca10 	vmrs	ip, fpscr
- c001392:	f64f 7460 	movw	r4, #65376	@ 0xff60
- c001396:	f6c0 74ff 	movt	r4, #4095	@ 0xfff
- c00139a:	ea0c 0c04 	and.w	ip, ip, r4
- c00139e:	eee1 ca10 	vmsr	fpscr, ip
- c0013a2:	bc10      	pop	{r4}
- c0013a4:	46f4      	mov	ip, lr
- c0013a6:	4774      	bxns	lr
- c0013a8:	0c00b334 	.word	0x0c00b334
- c0013ac:	300012a4 	.word	0x300012a4
- c0013b0:	30000000 	.word	0x30000000
+ c001332:	f50d 1d00 	add.w	sp, sp, #2097152	@ 0x200000
+ c001336:	eeb7 0a00 	vmov.f32	s0, #112	@ 0x3f800000  1.0
+ c00133a:	e8bd 41f0 	ldmia.w	sp!, {r4, r5, r6, r7, r8, lr}
+ c00133e:	4670      	mov	r0, lr
+ c001340:	4671      	mov	r1, lr
+ c001342:	4672      	mov	r2, lr
+ c001344:	4673      	mov	r3, lr
+ c001346:	eef7 0a00 	vmov.f32	s1, #112	@ 0x3f800000  1.0
+ c00134a:	eeb7 1a00 	vmov.f32	s2, #112	@ 0x3f800000  1.0
+ c00134e:	eef7 1a00 	vmov.f32	s3, #112	@ 0x3f800000  1.0
+ c001352:	eeb7 2a00 	vmov.f32	s4, #112	@ 0x3f800000  1.0
+ c001356:	eef7 2a00 	vmov.f32	s5, #112	@ 0x3f800000  1.0
+ c00135a:	eeb7 3a00 	vmov.f32	s6, #112	@ 0x3f800000  1.0
+ c00135e:	eef7 3a00 	vmov.f32	s7, #112	@ 0x3f800000  1.0
+ c001362:	eeb7 4a00 	vmov.f32	s8, #112	@ 0x3f800000  1.0
+ c001366:	eef7 4a00 	vmov.f32	s9, #112	@ 0x3f800000  1.0
+ c00136a:	eeb7 5a00 	vmov.f32	s10, #112	@ 0x3f800000  1.0
+ c00136e:	eef7 5a00 	vmov.f32	s11, #112	@ 0x3f800000  1.0
+ c001372:	eeb7 6a00 	vmov.f32	s12, #112	@ 0x3f800000  1.0
+ c001376:	eef7 6a00 	vmov.f32	s13, #112	@ 0x3f800000  1.0
+ c00137a:	eeb7 7a00 	vmov.f32	s14, #112	@ 0x3f800000  1.0
+ c00137e:	eef7 7a00 	vmov.f32	s15, #112	@ 0x3f800000  1.0
+ c001382:	f38e 8c00 	msr	CPSR_fs, lr
+ c001386:	b410      	push	{r4}
+ c001388:	eef1 ca10 	vmrs	ip, fpscr
+ c00138c:	f64f 7460 	movw	r4, #65376	@ 0xff60
+ c001390:	f6c0 74ff 	movt	r4, #4095	@ 0xfff
+ c001394:	ea0c 0c04 	and.w	ip, ip, r4
+ c001398:	eee1 ca10 	vmsr	fpscr, ip
+ c00139c:	bc10      	pop	{r4}
+ c00139e:	46f4      	mov	ip, lr
+ c0013a0:	4774      	bxns	lr
+ c0013a2:	bf00      	nop
+ c0013a4:	0c00b334 	.word	0x0c00b334
+ c0013a8:	300018a4 	.word	0x300018a4
+ c0013ac:	30000000 	.word	0x30000000
 
-0c0013b4 <__acle_se_SECURE_TEST>:
+0c0013b0 <__acle_se_SECURE_TEST>:
 
 
 
 __attribute__((cmse_nonsecure_entry))
 void SECURE_TEST(uint8_t *output_digest, size_t maxlen)
 {
- c0013b4:	e92d 41f0 	stmdb	sp!, {r4, r5, r6, r7, r8, lr}
+ c0013b0:	e92d 41f0 	stmdb	sp!, {r4, r5, r6, r7, r8, lr}
 	 if (!output_digest || maxlen < SHA256_DIGEST_SIZE) return;
- c0013b8:	4605      	mov	r5, r0
+ c0013b4:	4605      	mov	r5, r0
 {
- c0013ba:	b0c0      	sub	sp, #256	@ 0x100
+ c0013b6:	f5ad 6d80 	sub.w	sp, sp, #1024	@ 0x400
 	 if (!output_digest || maxlen < SHA256_DIGEST_SIZE) return;
- c0013bc:	2800      	cmp	r0, #0
- c0013be:	d04e      	beq.n	c00145e <__acle_se_SECURE_TEST+0xaa>
- c0013c0:	291f      	cmp	r1, #31
- c0013c2:	d94c      	bls.n	c00145e <__acle_se_SECURE_TEST+0xaa>
+ c0013ba:	2800      	cmp	r0, #0
+ c0013bc:	d050      	beq.n	c001460 <__acle_se_SECURE_TEST+0xb0>
+ c0013be:	291f      	cmp	r1, #31
+ c0013c0:	d94e      	bls.n	c001460 <__acle_se_SECURE_TEST+0xb0>
 
 	    // Fill real_memory ifจำเป็น (ทำแบบ linear)
 	    for (int i = 0; i < TOTAL_SIZE * BLOCK_SIZE; i++) {
- c0013c4:	2300      	movs	r3, #0
+ c0013c2:	2300      	movs	r3, #0
 	        real_memory[i] = i & 0xFF;
- c0013c6:	4f41      	ldr	r7, [pc, #260]	@ (c0014cc <__acle_se_SECURE_TEST+0x118>)
- c0013c8:	683a      	ldr	r2, [r7, #0]
- c0013ca:	54d3      	strb	r3, [r2, r3]
+ c0013c4:	4f42      	ldr	r7, [pc, #264]	@ (c0014d0 <__acle_se_SECURE_TEST+0x120>)
+ c0013c6:	683a      	ldr	r2, [r7, #0]
+ c0013c8:	54d3      	strb	r3, [r2, r3]
 	    for (int i = 0; i < TOTAL_SIZE * BLOCK_SIZE; i++) {
- c0013cc:	3301      	adds	r3, #1
- c0013ce:	f1b3 4f80 	cmp.w	r3, #1073741824	@ 0x40000000
- c0013d2:	d1f9      	bne.n	c0013c8 <__acle_se_SECURE_TEST+0x14>
- c0013d4:	466e      	mov	r6, sp
+ c0013ca:	3301      	adds	r3, #1
+ c0013cc:	f1b3 4f80 	cmp.w	r3, #1073741824	@ 0x40000000
+ c0013d0:	d1f9      	bne.n	c0013c6 <__acle_se_SECURE_TEST+0x16>
+ c0013d2:	466e      	mov	r6, sp
 	    }
 
 	    // 1. Initialize indices
 	    int indices[BLOCKS];
 	    for (int i = 0; i < BLOCKS; i++) indices[i] = i;
- c0013d6:	2400      	movs	r4, #0
+ c0013d4:	2400      	movs	r4, #0
 	    for (int i = 0; i < TOTAL_SIZE * BLOCK_SIZE; i++) {
- c0013d8:	4633      	mov	r3, r6
+ c0013d6:	4633      	mov	r3, r6
 	    for (int i = 0; i < BLOCKS; i++) indices[i] = i;
- c0013da:	f843 4b04 	str.w	r4, [r3], #4
- c0013de:	3401      	adds	r4, #1
- c0013e0:	2c40      	cmp	r4, #64	@ 0x40
- c0013e2:	d1fa      	bne.n	c0013da <__acle_se_SECURE_TEST+0x26>
+ c0013d8:	f843 4b04 	str.w	r4, [r3], #4
+ c0013dc:	3401      	adds	r4, #1
+ c0013de:	f5b4 7f80 	cmp.w	r4, #256	@ 0x100
+ c0013e2:	d1f9      	bne.n	c0013d8 <__acle_se_SECURE_TEST+0x28>
 
 	    srand(42);
  c0013e4:	202a      	movs	r0, #42	@ 0x2a
@@ -2716,7 +2717,7 @@ void SECURE_TEST(uint8_t *output_digest, size_t maxlen)
 
 	    // 2. Shuffle indices
 	    for (int i = BLOCKS - 1; i > 0; i--) {
- c0013ea:	f50d 7880 	add.w	r8, sp, #256	@ 0x100
+ c0013ea:	f50d 6880 	add.w	r8, sp, #1024	@ 0x400
 	        int j = rand() % (i + 1);
  c0013ee:	f008 fbdb 	bl	c009ba8 <rand>
  c0013f2:	fb90 f3f4 	sdiv	r3, r0, r4
@@ -2733,386 +2734,385 @@ void SECURE_TEST(uint8_t *output_digest, size_t maxlen)
 	        indices[j] = tmp;
  c00140a:	f846 3020 	str.w	r3, [r6, r0, lsl #2]
 	    for (int i = BLOCKS - 1; i > 0; i--) {
- c00140e:	d1ee      	bne.n	c0013ee <__acle_se_SECURE_TEST+0x3a>
+ c00140e:	d1ee      	bne.n	c0013ee <__acle_se_SECURE_TEST+0x3e>
 	    }
 
 	    hmac_sha256_initialize(&hmac, key, strlen((const char *)key));
  c001410:	220e      	movs	r2, #14
- c001412:	492f      	ldr	r1, [pc, #188]	@ (c0014d0 <__acle_se_SECURE_TEST+0x11c>)
- c001414:	482f      	ldr	r0, [pc, #188]	@ (c0014d4 <__acle_se_SECURE_TEST+0x120>)
+ c001412:	4930      	ldr	r1, [pc, #192]	@ (c0014d4 <__acle_se_SECURE_TEST+0x124>)
+ c001414:	4830      	ldr	r0, [pc, #192]	@ (c0014d8 <__acle_se_SECURE_TEST+0x128>)
  c001416:	f7ff fb0a 	bl	c000a2e <hmac_sha256_initialize>
 
 	    for (int i = 0; i < BLOCKS; i++) {
  c00141a:	2400      	movs	r4, #0
 	        const uint8_t *block = &real_memory[indices[i] * BLOCK_SIZE];
 	        hmac_sha256_update(&hmac, block, BLOCK_SIZE);
- c00141c:	f8df 80b4 	ldr.w	r8, [pc, #180]	@ c0014d4 <__acle_se_SECURE_TEST+0x120>
+ c00141c:	f8df 80b8 	ldr.w	r8, [pc, #184]	@ c0014d8 <__acle_se_SECURE_TEST+0x128>
 	        const uint8_t *block = &real_memory[indices[i] * BLOCK_SIZE];
  c001420:	f856 1b04 	ldr.w	r1, [r6], #4
  c001424:	683b      	ldr	r3, [r7, #0]
 	        hmac_sha256_update(&hmac, block, BLOCK_SIZE);
- c001426:	f44f 5280 	mov.w	r2, #4096	@ 0x1000
+ c001426:	f44f 6200 	mov.w	r2, #2048	@ 0x800
  c00142a:	4640      	mov	r0, r8
- c00142c:	eb03 3101 	add.w	r1, r3, r1, lsl #12
+ c00142c:	eb03 21c1 	add.w	r1, r3, r1, lsl #11
 	    for (int i = 0; i < BLOCKS; i++) {
  c001430:	3401      	adds	r4, #1
 	        hmac_sha256_update(&hmac, block, BLOCK_SIZE);
  c001432:	f7ff fb45 	bl	c000ac0 <hmac_sha256_update>
 	    for (int i = 0; i < BLOCKS; i++) {
- c001436:	2c40      	cmp	r4, #64	@ 0x40
- c001438:	d1f2      	bne.n	c001420 <__acle_se_SECURE_TEST+0x6c>
+ c001436:	f5b4 7f80 	cmp.w	r4, #256	@ 0x100
+ c00143a:	d1f1      	bne.n	c001420 <__acle_se_SECURE_TEST+0x70>
 	    }
 
 	    hmac_sha256_finalize(&hmac, NULL, 0);
- c00143a:	2200      	movs	r2, #0
+ c00143c:	2200      	movs	r2, #0
 	    memcpy(output_digest, hmac.digest, SHA256_DIGEST_SIZE);
- c00143c:	4c25      	ldr	r4, [pc, #148]	@ (c0014d4 <__acle_se_SECURE_TEST+0x120>)
+ c00143e:	4c26      	ldr	r4, [pc, #152]	@ (c0014d8 <__acle_se_SECURE_TEST+0x128>)
 	    hmac_sha256_finalize(&hmac, NULL, 0);
- c00143e:	4611      	mov	r1, r2
- c001440:	4824      	ldr	r0, [pc, #144]	@ (c0014d4 <__acle_se_SECURE_TEST+0x120>)
- c001442:	f7ff fb40 	bl	c000ac6 <hmac_sha256_finalize>
+ c001440:	4611      	mov	r1, r2
+ c001442:	4825      	ldr	r0, [pc, #148]	@ (c0014d8 <__acle_se_SECURE_TEST+0x128>)
+ c001444:	f7ff fb3f 	bl	c000ac6 <hmac_sha256_finalize>
 	    memcpy(output_digest, hmac.digest, SHA256_DIGEST_SIZE);
- c001446:	462b      	mov	r3, r5
- c001448:	f104 0520 	add.w	r5, r4, #32
- c00144c:	4622      	mov	r2, r4
- c00144e:	ca03      	ldmia	r2!, {r0, r1}
- c001450:	42aa      	cmp	r2, r5
- c001452:	6018      	str	r0, [r3, #0]
- c001454:	6059      	str	r1, [r3, #4]
- c001456:	4614      	mov	r4, r2
- c001458:	f103 0308 	add.w	r3, r3, #8
- c00145c:	d1f6      	bne.n	c00144c <__acle_se_SECURE_TEST+0x98>
+ c001448:	462b      	mov	r3, r5
+ c00144a:	f104 0520 	add.w	r5, r4, #32
+ c00144e:	4622      	mov	r2, r4
+ c001450:	ca03      	ldmia	r2!, {r0, r1}
+ c001452:	42aa      	cmp	r2, r5
+ c001454:	6018      	str	r0, [r3, #0]
+ c001456:	6059      	str	r1, [r3, #4]
+ c001458:	4614      	mov	r4, r2
+ c00145a:	f103 0308 	add.w	r3, r3, #8
+ c00145e:	d1f6      	bne.n	c00144e <__acle_se_SECURE_TEST+0x9e>
 }
- c00145e:	b040      	add	sp, #256	@ 0x100
- c001460:	eeb7 0a00 	vmov.f32	s0, #112	@ 0x3f800000  1.0
- c001464:	e8bd 41f0 	ldmia.w	sp!, {r4, r5, r6, r7, r8, lr}
- c001468:	4670      	mov	r0, lr
- c00146a:	4671      	mov	r1, lr
- c00146c:	4672      	mov	r2, lr
- c00146e:	4673      	mov	r3, lr
- c001470:	eef7 0a00 	vmov.f32	s1, #112	@ 0x3f800000  1.0
- c001474:	eeb7 1a00 	vmov.f32	s2, #112	@ 0x3f800000  1.0
- c001478:	eef7 1a00 	vmov.f32	s3, #112	@ 0x3f800000  1.0
- c00147c:	eeb7 2a00 	vmov.f32	s4, #112	@ 0x3f800000  1.0
- c001480:	eef7 2a00 	vmov.f32	s5, #112	@ 0x3f800000  1.0
- c001484:	eeb7 3a00 	vmov.f32	s6, #112	@ 0x3f800000  1.0
- c001488:	eef7 3a00 	vmov.f32	s7, #112	@ 0x3f800000  1.0
- c00148c:	eeb7 4a00 	vmov.f32	s8, #112	@ 0x3f800000  1.0
- c001490:	eef7 4a00 	vmov.f32	s9, #112	@ 0x3f800000  1.0
- c001494:	eeb7 5a00 	vmov.f32	s10, #112	@ 0x3f800000  1.0
- c001498:	eef7 5a00 	vmov.f32	s11, #112	@ 0x3f800000  1.0
- c00149c:	eeb7 6a00 	vmov.f32	s12, #112	@ 0x3f800000  1.0
- c0014a0:	eef7 6a00 	vmov.f32	s13, #112	@ 0x3f800000  1.0
- c0014a4:	eeb7 7a00 	vmov.f32	s14, #112	@ 0x3f800000  1.0
- c0014a8:	eef7 7a00 	vmov.f32	s15, #112	@ 0x3f800000  1.0
- c0014ac:	f38e 8c00 	msr	CPSR_fs, lr
- c0014b0:	b410      	push	{r4}
- c0014b2:	eef1 ca10 	vmrs	ip, fpscr
- c0014b6:	f64f 7460 	movw	r4, #65376	@ 0xff60
- c0014ba:	f6c0 74ff 	movt	r4, #4095	@ 0xfff
- c0014be:	ea0c 0c04 	and.w	ip, ip, r4
- c0014c2:	eee1 ca10 	vmsr	fpscr, ip
- c0014c6:	bc10      	pop	{r4}
- c0014c8:	46f4      	mov	ip, lr
- c0014ca:	4774      	bxns	lr
- c0014cc:	30000000 	.word	0x30000000
- c0014d0:	0c00b334 	.word	0x0c00b334
- c0014d4:	300012a4 	.word	0x300012a4
+ c001460:	f50d 6d80 	add.w	sp, sp, #1024	@ 0x400
+ c001464:	eeb7 0a00 	vmov.f32	s0, #112	@ 0x3f800000  1.0
+ c001468:	e8bd 41f0 	ldmia.w	sp!, {r4, r5, r6, r7, r8, lr}
+ c00146c:	4670      	mov	r0, lr
+ c00146e:	4671      	mov	r1, lr
+ c001470:	4672      	mov	r2, lr
+ c001472:	4673      	mov	r3, lr
+ c001474:	eef7 0a00 	vmov.f32	s1, #112	@ 0x3f800000  1.0
+ c001478:	eeb7 1a00 	vmov.f32	s2, #112	@ 0x3f800000  1.0
+ c00147c:	eef7 1a00 	vmov.f32	s3, #112	@ 0x3f800000  1.0
+ c001480:	eeb7 2a00 	vmov.f32	s4, #112	@ 0x3f800000  1.0
+ c001484:	eef7 2a00 	vmov.f32	s5, #112	@ 0x3f800000  1.0
+ c001488:	eeb7 3a00 	vmov.f32	s6, #112	@ 0x3f800000  1.0
+ c00148c:	eef7 3a00 	vmov.f32	s7, #112	@ 0x3f800000  1.0
+ c001490:	eeb7 4a00 	vmov.f32	s8, #112	@ 0x3f800000  1.0
+ c001494:	eef7 4a00 	vmov.f32	s9, #112	@ 0x3f800000  1.0
+ c001498:	eeb7 5a00 	vmov.f32	s10, #112	@ 0x3f800000  1.0
+ c00149c:	eef7 5a00 	vmov.f32	s11, #112	@ 0x3f800000  1.0
+ c0014a0:	eeb7 6a00 	vmov.f32	s12, #112	@ 0x3f800000  1.0
+ c0014a4:	eef7 6a00 	vmov.f32	s13, #112	@ 0x3f800000  1.0
+ c0014a8:	eeb7 7a00 	vmov.f32	s14, #112	@ 0x3f800000  1.0
+ c0014ac:	eef7 7a00 	vmov.f32	s15, #112	@ 0x3f800000  1.0
+ c0014b0:	f38e 8c00 	msr	CPSR_fs, lr
+ c0014b4:	b410      	push	{r4}
+ c0014b6:	eef1 ca10 	vmrs	ip, fpscr
+ c0014ba:	f64f 7460 	movw	r4, #65376	@ 0xff60
+ c0014be:	f6c0 74ff 	movt	r4, #4095	@ 0xfff
+ c0014c2:	ea0c 0c04 	and.w	ip, ip, r4
+ c0014c6:	eee1 ca10 	vmsr	fpscr, ip
+ c0014ca:	bc10      	pop	{r4}
+ c0014cc:	46f4      	mov	ip, lr
+ c0014ce:	4774      	bxns	lr
+ c0014d0:	30000000 	.word	0x30000000
+ c0014d4:	0c00b334 	.word	0x0c00b334
+ c0014d8:	300018a4 	.word	0x300018a4
 
-0c0014d8 <__acle_se_Secure_FlashTest>:
+0c0014dc <__acle_se_Secure_FlashTest>:
 //
 //}
 
 __attribute__((cmse_nonsecure_entry))
 void Secure_FlashTest(void)
 {
- c0014d8:	e92d 43f0 	stmdb	sp!, {r4, r5, r6, r7, r8, r9, lr}
- c0014dc:	b08d      	sub	sp, #52	@ 0x34
+ c0014dc:	e92d 43f0 	stmdb	sp!, {r4, r5, r6, r7, r8, r9, lr}
+ c0014e0:	b08d      	sub	sp, #52	@ 0x34
 	 	HAL_StatusTypeDef status;
 	    FLASH_EraseInitTypeDef EraseInitStruct = {0};
- c0014de:	2210      	movs	r2, #16
- c0014e0:	2100      	movs	r1, #0
- c0014e2:	a802      	add	r0, sp, #8
- c0014e4:	f008 fda8 	bl	c00a038 <memset>
+ c0014e2:	2210      	movs	r2, #16
+ c0014e4:	2100      	movs	r1, #0
+ c0014e6:	a802      	add	r0, sp, #8
+ c0014e8:	f008 fda6 	bl	c00a038 <memset>
 	    FLASH_BBAttributesTypeDef flash_bb_attr = {0};
- c0014e8:	2218      	movs	r2, #24
- c0014ea:	2100      	movs	r1, #0
- c0014ec:	eb0d 0002 	add.w	r0, sp, r2
- c0014f0:	f008 fda2 	bl	c00a038 <memset>
+ c0014ec:	2218      	movs	r2, #24
+ c0014ee:	2100      	movs	r1, #0
+ c0014f0:	eb0d 0002 	add.w	r0, sp, r2
+ c0014f4:	f008 fda0 	bl	c00a038 <memset>
 	    uint32_t PageError = 0;
- c0014f4:	2300      	movs	r3, #0
+ c0014f8:	2300      	movs	r3, #0
 
 	    printf("[Secure] === Flash Test (with BB Attributes) ===\r\n");
 
 	    // ========== Step 1: Get Current BB Attributes ==========
 	    flash_bb_attr.Bank = FLASH_TEST_BANK;
 	    flash_bb_attr.BBAttributesType = FLASH_BB_SEC;
- c0014f6:	2402      	movs	r4, #2
- c0014f8:	2601      	movs	r6, #1
+ c0014fa:	2402      	movs	r4, #2
+ c0014fc:	2601      	movs	r6, #1
 	    printf("[Secure] === Flash Test (with BB Attributes) ===\r\n");
- c0014fa:	487b      	ldr	r0, [pc, #492]	@ (c0016e8 <__acle_se_Secure_FlashTest+0x210>)
+ c0014fe:	487a      	ldr	r0, [pc, #488]	@ (c0016e8 <__acle_se_Secure_FlashTest+0x20c>)
 	    uint32_t PageError = 0;
- c0014fc:	9301      	str	r3, [sp, #4]
+ c001500:	9301      	str	r3, [sp, #4]
 	    printf("[Secure] === Flash Test (with BB Attributes) ===\r\n");
- c0014fe:	f008 fcbb 	bl	c009e78 <puts>
+ c001502:	f008 fcb9 	bl	c009e78 <puts>
 
 	    HAL_FLASHEx_GetConfigBBAttributes(&flash_bb_attr);
- c001502:	a806      	add	r0, sp, #24
+ c001506:	a806      	add	r0, sp, #24
 	    flash_bb_attr.BBAttributesType = FLASH_BB_SEC;
- c001504:	e9cd 4606 	strd	r4, r6, [sp, #24]
+ c001508:	e9cd 4606 	strd	r4, r6, [sp, #24]
 	    HAL_FLASHEx_GetConfigBBAttributes(&flash_bb_attr);
- c001508:	f002 fd0a 	bl	c003f20 <HAL_FLASHEx_GetConfigBBAttributes>
+ c00150c:	f002 fd08 	bl	c003f20 <HAL_FLASHEx_GetConfigBBAttributes>
 
 	    uint32_t attr_index = FLASH_TEST_PAGE / 32;  // 120/32 = 3
 	    uint32_t attr_bit = FLASH_TEST_PAGE % 32;    // 120%32 = 24
 
 	    saved_attr = flash_bb_attr.BBAttributes_array[attr_index];
- c00150c:	9f0b      	ldr	r7, [sp, #44]	@ 0x2c
+ c001510:	9f0b      	ldr	r7, [sp, #44]	@ 0x2c
 	    uint32_t page_is_secure = (saved_attr >> attr_bit) & 0x1;
 
 	    printf("[Secure] Page %d current: %s\r\n",
- c00150e:	4b77      	ldr	r3, [pc, #476]	@ (c0016ec <__acle_se_Secure_FlashTest+0x214>)
- c001510:	f017 7f80 	tst.w	r7, #16777216	@ 0x1000000
- c001514:	f04f 0178 	mov.w	r1, #120	@ 0x78
- c001518:	4a75      	ldr	r2, [pc, #468]	@ (c0016f0 <__acle_se_Secure_FlashTest+0x218>)
- c00151a:	4876      	ldr	r0, [pc, #472]	@ (c0016f4 <__acle_se_Secure_FlashTest+0x21c>)
- c00151c:	bf18      	it	ne
- c00151e:	461a      	movne	r2, r3
- c001520:	f008 fc42 	bl	c009da8 <iprintf>
+ c001512:	4b76      	ldr	r3, [pc, #472]	@ (c0016ec <__acle_se_Secure_FlashTest+0x210>)
+ c001514:	f017 7f80 	tst.w	r7, #16777216	@ 0x1000000
+ c001518:	f04f 0178 	mov.w	r1, #120	@ 0x78
+ c00151c:	4a74      	ldr	r2, [pc, #464]	@ (c0016f0 <__acle_se_Secure_FlashTest+0x214>)
+ c00151e:	4875      	ldr	r0, [pc, #468]	@ (c0016f4 <__acle_se_Secure_FlashTest+0x218>)
+ c001520:	bf18      	it	ne
+ c001522:	461a      	movne	r2, r3
+ c001524:	f008 fc40 	bl	c009da8 <iprintf>
 	           FLASH_TEST_PAGE,
 	           page_is_secure ? "SECURE" : "NON-SECURE");
 
 	    // ========== Step 2: Promote Page to SECURE ==========
 	    printf("[Secure] Promoting to SECURE...\r\n");
- c001524:	4874      	ldr	r0, [pc, #464]	@ (c0016f8 <__acle_se_Secure_FlashTest+0x220>)
- c001526:	f008 fca7 	bl	c009e78 <puts>
+ c001528:	4873      	ldr	r0, [pc, #460]	@ (c0016f8 <__acle_se_Secure_FlashTest+0x21c>)
+ c00152a:	f008 fca5 	bl	c009e78 <puts>
 
 	    // Set bit to make page Secure
 	    flash_bb_attr.BBAttributes_array[attr_index] |= (1U << attr_bit);
- c00152a:	9b0b      	ldr	r3, [sp, #44]	@ 0x2c
+ c00152e:	9b0b      	ldr	r3, [sp, #44]	@ 0x2c
 
 	    status = HAL_FLASHEx_ConfigBBAttributes(&flash_bb_attr);
- c00152c:	a806      	add	r0, sp, #24
+ c001530:	a806      	add	r0, sp, #24
 	    flash_bb_attr.BBAttributes_array[attr_index] |= (1U << attr_bit);
- c00152e:	f043 7380 	orr.w	r3, r3, #16777216	@ 0x1000000
- c001532:	930b      	str	r3, [sp, #44]	@ 0x2c
+ c001532:	f043 7380 	orr.w	r3, r3, #16777216	@ 0x1000000
+ c001536:	930b      	str	r3, [sp, #44]	@ 0x2c
 	    status = HAL_FLASHEx_ConfigBBAttributes(&flash_bb_attr);
- c001534:	f002 fcca 	bl	c003ecc <HAL_FLASHEx_ConfigBBAttributes>
+ c001538:	f002 fcc8 	bl	c003ecc <HAL_FLASHEx_ConfigBBAttributes>
 	    if (status != HAL_OK)
- c001538:	4601      	mov	r1, r0
- c00153a:	b3c8      	cbz	r0, c0015b0 <__acle_se_Secure_FlashTest+0xd8>
+ c00153c:	4601      	mov	r1, r0
+ c00153e:	b3c8      	cbz	r0, c0015b4 <__acle_se_Secure_FlashTest+0xd8>
 	    {
 	        printf("[Secure] ❌ Promote FAILED: %d\r\n", status);
- c00153c:	486f      	ldr	r0, [pc, #444]	@ (c0016fc <__acle_se_Secure_FlashTest+0x224>)
- c00153e:	f008 fc33 	bl	c009da8 <iprintf>
+ c001540:	486e      	ldr	r0, [pc, #440]	@ (c0016fc <__acle_se_Secure_FlashTest+0x220>)
+ c001542:	f008 fc31 	bl	c009da8 <iprintf>
 	    // ========== Step 10: Invalidate Caches ==========
 	    __DSB();
 	    __ISB();
 
 	    printf("[Secure] 🎉 Flash Test Complete!\r\n");
 }
- c001542:	b00d      	add	sp, #52	@ 0x34
- c001544:	eeb7 0a00 	vmov.f32	s0, #112	@ 0x3f800000  1.0
- c001548:	e8bd 43f0 	ldmia.w	sp!, {r4, r5, r6, r7, r8, r9, lr}
- c00154c:	4670      	mov	r0, lr
- c00154e:	4671      	mov	r1, lr
- c001550:	4672      	mov	r2, lr
- c001552:	4673      	mov	r3, lr
- c001554:	eef7 0a00 	vmov.f32	s1, #112	@ 0x3f800000  1.0
- c001558:	eeb7 1a00 	vmov.f32	s2, #112	@ 0x3f800000  1.0
- c00155c:	eef7 1a00 	vmov.f32	s3, #112	@ 0x3f800000  1.0
- c001560:	eeb7 2a00 	vmov.f32	s4, #112	@ 0x3f800000  1.0
- c001564:	eef7 2a00 	vmov.f32	s5, #112	@ 0x3f800000  1.0
- c001568:	eeb7 3a00 	vmov.f32	s6, #112	@ 0x3f800000  1.0
- c00156c:	eef7 3a00 	vmov.f32	s7, #112	@ 0x3f800000  1.0
- c001570:	eeb7 4a00 	vmov.f32	s8, #112	@ 0x3f800000  1.0
- c001574:	eef7 4a00 	vmov.f32	s9, #112	@ 0x3f800000  1.0
- c001578:	eeb7 5a00 	vmov.f32	s10, #112	@ 0x3f800000  1.0
- c00157c:	eef7 5a00 	vmov.f32	s11, #112	@ 0x3f800000  1.0
- c001580:	eeb7 6a00 	vmov.f32	s12, #112	@ 0x3f800000  1.0
- c001584:	eef7 6a00 	vmov.f32	s13, #112	@ 0x3f800000  1.0
- c001588:	eeb7 7a00 	vmov.f32	s14, #112	@ 0x3f800000  1.0
- c00158c:	eef7 7a00 	vmov.f32	s15, #112	@ 0x3f800000  1.0
- c001590:	f38e 8c00 	msr	CPSR_fs, lr
- c001594:	b410      	push	{r4}
- c001596:	eef1 ca10 	vmrs	ip, fpscr
- c00159a:	f64f 7460 	movw	r4, #65376	@ 0xff60
- c00159e:	f6c0 74ff 	movt	r4, #4095	@ 0xfff
- c0015a2:	ea0c 0c04 	and.w	ip, ip, r4
- c0015a6:	eee1 ca10 	vmsr	fpscr, ip
- c0015aa:	bc10      	pop	{r4}
- c0015ac:	46f4      	mov	ip, lr
- c0015ae:	4774      	bxns	lr
+ c001546:	b00d      	add	sp, #52	@ 0x34
+ c001548:	eeb7 0a00 	vmov.f32	s0, #112	@ 0x3f800000  1.0
+ c00154c:	e8bd 43f0 	ldmia.w	sp!, {r4, r5, r6, r7, r8, r9, lr}
+ c001550:	4670      	mov	r0, lr
+ c001552:	4671      	mov	r1, lr
+ c001554:	4672      	mov	r2, lr
+ c001556:	4673      	mov	r3, lr
+ c001558:	eef7 0a00 	vmov.f32	s1, #112	@ 0x3f800000  1.0
+ c00155c:	eeb7 1a00 	vmov.f32	s2, #112	@ 0x3f800000  1.0
+ c001560:	eef7 1a00 	vmov.f32	s3, #112	@ 0x3f800000  1.0
+ c001564:	eeb7 2a00 	vmov.f32	s4, #112	@ 0x3f800000  1.0
+ c001568:	eef7 2a00 	vmov.f32	s5, #112	@ 0x3f800000  1.0
+ c00156c:	eeb7 3a00 	vmov.f32	s6, #112	@ 0x3f800000  1.0
+ c001570:	eef7 3a00 	vmov.f32	s7, #112	@ 0x3f800000  1.0
+ c001574:	eeb7 4a00 	vmov.f32	s8, #112	@ 0x3f800000  1.0
+ c001578:	eef7 4a00 	vmov.f32	s9, #112	@ 0x3f800000  1.0
+ c00157c:	eeb7 5a00 	vmov.f32	s10, #112	@ 0x3f800000  1.0
+ c001580:	eef7 5a00 	vmov.f32	s11, #112	@ 0x3f800000  1.0
+ c001584:	eeb7 6a00 	vmov.f32	s12, #112	@ 0x3f800000  1.0
+ c001588:	eef7 6a00 	vmov.f32	s13, #112	@ 0x3f800000  1.0
+ c00158c:	eeb7 7a00 	vmov.f32	s14, #112	@ 0x3f800000  1.0
+ c001590:	eef7 7a00 	vmov.f32	s15, #112	@ 0x3f800000  1.0
+ c001594:	f38e 8c00 	msr	CPSR_fs, lr
+ c001598:	b410      	push	{r4}
+ c00159a:	eef1 ca10 	vmrs	ip, fpscr
+ c00159e:	f64f 7460 	movw	r4, #65376	@ 0xff60
+ c0015a2:	f6c0 74ff 	movt	r4, #4095	@ 0xfff
+ c0015a6:	ea0c 0c04 	and.w	ip, ip, r4
+ c0015aa:	eee1 ca10 	vmsr	fpscr, ip
+ c0015ae:	bc10      	pop	{r4}
+ c0015b0:	46f4      	mov	ip, lr
+ c0015b2:	4774      	bxns	lr
 	    printf("[Secure] ✅ Promoted to SECURE\r\n");
- c0015b0:	4853      	ldr	r0, [pc, #332]	@ (c001700 <__acle_se_Secure_FlashTest+0x228>)
- c0015b2:	f008 fc61 	bl	c009e78 <puts>
+ c0015b4:	4852      	ldr	r0, [pc, #328]	@ (c001700 <__acle_se_Secure_FlashTest+0x224>)
+ c0015b6:	f008 fc5f 	bl	c009e78 <puts>
 	    status = HAL_FLASH_Unlock();
- c0015b6:	f002 f997 	bl	c0038e8 <HAL_FLASH_Unlock>
+ c0015ba:	f002 f995 	bl	c0038e8 <HAL_FLASH_Unlock>
 	    if (status != HAL_OK)
- c0015ba:	4601      	mov	r1, r0
- c0015bc:	b1d0      	cbz	r0, c0015f4 <__acle_se_Secure_FlashTest+0x11c>
+ c0015be:	4601      	mov	r1, r0
+ c0015c0:	b1d0      	cbz	r0, c0015f8 <__acle_se_Secure_FlashTest+0x11c>
 	        printf("[Secure] ❌ Unlock FAILED: %d\r\n", status);
- c0015be:	4851      	ldr	r0, [pc, #324]	@ (c001704 <__acle_se_Secure_FlashTest+0x22c>)
- c0015c0:	f008 fbf2 	bl	c009da8 <iprintf>
+ c0015c2:	4850      	ldr	r0, [pc, #320]	@ (c001704 <__acle_se_Secure_FlashTest+0x228>)
+ c0015c4:	f008 fbf0 	bl	c009da8 <iprintf>
 	    printf("[Secure] Restoring attributes...\r\n");
- c0015c4:	4850      	ldr	r0, [pc, #320]	@ (c001708 <__acle_se_Secure_FlashTest+0x230>)
- c0015c6:	f008 fc57 	bl	c009e78 <puts>
+ c0015c8:	484f      	ldr	r0, [pc, #316]	@ (c001708 <__acle_se_Secure_FlashTest+0x22c>)
+ c0015ca:	f008 fc55 	bl	c009e78 <puts>
 	    status = HAL_FLASHEx_ConfigBBAttributes(&flash_bb_attr);
- c0015ca:	a806      	add	r0, sp, #24
+ c0015ce:	a806      	add	r0, sp, #24
 	    flash_bb_attr.BBAttributes_array[attr_index] = saved_attr;
- c0015cc:	970b      	str	r7, [sp, #44]	@ 0x2c
+ c0015d0:	970b      	str	r7, [sp, #44]	@ 0x2c
 	    status = HAL_FLASHEx_ConfigBBAttributes(&flash_bb_attr);
- c0015ce:	f002 fc7d 	bl	c003ecc <HAL_FLASHEx_ConfigBBAttributes>
+ c0015d2:	f002 fc7b 	bl	c003ecc <HAL_FLASHEx_ConfigBBAttributes>
 	    if (status != HAL_OK)
- c0015d2:	4601      	mov	r1, r0
- c0015d4:	2800      	cmp	r0, #0
- c0015d6:	d07e      	beq.n	c0016d6 <__acle_se_Secure_FlashTest+0x1fe>
+ c0015d6:	4601      	mov	r1, r0
+ c0015d8:	2800      	cmp	r0, #0
+ c0015da:	d07e      	beq.n	c0016da <__acle_se_Secure_FlashTest+0x1fe>
 	        printf("[Secure] ⚠️  WARNING: Failed to restore: %d\r\n", status);
- c0015d8:	484c      	ldr	r0, [pc, #304]	@ (c00170c <__acle_se_Secure_FlashTest+0x234>)
- c0015da:	f008 fbe5 	bl	c009da8 <iprintf>
+ c0015dc:	484b      	ldr	r0, [pc, #300]	@ (c00170c <__acle_se_Secure_FlashTest+0x230>)
+ c0015de:	f008 fbe3 	bl	c009da8 <iprintf>
 	        printf("[Secure] ⚠️  Page may remain SECURE!\r\n");
- c0015de:	484c      	ldr	r0, [pc, #304]	@ (c001710 <__acle_se_Secure_FlashTest+0x238>)
+ c0015e2:	484b      	ldr	r0, [pc, #300]	@ (c001710 <__acle_se_Secure_FlashTest+0x234>)
 	        printf("[Secure] ✅ Attributes restored\r\n");
- c0015e0:	f008 fc4a 	bl	c009e78 <puts>
+ c0015e4:	f008 fc48 	bl	c009e78 <puts>
   \details Acts as a special kind of Data Memory Barrier.
            It completes when all explicit memory accesses before this instruction complete.
  */
 __STATIC_FORCEINLINE void __DSB(void)
 {
   __ASM volatile ("dsb 0xF":::"memory");
- c0015e4:	f3bf 8f4f 	dsb	sy
+ c0015e8:	f3bf 8f4f 	dsb	sy
   __ASM volatile ("isb 0xF":::"memory");
- c0015e8:	f3bf 8f6f 	isb	sy
+ c0015ec:	f3bf 8f6f 	isb	sy
 	    printf("[Secure] 🎉 Flash Test Complete!\r\n");
- c0015ec:	4849      	ldr	r0, [pc, #292]	@ (c001714 <__acle_se_Secure_FlashTest+0x23c>)
- c0015ee:	f008 fc43 	bl	c009e78 <puts>
- c0015f2:	e7a6      	b.n	c001542 <__acle_se_Secure_FlashTest+0x6a>
+ c0015f0:	4848      	ldr	r0, [pc, #288]	@ (c001714 <__acle_se_Secure_FlashTest+0x238>)
+ c0015f2:	f008 fc41 	bl	c009e78 <puts>
+ c0015f6:	e7a6      	b.n	c001546 <__acle_se_Secure_FlashTest+0x6a>
 	    printf("[Secure] ✅ Unlocked\r\n");
- c0015f4:	4848      	ldr	r0, [pc, #288]	@ (c001718 <__acle_se_Secure_FlashTest+0x240>)
- c0015f6:	f008 fc3f 	bl	c009e78 <puts>
+ c0015f8:	4847      	ldr	r0, [pc, #284]	@ (c001718 <__acle_se_Secure_FlashTest+0x23c>)
+ c0015fa:	f008 fc3d 	bl	c009e78 <puts>
 	    EraseInitStruct.Page = FLASH_TEST_PAGE;
- c0015fa:	2378      	movs	r3, #120	@ 0x78
+ c0015fe:	2378      	movs	r3, #120	@ 0x78
 	    status = HAL_FLASHEx_Erase(&EraseInitStruct, &PageError);
- c0015fc:	a901      	add	r1, sp, #4
- c0015fe:	a802      	add	r0, sp, #8
+ c001600:	a901      	add	r1, sp, #4
+ c001602:	a802      	add	r0, sp, #8
 	    EraseInitStruct.NbPages = 1;
- c001600:	e9cd 3604 	strd	r3, r6, [sp, #16]
+ c001604:	e9cd 3604 	strd	r3, r6, [sp, #16]
 	    EraseInitStruct.TypeErase = FLASH_TYPEERASE_PAGES;
- c001604:	9402      	str	r4, [sp, #8]
+ c001608:	9402      	str	r4, [sp, #8]
 	    EraseInitStruct.Banks = FLASH_TEST_BANK;
- c001606:	9403      	str	r4, [sp, #12]
+ c00160a:	9403      	str	r4, [sp, #12]
 	    status = HAL_FLASHEx_Erase(&EraseInitStruct, &PageError);
- c001608:	f002 fd5c 	bl	c0040c4 <HAL_FLASHEx_Erase>
+ c00160c:	f002 fd5a 	bl	c0040c4 <HAL_FLASHEx_Erase>
 	    if (status != HAL_OK || PageError != 0xFFFFFFFF)
- c00160c:	4601      	mov	r1, r0
- c00160e:	b910      	cbnz	r0, c001616 <__acle_se_Secure_FlashTest+0x13e>
- c001610:	9b01      	ldr	r3, [sp, #4]
- c001612:	3301      	adds	r3, #1
- c001614:	d006      	beq.n	c001624 <__acle_se_Secure_FlashTest+0x14c>
+ c001610:	4601      	mov	r1, r0
+ c001612:	b910      	cbnz	r0, c00161a <__acle_se_Secure_FlashTest+0x13e>
+ c001614:	9b01      	ldr	r3, [sp, #4]
+ c001616:	3301      	adds	r3, #1
+ c001618:	d006      	beq.n	c001628 <__acle_se_Secure_FlashTest+0x14c>
 	        printf("[Secure] ❌ Erase FAILED: status=%d, PageError=0x%08lX\r\n",
- c001616:	9a01      	ldr	r2, [sp, #4]
- c001618:	4840      	ldr	r0, [pc, #256]	@ (c00171c <__acle_se_Secure_FlashTest+0x244>)
- c00161a:	f008 fbc5 	bl	c009da8 <iprintf>
+ c00161a:	9a01      	ldr	r2, [sp, #4]
+ c00161c:	483f      	ldr	r0, [pc, #252]	@ (c00171c <__acle_se_Secure_FlashTest+0x240>)
+ c00161e:	f008 fbc3 	bl	c009da8 <iprintf>
 	        HAL_FLASH_Lock();
- c00161e:	f002 f983 	bl	c003928 <HAL_FLASH_Lock>
+ c001622:	f002 f981 	bl	c003928 <HAL_FLASH_Lock>
 	        goto restore_attributes;
- c001622:	e7cf      	b.n	c0015c4 <__acle_se_Secure_FlashTest+0xec>
+ c001626:	e7cf      	b.n	c0015c8 <__acle_se_Secure_FlashTest+0xec>
 	    memcpy(ns_work_buffer, &test_data, sizeof(test_data));
- c001624:	f8df 9138 	ldr.w	r9, [pc, #312]	@ c001760 <__acle_se_Secure_FlashTest+0x288>
+ c001628:	f8df 9134 	ldr.w	r9, [pc, #308]	@ c001760 <__acle_se_Secure_FlashTest+0x284>
 	    printf("[Secure] ✅ Erase OK\r\n");
- c001628:	483d      	ldr	r0, [pc, #244]	@ (c001720 <__acle_se_Secure_FlashTest+0x248>)
- c00162a:	f008 fc25 	bl	c009e78 <puts>
+ c00162c:	483c      	ldr	r0, [pc, #240]	@ (c001720 <__acle_se_Secure_FlashTest+0x244>)
+ c00162e:	f008 fc23 	bl	c009e78 <puts>
 	    memcpy(ns_work_buffer, &test_data, sizeof(test_data));
- c00162e:	a52c      	add	r5, pc, #176	@ (adr r5, c0016e0 <__acle_se_Secure_FlashTest+0x208>)
- c001630:	e9d5 4500 	ldrd	r4, r5, [r5]
- c001634:	e9c9 4500 	strd	r4, r5, [r9]
+ c001632:	a52b      	add	r5, pc, #172	@ (adr r5, c0016e0 <__acle_se_Secure_FlashTest+0x204>)
+ c001634:	e9d5 4500 	ldrd	r4, r5, [r5]
+ c001638:	e9c9 4500 	strd	r4, r5, [r9]
   __ASM volatile ("dsb 0xF":::"memory");
- c001638:	f3bf 8f4f 	dsb	sy
+ c00163c:	f3bf 8f4f 	dsb	sy
   __ASM volatile ("isb 0xF":::"memory");
- c00163c:	f3bf 8f6f 	isb	sy
+ c001640:	f3bf 8f6f 	isb	sy
 	    status = HAL_FLASH_Program(FLASH_TYPEPROGRAM_DOUBLEWORD,
- c001640:	f8df 8120 	ldr.w	r8, [pc, #288]	@ c001764 <__acle_se_Secure_FlashTest+0x28c>
+ c001644:	f8df 811c 	ldr.w	r8, [pc, #284]	@ c001764 <__acle_se_Secure_FlashTest+0x288>
 	    printf("[Secure] Programming...\r\n");
- c001644:	4837      	ldr	r0, [pc, #220]	@ (c001724 <__acle_se_Secure_FlashTest+0x24c>)
- c001646:	f008 fc17 	bl	c009e78 <puts>
+ c001648:	4836      	ldr	r0, [pc, #216]	@ (c001724 <__acle_se_Secure_FlashTest+0x248>)
+ c00164a:	f008 fc15 	bl	c009e78 <puts>
 	    status = HAL_FLASH_Program(FLASH_TYPEPROGRAM_DOUBLEWORD,
- c00164a:	e9d9 2300 	ldrd	r2, r3, [r9]
- c00164e:	4630      	mov	r0, r6
- c001650:	4641      	mov	r1, r8
- c001652:	f002 f9e9 	bl	c003a28 <HAL_FLASH_Program>
+ c00164e:	e9d9 2300 	ldrd	r2, r3, [r9]
+ c001652:	4630      	mov	r0, r6
+ c001654:	4641      	mov	r1, r8
+ c001656:	f002 f9e7 	bl	c003a28 <HAL_FLASH_Program>
 	    if (status != HAL_OK)
- c001656:	4606      	mov	r6, r0
- c001658:	b198      	cbz	r0, c001682 <__acle_se_Secure_FlashTest+0x1aa>
+ c00165a:	4606      	mov	r6, r0
+ c00165c:	b198      	cbz	r0, c001686 <__acle_se_Secure_FlashTest+0x1aa>
 	        uint32_t flash_error = HAL_FLASH_GetError();
- c00165a:	f002 f9a3 	bl	c0039a4 <HAL_FLASH_GetError>
- c00165e:	4604      	mov	r4, r0
+ c00165e:	f002 f9a1 	bl	c0039a4 <HAL_FLASH_GetError>
+ c001662:	4604      	mov	r4, r0
 	        printf("[Secure] ❌ Program FAILED\r\n");
- c001660:	4831      	ldr	r0, [pc, #196]	@ (c001728 <__acle_se_Secure_FlashTest+0x250>)
- c001662:	f008 fc09 	bl	c009e78 <puts>
+ c001664:	4830      	ldr	r0, [pc, #192]	@ (c001728 <__acle_se_Secure_FlashTest+0x24c>)
+ c001666:	f008 fc07 	bl	c009e78 <puts>
 	        printf("[Secure]    Status: %d\r\n", status);
- c001666:	4631      	mov	r1, r6
- c001668:	4830      	ldr	r0, [pc, #192]	@ (c00172c <__acle_se_Secure_FlashTest+0x254>)
- c00166a:	f008 fb9d 	bl	c009da8 <iprintf>
+ c00166a:	4631      	mov	r1, r6
+ c00166c:	482f      	ldr	r0, [pc, #188]	@ (c00172c <__acle_se_Secure_FlashTest+0x250>)
+ c00166e:	f008 fb9b 	bl	c009da8 <iprintf>
 	        printf("[Secure]    Error: 0x%08lX\r\n", flash_error);
- c00166e:	4621      	mov	r1, r4
- c001670:	482f      	ldr	r0, [pc, #188]	@ (c001730 <__acle_se_Secure_FlashTest+0x258>)
- c001672:	f008 fb99 	bl	c009da8 <iprintf>
+ c001672:	4621      	mov	r1, r4
+ c001674:	482e      	ldr	r0, [pc, #184]	@ (c001730 <__acle_se_Secure_FlashTest+0x254>)
+ c001676:	f008 fb97 	bl	c009da8 <iprintf>
 	        printf("[Secure]    SECSR: 0x%08lX\r\n", FLASH->SECSR);
- c001676:	4b2f      	ldr	r3, [pc, #188]	@ (c001734 <__acle_se_Secure_FlashTest+0x25c>)
- c001678:	482f      	ldr	r0, [pc, #188]	@ (c001738 <__acle_se_Secure_FlashTest+0x260>)
- c00167a:	6a59      	ldr	r1, [r3, #36]	@ 0x24
- c00167c:	f008 fb94 	bl	c009da8 <iprintf>
- c001680:	e7cd      	b.n	c00161e <__acle_se_Secure_FlashTest+0x146>
+ c00167a:	4b2e      	ldr	r3, [pc, #184]	@ (c001734 <__acle_se_Secure_FlashTest+0x258>)
+ c00167c:	482e      	ldr	r0, [pc, #184]	@ (c001738 <__acle_se_Secure_FlashTest+0x25c>)
+ c00167e:	6a59      	ldr	r1, [r3, #36]	@ 0x24
+ c001680:	f008 fb92 	bl	c009da8 <iprintf>
+ c001684:	e7cd      	b.n	c001622 <__acle_se_Secure_FlashTest+0x146>
 	    printf("[Secure] ✅ Program OK\r\n");
- c001682:	482e      	ldr	r0, [pc, #184]	@ (c00173c <__acle_se_Secure_FlashTest+0x264>)
- c001684:	f008 fbf8 	bl	c009e78 <puts>
+ c001686:	482d      	ldr	r0, [pc, #180]	@ (c00173c <__acle_se_Secure_FlashTest+0x260>)
+ c001688:	f008 fbf6 	bl	c009e78 <puts>
 	    HAL_FLASH_Lock();
- c001688:	f002 f94e 	bl	c003928 <HAL_FLASH_Lock>
+ c00168c:	f002 f94c 	bl	c003928 <HAL_FLASH_Lock>
   __ASM volatile ("dsb 0xF":::"memory");
- c00168c:	f3bf 8f4f 	dsb	sy
+ c001690:	f3bf 8f4f 	dsb	sy
   __ASM volatile ("isb 0xF":::"memory");
- c001690:	f3bf 8f6f 	isb	sy
+ c001694:	f3bf 8f6f 	isb	sy
 	    uint64_t verify_value = *(volatile uint64_t*)FLASH_TEST_ADDR_SECURE;
- c001694:	e9d8 8900 	ldrd	r8, r9, [r8]
+ c001698:	e9d8 8900 	ldrd	r8, r9, [r8]
 	    if (verify_value == test_data)
- c001698:	4b29      	ldr	r3, [pc, #164]	@ (c001740 <__acle_se_Secure_FlashTest+0x268>)
- c00169a:	4599      	cmp	r9, r3
- c00169c:	bf08      	it	eq
- c00169e:	4598      	cmpeq	r8, r3
- c0016a0:	d10d      	bne.n	c0016be <__acle_se_Secure_FlashTest+0x1e6>
+ c00169c:	4b28      	ldr	r3, [pc, #160]	@ (c001740 <__acle_se_Secure_FlashTest+0x264>)
+ c00169e:	4599      	cmp	r9, r3
+ c0016a0:	bf08      	it	eq
+ c0016a2:	4598      	cmpeq	r8, r3
+ c0016a4:	d10d      	bne.n	c0016c2 <__acle_se_Secure_FlashTest+0x1e6>
 	        printf("[Secure] ✅ Verify OK!\r\n");
- c0016a2:	4828      	ldr	r0, [pc, #160]	@ (c001744 <__acle_se_Secure_FlashTest+0x26c>)
- c0016a4:	f008 fbe8 	bl	c009e78 <puts>
+ c0016a6:	4827      	ldr	r0, [pc, #156]	@ (c001744 <__acle_se_Secure_FlashTest+0x268>)
+ c0016a8:	f008 fbe6 	bl	c009e78 <puts>
 	        printf("[Secure]    Written:  0x%016llX\r\n", test_data);
- c0016a8:	4622      	mov	r2, r4
- c0016aa:	462b      	mov	r3, r5
- c0016ac:	4826      	ldr	r0, [pc, #152]	@ (c001748 <__acle_se_Secure_FlashTest+0x270>)
- c0016ae:	f008 fb7b 	bl	c009da8 <iprintf>
+ c0016ac:	4622      	mov	r2, r4
+ c0016ae:	462b      	mov	r3, r5
+ c0016b0:	4825      	ldr	r0, [pc, #148]	@ (c001748 <__acle_se_Secure_FlashTest+0x26c>)
+ c0016b2:	f008 fb79 	bl	c009da8 <iprintf>
 	        printf("[Secure]    Read:     0x%016llX\r\n", verify_value);
- c0016b2:	4622      	mov	r2, r4
- c0016b4:	462b      	mov	r3, r5
- c0016b6:	4825      	ldr	r0, [pc, #148]	@ (c00174c <__acle_se_Secure_FlashTest+0x274>)
+ c0016b6:	4622      	mov	r2, r4
+ c0016b8:	462b      	mov	r3, r5
+ c0016ba:	4824      	ldr	r0, [pc, #144]	@ (c00174c <__acle_se_Secure_FlashTest+0x270>)
 	        printf("[Secure]    Got:      0x%016llX\r\n", verify_value);
- c0016b8:	f008 fb76 	bl	c009da8 <iprintf>
- c0016bc:	e782      	b.n	c0015c4 <__acle_se_Secure_FlashTest+0xec>
+ c0016bc:	f008 fb74 	bl	c009da8 <iprintf>
+ c0016c0:	e782      	b.n	c0015c8 <__acle_se_Secure_FlashTest+0xec>
 	        printf("[Secure] ❌ Verify FAILED!\r\n");
- c0016be:	4824      	ldr	r0, [pc, #144]	@ (c001750 <__acle_se_Secure_FlashTest+0x278>)
- c0016c0:	f008 fbda 	bl	c009e78 <puts>
+ c0016c2:	4823      	ldr	r0, [pc, #140]	@ (c001750 <__acle_se_Secure_FlashTest+0x274>)
+ c0016c4:	f008 fbd8 	bl	c009e78 <puts>
 	        printf("[Secure]    Expected: 0x%016llX\r\n", test_data);
- c0016c4:	4622      	mov	r2, r4
- c0016c6:	462b      	mov	r3, r5
- c0016c8:	4822      	ldr	r0, [pc, #136]	@ (c001754 <__acle_se_Secure_FlashTest+0x27c>)
- c0016ca:	f008 fb6d 	bl	c009da8 <iprintf>
+ c0016c8:	4622      	mov	r2, r4
+ c0016ca:	462b      	mov	r3, r5
+ c0016cc:	4821      	ldr	r0, [pc, #132]	@ (c001754 <__acle_se_Secure_FlashTest+0x278>)
+ c0016ce:	f008 fb6b 	bl	c009da8 <iprintf>
 	        printf("[Secure]    Got:      0x%016llX\r\n", verify_value);
- c0016ce:	4642      	mov	r2, r8
- c0016d0:	464b      	mov	r3, r9
- c0016d2:	4821      	ldr	r0, [pc, #132]	@ (c001758 <__acle_se_Secure_FlashTest+0x280>)
- c0016d4:	e7f0      	b.n	c0016b8 <__acle_se_Secure_FlashTest+0x1e0>
+ c0016d2:	4642      	mov	r2, r8
+ c0016d4:	464b      	mov	r3, r9
+ c0016d6:	4820      	ldr	r0, [pc, #128]	@ (c001758 <__acle_se_Secure_FlashTest+0x27c>)
+ c0016d8:	e7f0      	b.n	c0016bc <__acle_se_Secure_FlashTest+0x1e0>
 	        printf("[Secure] ✅ Attributes restored\r\n");
- c0016d6:	4821      	ldr	r0, [pc, #132]	@ (c00175c <__acle_se_Secure_FlashTest+0x284>)
- c0016d8:	e782      	b.n	c0015e0 <__acle_se_Secure_FlashTest+0x108>
- c0016da:	bf00      	nop
- c0016dc:	f3af 8000 	nop.w
+ c0016da:	4820      	ldr	r0, [pc, #128]	@ (c00175c <__acle_se_Secure_FlashTest+0x280>)
+ c0016dc:	e782      	b.n	c0015e4 <__acle_se_Secure_FlashTest+0x108>
+ c0016de:	bf00      	nop
  c0016e0:	12345678 	.word	0x12345678
  c0016e4:	12345678 	.word	0x12345678
  c0016e8:	0c00ae81 	.word	0x0c00ae81
@@ -3145,7 +3145,7 @@ __STATIC_FORCEINLINE void __DSB(void)
  c001754:	0c00b0db 	.word	0x0c00b0db
  c001758:	0c00b0fd 	.word	0x0c00b0fd
  c00175c:	0c00b19d 	.word	0x0c00b19d
- c001760:	30003f40 	.word	0x30003f40
+ c001760:	30004540 	.word	0x30004540
  c001764:	0c0be000 	.word	0x0c0be000
 
 0c001768 <__acle_se_Secure_EraseWriteVerify>:
@@ -4268,7 +4268,7 @@ void SecureFault_Handler(void)
   while (1)
  c001ec8:	e7fe      	b.n	c001ec8 <SecureFault_Handler+0x5e>
  c001eca:	bf00      	nop
- c001ecc:	3000149c 	.word	0x3000149c
+ c001ecc:	30001a9c 	.word	0x30001a9c
 
 0c001ed0 <SVC_Handler>:
 
@@ -4362,7 +4362,7 @@ void GTZC_IRQHandler(void)
     while(1);
  c001f3c:	e7fe      	b.n	c001f3c <GTZC_IRQHandler+0x62>
  c001f3e:	bf00      	nop
- c001f40:	30001498 	.word	0x30001498
+ c001f40:	30001a98 	.word	0x30001a98
 
 0c001f44 <initialise_monitor_handles>:
 
@@ -4691,8 +4691,8 @@ int _gettimeofday(struct timeval *tv, void *tz)
   return (void *)prev_heap_end;
  c002050:	e7fc      	b.n	c00204c <_sbrk+0x28>
  c002052:	bf00      	nop
- c002054:	300014a0 	.word	0x300014a0
- c002058:	30004040 	.word	0x30004040
+ c002054:	30001aa0 	.word	0x30001aa0
+ c002058:	30004640 	.word	0x30004640
  c00205c:	30018000 	.word	0x30018000
  c002060:	00000400 	.word	0x00000400
 
@@ -5058,7 +5058,7 @@ int32_t BSP_PB_Init(Button_TypeDef Button, ButtonMode_TypeDef ButtonMode)
  c002232:	bf00      	nop
  c002234:	50021000 	.word	0x50021000
  c002238:	52020800 	.word	0x52020800
- c00223c:	300014a4 	.word	0x300014a4
+ c00223c:	30001aa4 	.word	0x30001aa4
  c002240:	0600000d 	.word	0x0600000d
  c002244:	0c00227f 	.word	0x0c00227f
 
@@ -5140,7 +5140,7 @@ static void BUTTON_USER_EXTI_Callback(void)
  c00228a:	4b02      	ldr	r3, [pc, #8]	@ (c002294 <BSP_PB_IRQHandler+0xc>)
  c00228c:	fb02 3000 	mla	r0, r2, r0, r3
  c002290:	f001 b9f7 	b.w	c003682 <HAL_EXTI_IRQHandler>
- c002294:	300014a4 	.word	0x300014a4
+ c002294:	30001aa4 	.word	0x30001aa4
 
 0c002298 <BSP_COM_DeInit>:
 {
@@ -5228,7 +5228,7 @@ static void BUTTON_USER_EXTI_Callback(void)
   return status;
  c002316:	e7fa      	b.n	c00230e <BSP_COM_DeInit+0x76>
  c002318:	0c00b350 	.word	0x0c00b350
- c00231c:	300014b0 	.word	0x300014b0
+ c00231c:	30001ab0 	.word	0x30001ab0
  c002320:	50008000 	.word	0x50008000
  c002324:	52021800 	.word	0x52021800
  c002328:	52020c00 	.word	0x52020c00
@@ -5437,7 +5437,7 @@ __weak HAL_StatusTypeDef MX_USART3_Init(UART_HandleTypeDef* huart, MX_UART_InitT
  c0024a4:	e7d8      	b.n	c002458 <BSP_COM_Init+0xf6>
  c0024a6:	bf00      	nop
  c0024a8:	0c00b350 	.word	0x0c00b350
- c0024ac:	300014b0 	.word	0x300014b0
+ c0024ac:	30001ab0 	.word	0x30001ab0
  c0024b0:	52021800 	.word	0x52021800
  c0024b4:	52020c00 	.word	0x52020c00
  c0024b8:	50021000 	.word	0x50021000
@@ -5903,7 +5903,7 @@ __weak void HAL_IncTick(void)
  c002784:	6013      	str	r3, [r2, #0]
 }
  c002786:	4770      	bx	lr
- c002788:	300015d8 	.word	0x300015d8
+ c002788:	30001bd8 	.word	0x30001bd8
  c00278c:	30000008 	.word	0x30000008
 
 0c002790 <HAL_GetTick>:
@@ -5918,7 +5918,7 @@ __weak uint32_t HAL_GetTick(void)
 }
  c002794:	4770      	bx	lr
  c002796:	bf00      	nop
- c002798:	300015d8 	.word	0x300015d8
+ c002798:	30001bd8 	.word	0x30001bd8
 
 0c00279c <HAL_GetTickPrio>:
   * @retval tick priority
@@ -24133,8 +24133,8 @@ uint8_t *puc;
  c0090d6:	4619      	mov	r1, r3
  c0090d8:	e7f8      	b.n	c0090cc <prvInsertBlockIntoFreeList+0x34>
  c0090da:	bf00      	nop
- c0090dc:	300015ec 	.word	0x300015ec
- c0090e0:	300015e8 	.word	0x300015e8
+ c0090dc:	30001bec 	.word	0x30001bec
+ c0090e0:	30001be8 	.word	0x30001be8
 
 0c0090e4 <pvPortMalloc>:
 BlockLink_t *pxBlock, *pxPreviousBlock, *pxNewBlockLink;
@@ -24357,12 +24357,12 @@ void *pvReturn = NULL;
 	return pvReturn;
 }
  c0091cc:	e8bd 81f0 	ldmia.w	sp!, {r4, r5, r6, r7, r8, pc}
- c0091d0:	300015e8 	.word	0x300015e8
- c0091d4:	300015dc 	.word	0x300015dc
- c0091d8:	300015f4 	.word	0x300015f4
- c0091dc:	300015ec 	.word	0x300015ec
- c0091e0:	300015e0 	.word	0x300015e0
- c0091e4:	300015e4 	.word	0x300015e4
+ c0091d0:	30001be8 	.word	0x30001be8
+ c0091d4:	30001bdc 	.word	0x30001bdc
+ c0091d8:	30001bf4 	.word	0x30001bf4
+ c0091dc:	30001bec 	.word	0x30001bec
+ c0091e0:	30001be0 	.word	0x30001be0
+ c0091e4:	30001be4 	.word	0x30001be4
 
 0c0091e8 <vPortFree>:
 /*-----------------------------------------------------------*/
@@ -24431,8 +24431,8 @@ BlockLink_t *pxLink;
 	}
 }
  c009236:	bd10      	pop	{r4, pc}
- c009238:	300015dc 	.word	0x300015dc
- c00923c:	300015e4 	.word	0x300015e4
+ c009238:	30001bdc 	.word	0x30001bdc
+ c00923c:	30001be4 	.word	0x30001be4
 
 0c009240 <xPortGetFreeHeapSize>:
 /*-----------------------------------------------------------*/
@@ -24445,7 +24445,7 @@ size_t xPortGetFreeHeapSize( void )
  c009242:	6818      	ldr	r0, [r3, #0]
  c009244:	4770      	bx	lr
  c009246:	bf00      	nop
- c009248:	300015e4 	.word	0x300015e4
+ c009248:	30001be4 	.word	0x30001be4
 
 0c00924c <xPortGetMinimumEverFreeHeapSize>:
 /*-----------------------------------------------------------*/
@@ -24458,7 +24458,7 @@ size_t xPortGetMinimumEverFreeHeapSize( void )
  c00924e:	6818      	ldr	r0, [r3, #0]
  c009250:	4770      	bx	lr
  c009252:	bf00      	nop
- c009254:	300015e0 	.word	0x300015e0
+ c009254:	30001be0 	.word	0x30001be0
 
 0c009258 <vPortInitialiseBlocks>:
 /*-----------------------------------------------------------*/
@@ -25044,7 +25044,7 @@ LoopForever:
 	ldr	r2, =_sbss
  c0097a8:	30000088 	.word	0x30000088
 	ldr	r3, = _ebss
- c0097ac:	30003f40 	.word	0x30003f40
+ c0097ac:	30004540 	.word	0x30004540
 
 0c0097b0 <ADC1_2_IRQHandler>:
  * @retval : None
@@ -25381,7 +25381,7 @@ int main(void)
  c009a2a:	d1f2      	bne.n	c009a12 <sbrk_aligned+0x22>
  c009a2c:	e7ef      	b.n	c009a0e <sbrk_aligned+0x1e>
  c009a2e:	bf00      	nop
- c009a30:	30003df4 	.word	0x30003df4
+ c009a30:	300043f4 	.word	0x300043f4
 
 0c009a34 <_malloc_r>:
  c009a34:	e92d 43f8 	stmdb	sp!, {r3, r4, r5, r6, r7, r8, r9, lr}
@@ -25491,19 +25491,19 @@ int main(void)
  c009b2a:	6005      	str	r5, [r0, #0]
  c009b2c:	e7d6      	b.n	c009adc <_malloc_r+0xa8>
  c009b2e:	bf00      	nop
- c009b30:	30003df8 	.word	0x30003df8
+ c009b30:	300043f8 	.word	0x300043f8
 
 0c009b34 <__malloc_lock>:
  c009b34:	4801      	ldr	r0, [pc, #4]	@ (c009b3c <__malloc_lock+0x8>)
  c009b36:	f000 bb1c 	b.w	c00a172 <__retarget_lock_acquire_recursive>
  c009b3a:	bf00      	nop
- c009b3c:	30003f3c 	.word	0x30003f3c
+ c009b3c:	3000453c 	.word	0x3000453c
 
 0c009b40 <__malloc_unlock>:
  c009b40:	4801      	ldr	r0, [pc, #4]	@ (c009b48 <__malloc_unlock+0x8>)
  c009b42:	f000 bb17 	b.w	c00a174 <__retarget_lock_release_recursive>
  c009b46:	bf00      	nop
- c009b48:	30003f3c 	.word	0x30003f3c
+ c009b48:	3000453c 	.word	0x3000453c
 
 0c009b4c <srand>:
  c009b4c:	b538      	push	{r3, r4, r5, lr}
@@ -25632,7 +25632,7 @@ int main(void)
  c009c80:	0c009eab 	.word	0x0c009eab
  c009c84:	0c009ee3 	.word	0x0c009ee3
  c009c88:	0c009f07 	.word	0x0c009f07
- c009c8c:	30003dfc 	.word	0x30003dfc
+ c009c8c:	300043fc 	.word	0x300043fc
 
 0c009c90 <stdio_exit_handler>:
  c009c90:	4a02      	ldr	r2, [pc, #8]	@ (c009c9c <stdio_exit_handler+0xc>)
@@ -25667,9 +25667,9 @@ int main(void)
  c009cd4:	f000 be1a 	b.w	c00a90c <_fflush_r>
  c009cd8:	bd10      	pop	{r4, pc}
  c009cda:	bf00      	nop
- c009cdc:	30003dfc 	.word	0x30003dfc
- c009ce0:	30003e64 	.word	0x30003e64
- c009ce4:	30003ecc 	.word	0x30003ecc
+ c009cdc:	300043fc 	.word	0x300043fc
+ c009ce0:	30004464 	.word	0x30004464
+ c009ce4:	300044cc 	.word	0x300044cc
 
 0c009ce8 <global_stdio_init.part.0>:
  c009ce8:	b510      	push	{r4, lr}
@@ -25690,21 +25690,21 @@ int main(void)
  c009d0e:	2112      	movs	r1, #18
  c009d10:	e8bd 4010 	ldmia.w	sp!, {r4, lr}
  c009d14:	f7ff bf86 	b.w	c009c24 <std>
- c009d18:	30003f34 	.word	0x30003f34
- c009d1c:	30003dfc 	.word	0x30003dfc
+ c009d18:	30004534 	.word	0x30004534
+ c009d1c:	300043fc 	.word	0x300043fc
  c009d20:	0c009c91 	.word	0x0c009c91
 
 0c009d24 <__sfp_lock_acquire>:
  c009d24:	4801      	ldr	r0, [pc, #4]	@ (c009d2c <__sfp_lock_acquire+0x8>)
  c009d26:	f000 ba24 	b.w	c00a172 <__retarget_lock_acquire_recursive>
  c009d2a:	bf00      	nop
- c009d2c:	30003f3d 	.word	0x30003f3d
+ c009d2c:	3000453d 	.word	0x3000453d
 
 0c009d30 <__sfp_lock_release>:
  c009d30:	4801      	ldr	r0, [pc, #4]	@ (c009d38 <__sfp_lock_release+0x8>)
  c009d32:	f000 ba1f 	b.w	c00a174 <__retarget_lock_release_recursive>
  c009d36:	bf00      	nop
- c009d38:	30003f3d 	.word	0x30003f3d
+ c009d38:	3000453d 	.word	0x3000453d
 
 0c009d3c <__sinit>:
  c009d3c:	b510      	push	{r4, lr}
@@ -25724,7 +25724,7 @@ int main(void)
  c009d60:	e7f2      	b.n	c009d48 <__sinit+0xc>
  c009d62:	bf00      	nop
  c009d64:	0c009ca9 	.word	0x0c009ca9
- c009d68:	30003f34 	.word	0x30003f34
+ c009d68:	30004534 	.word	0x30004534
 
 0c009d6c <_fwalk_sglue>:
  c009d6c:	e92d 43f8 	stmdb	sp!, {r3, r4, r5, r6, r7, r8, r9, lr}
@@ -26091,7 +26091,7 @@ int main(void)
  c00a086:	b103      	cbz	r3, c00a08a <_close_r+0x1a>
  c00a088:	6023      	str	r3, [r4, #0]
  c00a08a:	bd38      	pop	{r3, r4, r5, pc}
- c00a08c:	30003f38 	.word	0x30003f38
+ c00a08c:	30004538 	.word	0x30004538
 
 0c00a090 <_lseek_r>:
  c00a090:	b538      	push	{r3, r4, r5, lr}
@@ -26109,7 +26109,7 @@ int main(void)
  c00a0aa:	b103      	cbz	r3, c00a0ae <_lseek_r+0x1e>
  c00a0ac:	6023      	str	r3, [r4, #0]
  c00a0ae:	bd38      	pop	{r3, r4, r5, pc}
- c00a0b0:	30003f38 	.word	0x30003f38
+ c00a0b0:	30004538 	.word	0x30004538
 
 0c00a0b4 <_read_r>:
  c00a0b4:	b538      	push	{r3, r4, r5, lr}
@@ -26127,7 +26127,7 @@ int main(void)
  c00a0ce:	b103      	cbz	r3, c00a0d2 <_read_r+0x1e>
  c00a0d0:	6023      	str	r3, [r4, #0]
  c00a0d2:	bd38      	pop	{r3, r4, r5, pc}
- c00a0d4:	30003f38 	.word	0x30003f38
+ c00a0d4:	30004538 	.word	0x30004538
 
 0c00a0d8 <_sbrk_r>:
  c00a0d8:	b538      	push	{r3, r4, r5, lr}
@@ -26143,7 +26143,7 @@ int main(void)
  c00a0ee:	b103      	cbz	r3, c00a0f2 <_sbrk_r+0x1a>
  c00a0f0:	6023      	str	r3, [r4, #0]
  c00a0f2:	bd38      	pop	{r3, r4, r5, pc}
- c00a0f4:	30003f38 	.word	0x30003f38
+ c00a0f4:	30004538 	.word	0x30004538
 
 0c00a0f8 <_write_r>:
  c00a0f8:	b538      	push	{r3, r4, r5, lr}
@@ -26161,7 +26161,7 @@ int main(void)
  c00a112:	b103      	cbz	r3, c00a116 <_write_r+0x1e>
  c00a114:	6023      	str	r3, [r4, #0]
  c00a116:	bd38      	pop	{r3, r4, r5, pc}
- c00a118:	30003f38 	.word	0x30003f38
+ c00a118:	30004538 	.word	0x30004538
 
 0c00a11c <__errno>:
  c00a11c:	4b01      	ldr	r3, [pc, #4]	@ (c00a124 <__errno+0x8>)
@@ -26317,7 +26317,7 @@ int main(void)
  c00a256:	e7ca      	b.n	c00a1ee <_free_r+0x22>
  c00a258:	bd38      	pop	{r3, r4, r5, pc}
  c00a25a:	bf00      	nop
- c00a25c:	30003df8 	.word	0x30003df8
+ c00a25c:	300043f8 	.word	0x300043f8
 
 0c00a260 <__sfputc_r>:
  c00a260:	6893      	ldr	r3, [r2, #8]
@@ -27191,7 +27191,7 @@ int main(void)
  c00aa5e:	6023      	str	r3, [r4, #0]
  c00aa60:	bd38      	pop	{r3, r4, r5, pc}
  c00aa62:	bf00      	nop
- c00aa64:	30003f38 	.word	0x30003f38
+ c00aa64:	30004538 	.word	0x30004538
 
 0c00aa68 <_isatty_r>:
  c00aa68:	b538      	push	{r3, r4, r5, lr}
@@ -27207,7 +27207,7 @@ int main(void)
  c00aa7e:	b103      	cbz	r3, c00aa82 <_isatty_r+0x1a>
  c00aa80:	6023      	str	r3, [r4, #0]
  c00aa82:	bd38      	pop	{r3, r4, r5, pc}
- c00aa84:	30003f38 	.word	0x30003f38
+ c00aa84:	30004538 	.word	0x30004538
 
 0c00aa88 <memchr>:
  c00aa88:	b2c9      	uxtb	r1, r1
@@ -27293,7 +27293,7 @@ int main(void)
  c00ab2e:	6023      	str	r3, [r4, #0]
  c00ab30:	bd38      	pop	{r3, r4, r5, pc}
  c00ab32:	bf00      	nop
- c00ab34:	30003f38 	.word	0x30003f38
+ c00ab34:	30004538 	.word	0x30004538
 
 0c00ab38 <_getpid_r>:
  c00ab38:	f7f7 ba05 	b.w	c001f46 <_getpid>
@@ -27344,11 +27344,11 @@ Disassembly of section .gnu.sgstubs:
 
 0c03e030 <SECURE_SMARM>:
  c03e030:	e97f e97f 	sg
- c03e034:	f7c3 b930 	b.w	c001298 <__acle_se_SECURE_SMARM>
+ c03e034:	f7c3 b92c 	b.w	c001290 <__acle_se_SECURE_SMARM>
 
 0c03e038 <SECURE_ShuffledHMAC>:
  c03e038:	e97f e97f 	sg
- c03e03c:	f7c2 bfa6 	b.w	c000f8c <__acle_se_SECURE_ShuffledHMAC>
+ c03e03c:	f7c2 bfa8 	b.w	c000f90 <__acle_se_SECURE_ShuffledHMAC>
 
 0c03e040 <SECURE_LEDToggle>:
  c03e040:	e97f e97f 	sg
@@ -27356,7 +27356,7 @@ Disassembly of section .gnu.sgstubs:
 
 0c03e048 <SECURE_ShuffledHMAC_secure>:
  c03e048:	e97f e97f 	sg
- c03e04c:	f7c3 b82c 	b.w	c0010a8 <__acle_se_SECURE_ShuffledHMAC_secure>
+ c03e04c:	f7c3 b832 	b.w	c0010b4 <__acle_se_SECURE_ShuffledHMAC_secure>
 
 0c03e050 <Secure_Flash256KB>:
  c03e050:	e97f e97f 	sg
@@ -27372,7 +27372,7 @@ Disassembly of section .gnu.sgstubs:
 
 0c03e068 <Secure_FlashTest>:
  c03e068:	e97f e97f 	sg
- c03e06c:	f7c3 ba34 	b.w	c0014d8 <__acle_se_Secure_FlashTest>
+ c03e06c:	f7c3 ba36 	b.w	c0014dc <__acle_se_Secure_FlashTest>
 
 0c03e070 <Secure_EraseWriteVerify>:
  c03e070:	e97f e97f 	sg
@@ -27380,7 +27380,7 @@ Disassembly of section .gnu.sgstubs:
 
 0c03e078 <SECURE_TEST>:
  c03e078:	e97f e97f 	sg
- c03e07c:	f7c3 b99a 	b.w	c0013b4 <__acle_se_SECURE_TEST>
+ c03e07c:	f7c3 b998 	b.w	c0013b0 <__acle_se_SECURE_TEST>
 
 0c03e080 <SecureContext_LoadContext>:
  c03e080:	e97f e97f 	sg

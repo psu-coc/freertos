@@ -1,5 +1,5 @@
 Middlewares/FreeRTOS/port.o: \
- C:/Users/laoam/OneDrive/Documents/stm32/workspace/freertostrustzone-master/freertostrustzone-master/Middlewares/Third_Party/FreeRTOS/Source/portable/GCC/ARM_CM33/non_secure/port.c \
+ C:/Users/PC/STM32CubeIDE/workspace_2.0.0/freertos/Middlewares/Third_Party/FreeRTOS/Source/portable/GCC/ARM_CM33/non_secure/port.c \
  ../../../Middlewares/Third_Party/FreeRTOS/Source/include/FreeRTOS.h \
  ../../../NonSecure/Inc/FreeRTOSConfig.h \
  ../../../Middlewares/Third_Party/FreeRTOS/Source/include/projdefs.h \
@@ -10,7 +10,7 @@ Middlewares/FreeRTOS/port.o: \
  ../../../Middlewares/Third_Party/FreeRTOS/Source/include/task.h \
  ../../../Middlewares/Third_Party/FreeRTOS/Source/include/list.h \
  ../../../Middlewares/Third_Party/FreeRTOS/Source/include/mpu_wrappers.h \
- C:/Users/laoam/OneDrive/Documents/stm32/workspace/freertostrustzone-master/freertostrustzone-master/Middlewares/Third_Party/FreeRTOS/Source/portable/GCC/ARM_CM33/non_secure/portasm.h \
+ C:/Users/PC/STM32CubeIDE/workspace_2.0.0/freertos/Middlewares/Third_Party/FreeRTOS/Source/portable/GCC/ARM_CM33/non_secure/portasm.h \
  ../../../Middlewares/Third_Party/FreeRTOS/Source/portable/GCC/ARM_CM33/secure/secure_context.h \
  ../../../Middlewares/Third_Party/FreeRTOS/Source/portable/GCC/ARM_CM33/secure/secure_init.h
 ../../../Middlewares/Third_Party/FreeRTOS/Source/include/FreeRTOS.h:
@@ -23,6 +23,6 @@ Middlewares/FreeRTOS/port.o: \
 ../../../Middlewares/Third_Party/FreeRTOS/Source/include/task.h:
 ../../../Middlewares/Third_Party/FreeRTOS/Source/include/list.h:
 ../../../Middlewares/Third_Party/FreeRTOS/Source/include/mpu_wrappers.h:
-C:/Users/laoam/OneDrive/Documents/stm32/workspace/freertostrustzone-master/freertostrustzone-master/Middlewares/Third_Party/FreeRTOS/Source/portable/GCC/ARM_CM33/non_secure/portasm.h:
+C:/Users/PC/STM32CubeIDE/workspace_2.0.0/freertos/Middlewares/Third_Party/FreeRTOS/Source/portable/GCC/ARM_CM33/non_secure/portasm.h:
 ../../../Middlewares/Third_Party/FreeRTOS/Source/portable/GCC/ARM_CM33/secure/secure_context.h:
 ../../../Middlewares/Third_Party/FreeRTOS/Source/portable/GCC/ARM_CM33/secure/secure_init.h:

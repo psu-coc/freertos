@@ -1,5 +1,5 @@
 Application/User/stm32l5xx_hal_msp.o: \
- C:/Users/laoam/OneDrive/Documents/stm32/workspace/freertostrustzone-master/freertostrustzone-master/Secure/Src/stm32l5xx_hal_msp.c \
+ C:/Users/PC/STM32CubeIDE/workspace_2.0.0/freertos/Secure/Src/stm32l5xx_hal_msp.c \
  ../../../Secure/Inc/main.h \
  ../../../Drivers/STM32L5xx_HAL_Driver/Inc/stm32l5xx_hal.h \
  ../../../Secure/Inc/stm32l5xx_hal_conf.h \

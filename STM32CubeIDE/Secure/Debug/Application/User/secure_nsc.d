@@ -1,5 +1,5 @@
 Application/User/secure_nsc.o: \
- C:/Users/laoam/OneDrive/Documents/stm32/workspace/freertostrustzone-master/freertostrustzone-master/Secure/Src/secure_nsc.c \
+ C:/Users/PC/STM32CubeIDE/workspace_2.0.0/freertos/Secure/Src/secure_nsc.c \
  ../../../Secure/Inc/main.h \
  ../../../Drivers/STM32L5xx_HAL_Driver/Inc/stm32l5xx_hal.h \
  ../../../Secure/Inc/stm32l5xx_hal_conf.h \

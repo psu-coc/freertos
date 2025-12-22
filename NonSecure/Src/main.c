@@ -148,6 +148,8 @@ void StartTask02(void *argument);
 void SecureFault_Callback(void);
 void SecureError_Callback(void);
 void LinearHMAC(void *argument);
+void NormalTask(void *argument);
+void SMARM_Experiment_Task(void *argument);
 
 UART_HandleTypeDef huart1;  // or whichever UART you're using
 
@@ -222,12 +224,12 @@ int main(void)
 
   /* Create the thread(s) */
   /* creation of LEDThreadHandle */
-//  LEDThreadHandleHandle = osThreadNew(LED_Thread, NULL, &LEDThreadHandle_attributes);
+  LEDThreadHandleHandle = osThreadNew(NormalTask, NULL, &LEDThreadHandle_attributes);
 
   /* creation of myTask02 */
-//  myTask02Handle = osThreadNew(StartTask02, NULL, &myTask02_attributes);
+//  myTask02Handle = osThreadNew(LED_Thread, NULL, &myTask02_attributes);
 
-  myTask02Handle = osThreadNew(LinearHMAC, NULL, &myTask02_attributes);
+  myTask02Handle = osThreadNew(SMARM_Experiment_Task, NULL, &myTask02_attributes);
 
   /* USER CODE BEGIN RTOS_THREADS */
   /* add threads, ... */
@@ -1232,6 +1234,115 @@ test_end:
   }
 }
 
+
+void SMARM_Experiment_Task(void *argument)
+{
+    (void) argument;
+
+    portALLOCATE_SECURE_CONTEXT(4096);
+
+    uint8_t digest[32];
+    uint8_t challenge[16];
+
+    osDelay(3000);
+
+    for(;;)
+    {
+
+        uint32_t seed = osKernelGetTickCount();
+        for(int k=0; k<4; k++) {
+            uint32_t rnd = seed ^ (seed << 13) ^ (k * 0x5DEECE66D);
+            memcpy(&challenge[k*4], &rnd, 4);
+        }
+
+        uint32_t start_tim2 = __HAL_TIM_GET_COUNTER(&htim2);
+        uint32_t start_systick = osKernelGetTickCount();
+
+        SECURE_ShuffledHMAC_secure(digest, sizeof(digest), challenge, sizeof(challenge));
+
+        uint32_t end_tim2 = __HAL_TIM_GET_COUNTER(&htim2);
+        uint32_t end_systick = osKernelGetTickCount();
+
+        uint32_t duration_os_ms = end_systick - start_systick;
+
+
+        uint32_t tim2_diff = end_tim2 - start_tim2;
+
+        #define TIM2_FREQ 137500
+        uint32_t duration_real_ms = ((uint64_t)tim2_diff * 1000) / TIM2_FREQ;
+
+        osDelay(1);
+    }
+}
+
+#define TARGET_FREQ_HZ   1000
+#define TIM2_TICKS_PER_SEC  137500
+
+void NormalTask(void *argument)
+{
+	(void) argument;
+
+	    // คำนวณ Period (1000 / 1000 = 1 tick)
+	    const uint32_t period_os_ticks = 1000 / TARGET_FREQ_HZ;
+
+	    uint32_t next_wake_time = osKernelGetTickCount();
+	    uint32_t loop_counter = 0;
+
+	    // เริ่มจับเวลา TIM2
+	    uint32_t start_tim2 = __HAL_TIM_GET_COUNTER(&htim2);
+
+	    printf("\r\n=== FREQUENCY TEST MODE (Integer Math) ===\r\n");
+	    printf("Target: %d Hz | TickRate: %d\r\n", TARGET_FREQ_HZ, configTICK_RATE_HZ);
+
+	    for (;;)
+	    {
+	        // 1. คุมจังหวะการทำงาน
+	        next_wake_time += period_os_ticks;
+	        osDelayUntil(next_wake_time);
+
+	        // 2. นับรอบ
+	        loop_counter++;
+
+	        // 3. เช็คเวลา TIM2
+	        uint32_t current_tim2 = __HAL_TIM_GET_COUNTER(&htim2);
+	        uint32_t elapsed_tim2 = current_tim2 - start_tim2; // Auto-handle overflow
+
+	        // ถ้าเวลาผ่านไปเกิน 1 วินาที (โดยใช้ TIM2 เป็นเกณฑ์)
+	        if (elapsed_tim2 >= TIM2_TICKS_PER_SEC)
+	        {
+	            // --- คำนวณแบบไม่ใช้ Float (%f) เพื่อแก้ปัญหาค่าไม่ออก ---
+
+	            // 1. คำนวณเวลาจริงหน่วยวินาที (x1000 เพื่อทำเป็นทศนิยม 3 ตำแหน่ง)
+	            // สูตร: (Elapsed_Ticks * 1000) / Ticks_Per_Sec
+	            uint32_t time_ms = (uint64_t)elapsed_tim2 * 1000 / TIM2_TICKS_PER_SEC;
+
+	            // แยกวินาที กับ มิลลิวินาที
+	            uint32_t time_s_int = time_ms / 1000;
+	            uint32_t time_s_dec = time_ms % 1000;
+
+	            // 2. คำนวณความถี่จริง (Hz) (x100 เพื่อทำเป็นทศนิยม 2 ตำแหน่ง)
+	            // สูตร: (Count * Hardware_Ticks_Per_Sec * 100) / Elapsed_Hardware_Ticks
+	            // การใช้ Hardware Ticks หารโดยตรงจะแม่นยำกว่าแปลงเป็น ms ก่อน
+	            uint32_t freq_x100 = ((uint64_t)loop_counter * TIM2_TICKS_PER_SEC * 100) / elapsed_tim2;
+
+	            // แยกจำนวนเต็ม กับ ทศนิยม
+	            uint32_t freq_int = freq_x100 / 100;
+	            uint32_t freq_dec = freq_x100 % 100;
+
+	            if (xSemaphoreTake(uart_mutex, pdMS_TO_TICKS(10)) == pdTRUE) {
+	                // ปริ้นโดยใช้ %lu ทั้งหมด
+	                printf("Time: %lu.%03lu s | Count: %lu | ActFreq: %lu.%02lu Hz\r\n",
+	                       time_s_int, time_s_dec, loop_counter, freq_int, freq_dec);
+	                xSemaphoreGive(uart_mutex);
+	            }
+
+	            // Reset
+	            loop_counter = 0;
+	            start_tim2 = current_tim2;
+	        }
+	    }
+}
+
 void LinearHMAC(void *argument)
 {
     (void) argument;
@@ -1246,11 +1357,11 @@ void LinearHMAC(void *argument)
     	for(int i = 1 ; i<=5 ;i++){
 
 
-			if (xSemaphoreTake(uart_mutex, pdMS_TO_TICKS(100)) == pdTRUE) {
-				printf("------------------------\r\n");
-				printf("Round %d\r\n", i);
-				xSemaphoreGive(uart_mutex);
-			}
+//			if (xSemaphoreTake(uart_mutex, pdMS_TO_TICKS(100)) == pdTRUE) {
+//				printf("------------------------\r\n");
+//				printf("Roundddd %d\r\n", i);
+//				xSemaphoreGive(uart_mutex);
+//			}
 
 			// Capture start timestamps
 			uint32_t systick_before = osKernelGetTickCount();
@@ -1295,16 +1406,16 @@ void LinearHMAC(void *argument)
 			}
 
 			// ========== Print results ==========
-			if (xSemaphoreTake(uart_mutex, pdMS_TO_TICKS(100)) == pdTRUE) {
-				printf("TIMER cycles: %lu\r\n", tim2_elapsed);
-				printf("TIMER ms: %lu\r\n", tim2_ms);
-				printf("Systick tick: %lu\r\n", systick_elapsed);
-				printf("Systick ms: %lu\r\n", systick_ms);
-				xSemaphoreGive(uart_mutex);
-			}
+//			if (xSemaphoreTake(uart_mutex, pdMS_TO_TICKS(100)) == pdTRUE) {
+//				printf("TIMER cycles: %lu\r\n", tim2_elapsed);
+//				printf("TIMER ms: %lu\r\n", tim2_ms);
+//				printf("Systick tick: %lu\r\n", systick_elapsed);
+//				printf("Systick ms: %lu\r\n", systick_ms);
+//				xSemaphoreGive(uart_mutex);
+//			}
 //			osDelay(1000);
     	}
-    	osDelay(10000);
+    	osDelay(1);
     }
 }
 

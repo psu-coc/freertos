@@ -1,5 +1,5 @@
 Middlewares/FreeRTOS/heap_4.o: \
- C:/Users/laoam/OneDrive/Documents/stm32/workspace/freertostrustzone-master/freertostrustzone-master/Middlewares/Third_Party/FreeRTOS/Source/portable/MemMang/heap_4.c \
+ C:/Users/PC/STM32CubeIDE/workspace_2.0.0/freertos/Middlewares/Third_Party/FreeRTOS/Source/portable/MemMang/heap_4.c \
  ../../../Middlewares/Third_Party/FreeRTOS/Source/include/FreeRTOS.h \
  ../../../NonSecure/Inc/FreeRTOSConfig.h \
  ../../../Middlewares/Third_Party/FreeRTOS/Source/include/projdefs.h \

@@ -1,5 +1,5 @@
 Application/User/stm32l5xx_hal_timebase_tim.o: \
- C:/Users/laoam/OneDrive/Documents/stm32/workspace/freertostrustzone-master/freertostrustzone-master/NonSecure/Src/stm32l5xx_hal_timebase_tim.c \
+ C:/Users/PC/STM32CubeIDE/workspace_2.0.0/freertos/NonSecure/Src/stm32l5xx_hal_timebase_tim.c \
  ../../../Drivers/STM32L5xx_HAL_Driver/Inc/stm32l5xx_hal.h \
  ../../../NonSecure/Inc/stm32l5xx_hal_conf.h \
  ../../../Drivers/STM32L5xx_HAL_Driver/Inc/stm32l5xx_hal_rcc.h \

@@ -32,8 +32,8 @@
 #include "arm_cmse.h"
 
 #define SHA256_DIGEST_SIZE 32
-#define BLOCK_SIZE 4096 // // <--- แก้ตัวเลขตรงนี้ครับ (256, 512, 1024, 2048, 4096)
-#define TOTAL_SIZE 0x40000
+#define BLOCK_SIZE 2048 // // <--- แก้ตัวเลขตรงนี้ครับ (256, 512, 1024, 2048, 4096)
+#define TOTAL_SIZE 0x80000 // 0x40000
 #define BLOCKS (TOTAL_SIZE / BLOCK_SIZE)
 
 #define SAFE_FLASH_PAGE   128
@@ -228,7 +228,7 @@ void SECURE_ComputeHMAC(uint8_t *output_digest, size_t maxlen)
 }
 
 static uint8_t secure_digest_2[SHA256_DIGEST_SIZE];
-uint8_t *real_memory = (uint8_t *)0x8040000;
+uint8_t *real_memory = (uint8_t *)0x8000000; // อันเก่าใช้ 0x8040000
 uint8_t seed[32] = {0};
 //uint8_t real_memory[TOTAL_SIZE];  // This is safe, real RAM
 
@@ -244,7 +244,7 @@ void SECURE_LinearHMAC(uint8_t *output_digest, size_t maxlen)
 {
 
 
-//    __disable_irq();
+    __disable_irq();
     if (!output_digest || maxlen < SHA256_DIGEST_SIZE) {
         return;
     }
@@ -269,7 +269,7 @@ void SECURE_LinearHMAC(uint8_t *output_digest, size_t maxlen)
     hmac_sha256_finalize(&hmac, NULL, 0);
     memcpy(output_digest, hmac.digest, SHA256_DIGEST_SIZE);
 
-
+    __enable_irq();
 }
 
 
@@ -489,6 +489,7 @@ __attribute__((cmse_nonsecure_entry))
 void SECURE_ShuffledHMAC_secure(uint8_t *out_digest, size_t out_len,
                                 const uint8_t *challenge, size_t challenge_len)
 {
+
     if (!out_digest || out_len < SHA256_DIGEST_SIZE) return;
 
     // 1) indices = 0..BLOCKS-1
@@ -507,11 +508,11 @@ void SECURE_ShuffledHMAC_secure(uint8_t *out_digest, size_t out_len,
     uint8_t copy[BLOCK_SIZE];
     for (int i = 0; i < BLOCKS; i++) {
         const uint8_t *blk = &real_memory[(size_t)indices[i] * BLOCK_SIZE];
-        __disable_irq();
-        memcpy(copy, blk, BLOCK_SIZE);
-//        hmac_sha256_update(&hmac, blk, BLOCK_SIZE);
-        __enable_irq();
-        hmac_sha256_update(&hmac, copy, BLOCK_SIZE);
+//        __disable_irq();
+//        memcpy(copy, blk, BLOCK_SIZE);
+        hmac_sha256_update(&hmac, blk, BLOCK_SIZE);
+//        __enable_irq();
+//        hmac_sha256_update(&hmac, copy, BLOCK_SIZE);
     }
     hmac_sha256_finalize(&hmac, NULL, 0);
     memcpy(out_digest, hmac.digest, SHA256_DIGEST_SIZE);

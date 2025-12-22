@@ -1,4 +1,4 @@
-C:/Users/laoam/OneDrive/Documents/stm32/workspace/freertostrustzone-master/freertostrustzone-master/NonSecure/Src/stm32l5xx_it.c:72:6:MemManage_Handler	0	static
-C:/Users/laoam/OneDrive/Documents/stm32/workspace/freertostrustzone-master/freertostrustzone-master/NonSecure/Src/stm32l5xx_it.c:87:6:UsageFault_Handler	0	static
-C:/Users/laoam/OneDrive/Documents/stm32/workspace/freertostrustzone-master/freertostrustzone-master/NonSecure/Src/stm32l5xx_it.c:109:6:TIM6_IRQHandler	0	static
-C:/Users/laoam/OneDrive/Documents/stm32/workspace/freertostrustzone-master/freertostrustzone-master/NonSecure/Src/stm32l5xx_it.c:123:6:LPUART1_IRQHandler	0	static
+C:/Users/PC/STM32CubeIDE/workspace_2.0.0/freertos/NonSecure/Src/stm32l5xx_it.c:72:6:MemManage_Handler	0	static
+C:/Users/PC/STM32CubeIDE/workspace_2.0.0/freertos/NonSecure/Src/stm32l5xx_it.c:87:6:UsageFault_Handler	0	static
+C:/Users/PC/STM32CubeIDE/workspace_2.0.0/freertos/NonSecure/Src/stm32l5xx_it.c:109:6:TIM6_IRQHandler	0	static
+C:/Users/PC/STM32CubeIDE/workspace_2.0.0/freertos/NonSecure/Src/stm32l5xx_it.c:123:6:LPUART1_IRQHandler	0	static

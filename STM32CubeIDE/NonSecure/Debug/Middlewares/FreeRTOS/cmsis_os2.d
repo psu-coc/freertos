@@ -1,6 +1,6 @@
 Middlewares/FreeRTOS/cmsis_os2.o: \
- C:/Users/laoam/OneDrive/Documents/stm32/workspace/freertostrustzone-master/freertostrustzone-master/Middlewares/Third_Party/FreeRTOS/Source/CMSIS_RTOS_V2/cmsis_os2.c \
- C:/Users/laoam/OneDrive/Documents/stm32/workspace/freertostrustzone-master/freertostrustzone-master/Middlewares/Third_Party/FreeRTOS/Source/CMSIS_RTOS_V2/cmsis_os2.h \
+ C:/Users/PC/STM32CubeIDE/workspace_2.0.0/freertos/Middlewares/Third_Party/FreeRTOS/Source/CMSIS_RTOS_V2/cmsis_os2.c \
+ C:/Users/PC/STM32CubeIDE/workspace_2.0.0/freertos/Middlewares/Third_Party/FreeRTOS/Source/CMSIS_RTOS_V2/cmsis_os2.h \
  ../../../Drivers/CMSIS/Include/cmsis_compiler.h \
  ../../../Drivers/CMSIS/Include/cmsis_gcc.h \
  ../../../Middlewares/Third_Party/FreeRTOS/Source/include/FreeRTOS.h \
@@ -17,8 +17,8 @@ Middlewares/FreeRTOS/cmsis_os2.o: \
  ../../../Middlewares/Third_Party/FreeRTOS/Source/include/task.h \
  ../../../Middlewares/Third_Party/FreeRTOS/Source/include/semphr.h \
  ../../../Middlewares/Third_Party/FreeRTOS/Source/include/queue.h \
- C:/Users/laoam/OneDrive/Documents/stm32/workspace/freertostrustzone-master/freertostrustzone-master/Middlewares/Third_Party/FreeRTOS/Source/CMSIS_RTOS_V2/freertos_mpool.h \
- C:/Users/laoam/OneDrive/Documents/stm32/workspace/freertostrustzone-master/freertostrustzone-master/Middlewares/Third_Party/FreeRTOS/Source/CMSIS_RTOS_V2/freertos_os2.h \
+ C:/Users/PC/STM32CubeIDE/workspace_2.0.0/freertos/Middlewares/Third_Party/FreeRTOS/Source/CMSIS_RTOS_V2/freertos_mpool.h \
+ C:/Users/PC/STM32CubeIDE/workspace_2.0.0/freertos/Middlewares/Third_Party/FreeRTOS/Source/CMSIS_RTOS_V2/freertos_os2.h \
  ../../../Drivers/CMSIS/Device/ST/STM32L5xx/Include/stm32l5xx.h \
  ../../../Drivers/CMSIS/Device/ST/STM32L5xx/Include/stm32l552xx.h \
  ../../../Drivers/CMSIS/Include/core_cm33.h \
@@ -50,7 +50,7 @@ Middlewares/FreeRTOS/cmsis_os2.o: \
  ../../../Drivers/STM32L5xx_HAL_Driver/Inc/stm32l5xx_hal_tim_ex.h \
  ../../../Drivers/STM32L5xx_HAL_Driver/Inc/stm32l5xx_hal_uart.h \
  ../../../Drivers/STM32L5xx_HAL_Driver/Inc/stm32l5xx_hal_uart_ex.h
-C:/Users/laoam/OneDrive/Documents/stm32/workspace/freertostrustzone-master/freertostrustzone-master/Middlewares/Third_Party/FreeRTOS/Source/CMSIS_RTOS_V2/cmsis_os2.h:
+C:/Users/PC/STM32CubeIDE/workspace_2.0.0/freertos/Middlewares/Third_Party/FreeRTOS/Source/CMSIS_RTOS_V2/cmsis_os2.h:
 ../../../Drivers/CMSIS/Include/cmsis_compiler.h:
 ../../../Drivers/CMSIS/Include/cmsis_gcc.h:
 ../../../Middlewares/Third_Party/FreeRTOS/Source/include/FreeRTOS.h:
@@ -67,8 +67,8 @@ C:/Users/laoam/OneDrive/Documents/stm32/workspace/freertostrustzone-master/freer
 ../../../Middlewares/Third_Party/FreeRTOS/Source/include/task.h:
 ../../../Middlewares/Third_Party/FreeRTOS/Source/include/semphr.h:
 ../../../Middlewares/Third_Party/FreeRTOS/Source/include/queue.h:
-C:/Users/laoam/OneDrive/Documents/stm32/workspace/freertostrustzone-master/freertostrustzone-master/Middlewares/Third_Party/FreeRTOS/Source/CMSIS_RTOS_V2/freertos_mpool.h:
-C:/Users/laoam/OneDrive/Documents/stm32/workspace/freertostrustzone-master/freertostrustzone-master/Middlewares/Third_Party/FreeRTOS/Source/CMSIS_RTOS_V2/freertos_os2.h:
+C:/Users/PC/STM32CubeIDE/workspace_2.0.0/freertos/Middlewares/Third_Party/FreeRTOS/Source/CMSIS_RTOS_V2/freertos_mpool.h:
+C:/Users/PC/STM32CubeIDE/workspace_2.0.0/freertos/Middlewares/Third_Party/FreeRTOS/Source/CMSIS_RTOS_V2/freertos_os2.h:
 ../../../Drivers/CMSIS/Device/ST/STM32L5xx/Include/stm32l5xx.h:
 ../../../Drivers/CMSIS/Device/ST/STM32L5xx/Include/stm32l552xx.h:
 ../../../Drivers/CMSIS/Include/core_cm33.h:

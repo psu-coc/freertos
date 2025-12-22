@@ -1,6 +1,6 @@
 Drivers/BSP/STM32L5xx_Nucleo/stm32l5xx_nucleo.o: \
- C:/Users/laoam/OneDrive/Documents/stm32/workspace/freertostrustzone-master/freertostrustzone-master/Drivers/BSP/STM32L5xx_Nucleo/stm32l5xx_nucleo.c \
- C:/Users/laoam/OneDrive/Documents/stm32/workspace/freertostrustzone-master/freertostrustzone-master/Drivers/BSP/STM32L5xx_Nucleo/stm32l5xx_nucleo.h \
+ C:/Users/PC/STM32CubeIDE/workspace_2.0.0/freertos/Drivers/BSP/STM32L5xx_Nucleo/stm32l5xx_nucleo.c \
+ C:/Users/PC/STM32CubeIDE/workspace_2.0.0/freertos/Drivers/BSP/STM32L5xx_Nucleo/stm32l5xx_nucleo.h \
  ../../../NonSecure/Inc/stm32l5xx_nucleo_conf.h \
  ../../../Drivers/STM32L5xx_HAL_Driver/Inc/stm32l5xx_hal.h \
  ../../../NonSecure/Inc/stm32l5xx_hal_conf.h \
@@ -34,8 +34,8 @@ Drivers/BSP/STM32L5xx_Nucleo/stm32l5xx_nucleo.o: \
  ../../../Drivers/STM32L5xx_HAL_Driver/Inc/stm32l5xx_hal_tim_ex.h \
  ../../../Drivers/STM32L5xx_HAL_Driver/Inc/stm32l5xx_hal_uart.h \
  ../../../Drivers/STM32L5xx_HAL_Driver/Inc/stm32l5xx_hal_uart_ex.h \
- C:/Users/laoam/OneDrive/Documents/stm32/workspace/freertostrustzone-master/freertostrustzone-master/Drivers/BSP/STM32L5xx_Nucleo/stm32l5xx_nucleo_errno.h
-C:/Users/laoam/OneDrive/Documents/stm32/workspace/freertostrustzone-master/freertostrustzone-master/Drivers/BSP/STM32L5xx_Nucleo/stm32l5xx_nucleo.h:
+ C:/Users/PC/STM32CubeIDE/workspace_2.0.0/freertos/Drivers/BSP/STM32L5xx_Nucleo/stm32l5xx_nucleo_errno.h
+C:/Users/PC/STM32CubeIDE/workspace_2.0.0/freertos/Drivers/BSP/STM32L5xx_Nucleo/stm32l5xx_nucleo.h:
 ../../../NonSecure/Inc/stm32l5xx_nucleo_conf.h:
 ../../../Drivers/STM32L5xx_HAL_Driver/Inc/stm32l5xx_hal.h:
 ../../../NonSecure/Inc/stm32l5xx_hal_conf.h:
@@ -69,4 +69,4 @@ C:/Users/laoam/OneDrive/Documents/stm32/workspace/freertostrustzone-master/freer
 ../../../Drivers/STM32L5xx_HAL_Driver/Inc/stm32l5xx_hal_tim_ex.h:
 ../../../Drivers/STM32L5xx_HAL_Driver/Inc/stm32l5xx_hal_uart.h:
 ../../../Drivers/STM32L5xx_HAL_Driver/Inc/stm32l5xx_hal_uart_ex.h:
-C:/Users/laoam/OneDrive/Documents/stm32/workspace/freertostrustzone-master/freertostrustzone-master/Drivers/BSP/STM32L5xx_Nucleo/stm32l5xx_nucleo_errno.h:
+C:/Users/PC/STM32CubeIDE/workspace_2.0.0/freertos/Drivers/BSP/STM32L5xx_Nucleo/stm32l5xx_nucleo_errno.h:

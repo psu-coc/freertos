@@ -1,5 +1,5 @@
 Drivers/STM32L5xx_HAL_Driver/stm32l5xx_hal_cortex.o: \
- C:/Users/laoam/OneDrive/Documents/stm32/workspace/freertostrustzone-master/freertostrustzone-master/Drivers/STM32L5xx_HAL_Driver/Src/stm32l5xx_hal_cortex.c \
+ C:/Users/PC/STM32CubeIDE/workspace_2.0.0/freertos/Drivers/STM32L5xx_HAL_Driver/Src/stm32l5xx_hal_cortex.c \
  ../../../Drivers/STM32L5xx_HAL_Driver/Inc/stm32l5xx_hal.h \
  ../../../Secure/Inc/stm32l5xx_hal_conf.h \
  ../../../Drivers/STM32L5xx_HAL_Driver/Inc/stm32l5xx_hal_rcc.h \
