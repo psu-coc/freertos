@@ -6,9 +6,9 @@ C:/Users/PC/STM32CubeIDE/workspace_2.0.0/freertos/Secure/Src/secure_nsc.c:189:6:
 C:/Users/PC/STM32CubeIDE/workspace_2.0.0/freertos/Secure/Src/secure_nsc.c:204:6:SECURE_ComputeHMAC	24	static,ignoring_inline_asm
 C:/Users/PC/STM32CubeIDE/workspace_2.0.0/freertos/Secure/Src/secure_nsc.c:243:6:SECURE_LinearHMAC	16	static,ignoring_inline_asm
 C:/Users/PC/STM32CubeIDE/workspace_2.0.0/freertos/Secure/Src/secure_nsc.c:277:6:SECURE_ShuffledHMAC	24	static,ignoring_inline_asm
-C:/Users/PC/STM32CubeIDE/workspace_2.0.0/freertos/Secure/Src/secure_nsc.c:489:6:SECURE_ShuffledHMAC_secure	312	static
+C:/Users/PC/STM32CubeIDE/workspace_2.0.0/freertos/Secure/Src/secure_nsc.c:489:6:SECURE_ShuffledHMAC_secure	312	static,ignoring_inline_asm
 C:/Users/PC/STM32CubeIDE/workspace_2.0.0/freertos/Secure/Src/secure_nsc.c:523:6:SECURE_SMARM	2097176	static,ignoring_inline_asm
-C:/Users/PC/STM32CubeIDE/workspace_2.0.0/freertos/Secure/Src/secure_nsc.c:576:6:SECURE_TEST	1048	static
+C:/Users/PC/STM32CubeIDE/workspace_2.0.0/freertos/Secure/Src/secure_nsc.c:576:6:SECURE_TEST	2072	static
 C:/Users/PC/STM32CubeIDE/workspace_2.0.0/freertos/Secure/Src/secure_nsc.c:947:6:Secure_FlashTest	80	static,ignoring_inline_asm
 C:/Users/PC/STM32CubeIDE/workspace_2.0.0/freertos/Secure/Src/secure_nsc.c:1124:6:Secure_EraseWriteVerify	32	static,ignoring_inline_asm
 C:/Users/PC/STM32CubeIDE/workspace_2.0.0/freertos/Secure/Src/secure_nsc.c:1243:6:Simulate_flash_write_128KB	40	static,ignoring_inline_asm

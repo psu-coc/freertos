@@ -32,7 +32,7 @@
 #include "arm_cmse.h"
 
 #define SHA256_DIGEST_SIZE 32
-#define BLOCK_SIZE 2048 // // <--- แก้ตัวเลขตรงนี้ครับ (256, 512, 1024, 2048, 4096)
+#define BLOCK_SIZE 1024         // // <--- แก้ตัวเลขตรงนี้ครับ (256, 512, 1024, 2048, 4096)
 #define TOTAL_SIZE 0x80000 // 0x40000
 #define BLOCKS (TOTAL_SIZE / BLOCK_SIZE)
 
@@ -508,10 +508,10 @@ void SECURE_ShuffledHMAC_secure(uint8_t *out_digest, size_t out_len,
     uint8_t copy[BLOCK_SIZE];
     for (int i = 0; i < BLOCKS; i++) {
         const uint8_t *blk = &real_memory[(size_t)indices[i] * BLOCK_SIZE];
-//        __disable_irq();
+        __disable_irq();
 //        memcpy(copy, blk, BLOCK_SIZE);
         hmac_sha256_update(&hmac, blk, BLOCK_SIZE);
-//        __enable_irq();
+        __enable_irq();
 //        hmac_sha256_update(&hmac, copy, BLOCK_SIZE);
     }
     hmac_sha256_finalize(&hmac, NULL, 0);

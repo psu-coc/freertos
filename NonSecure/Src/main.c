@@ -22,7 +22,8 @@
 #include "cmsis_os.h"
 #include "semphr.h"
 #include "stm32l5xx_hal.h"
-
+#include <stdint.h>
+#include <stdio.h>
 
 SemaphoreHandle_t uart_mutex;
 #define ADDR_FLASH_PAGE_4     ((uint32_t)0x08002000) /* Base @ of Page 4, 2 Kbytes */
@@ -150,6 +151,7 @@ void SecureError_Callback(void);
 void LinearHMAC(void *argument);
 void NormalTask(void *argument);
 void SMARM_Experiment_Task(void *argument);
+void Test_Simulation(void *argument);
 
 UART_HandleTypeDef huart1;  // or whichever UART you're using
 
@@ -1234,49 +1236,96 @@ test_end:
   }
 }
 
-
-void SMARM_Experiment_Task(void *argument)
-{
-    (void) argument;
-
-    portALLOCATE_SECURE_CONTEXT(4096);
-
-    uint8_t digest[32];
-    uint8_t challenge[16];
-
-    osDelay(3000);
-
-    for(;;)
-    {
-
-        uint32_t seed = osKernelGetTickCount();
-        for(int k=0; k<4; k++) {
-            uint32_t rnd = seed ^ (seed << 13) ^ (k * 0x5DEECE66D);
-            memcpy(&challenge[k*4], &rnd, 4);
-        }
-
-        uint32_t start_tim2 = __HAL_TIM_GET_COUNTER(&htim2);
-        uint32_t start_systick = osKernelGetTickCount();
-
-        SECURE_ShuffledHMAC_secure(digest, sizeof(digest), challenge, sizeof(challenge));
-
-        uint32_t end_tim2 = __HAL_TIM_GET_COUNTER(&htim2);
-        uint32_t end_systick = osKernelGetTickCount();
-
-        uint32_t duration_os_ms = end_systick - start_systick;
-
-
-        uint32_t tim2_diff = end_tim2 - start_tim2;
-
-        #define TIM2_FREQ 137500
-        uint32_t duration_real_ms = ((uint64_t)tim2_diff * 1000) / TIM2_FREQ;
-
-        osDelay(1);
-    }
+// 1. ฟังก์ชันช่วยหาค่าเลขยกกำลัง 2 ที่ครอบคลุมจำนวนบล็อก (Small Domain)
+static uint32_t get_next_pow2(uint32_t n) {
+    uint32_t p = 1;
+    while (p < n) p <<= 1;
+    return p;
 }
+
+// 2. Round Function (F-function): หัวใจของการสุ่ม
+// ใช้การคำนวณบิตพื้นฐานเพื่อให้ทำงานได้เร็วบน MCU
+static uint32_t f_function(uint32_t val, uint32_t round, uint32_t seed) {
+    uint32_t hash = val ^ round ^ seed;
+    hash = ((hash >> 16) ^ hash) * 0x45d9f3b;
+    hash = ((hash >> 16) ^ hash) * 0x45d9f3b;
+    hash = (hash >> 16) ^ hash;
+    return hash;
+}
+
+// 3. ฟังก์ชันหลัก: Feistel Permutation พร้อมระบบ Cycle-walking
+uint32_t FeistelPermute(uint32_t index, uint32_t max_blocks, uint32_t seed) {
+    uint32_t domain = get_next_pow2(max_blocks);
+    uint32_t half_bits = 0;
+    uint32_t tmp_domain = domain;
+    while (tmp_domain > 1) { tmp_domain >>= 1; half_bits++; }
+
+    // แบ่งบิตออกเป็นฝั่งซ้าย (L) และขวา (R)
+    uint32_t r_half_bits = half_bits / 2;
+    uint32_t l_half_bits = half_bits - r_half_bits;
+    uint32_t r_mask = (1 << r_half_bits) - 1;
+    uint32_t l_mask = (1 << l_half_bits) - 1;
+
+    uint32_t curr_val = index;
+
+    // --- Cycle-walking Loop ---
+    // ถ้าสุ่มได้เลขที่เกินจำนวนบล็อก (max_blocks) ให้ทำการเดินต่อ (Walk) จนกว่าจะตกในช่วง
+    do {
+        uint32_t L = curr_val >> r_half_bits;
+        uint32_t R = curr_val & r_mask;
+
+        // รัน 3-4 Rounds ก็เพียงพอสำหรับการสุ่มตำแหน่งบล็อกแล้ว
+        for (int i = 0; i < 4; i++) {
+            uint32_t next_L = R;
+            uint32_t next_R = L ^ (f_function(R, i, seed) & l_mask);
+            L = next_L;
+            R = next_R;
+            // สลับฝั่งเพื่อให้บิตกระจายตัว
+            uint32_t temp = L; L = R; R = temp;
+        }
+        curr_val = (L << r_half_bits) | (R & r_mask);
+    } while (curr_val >= max_blocks); //
+
+    return curr_val;
+}
+
+void Test_Simulation(void *argument) {
+
+	uint32_t total_blocks = 1000;
+	uint32_t test_seed = 999;
+    printf("--- Testing Feistel Permutation (Blocks: %d, Seed: %d) ---\n", total_blocks, test_seed);
+
+    // ใช้ array เล็กๆ เช็กเฉพาะตอนเทสในคอม/Normal World
+    uint8_t *check = (uint8_t *)calloc(total_blocks, 1);
+    uint32_t collision_count = 0;
+
+    for (uint32_t i = 0; i < total_blocks; i++) {
+        uint32_t p = FeistelPermute(i, total_blocks, test_seed);
+//        printf("i: %d,n: %d \r\n",i,p);
+
+        if (p >= total_blocks) printf("Error: Out of range! (%d)\n", p);
+        if (check[p] == 1) collision_count++;
+
+        check[p] = 1;
+        // printf("i: %d -> Shuffled Index: %d\n", i, p);
+        osDelay(10);
+    }
+
+    if (collision_count == 0) {
+        printf("SUCCESS\n");
+    } else {
+        printf("FAILED: Found %d collisions!\n", collision_count);
+    }
+    free(check);
+}
+
+
+
+
 
 #define TARGET_FREQ_HZ   1000
 #define TIM2_TICKS_PER_SEC  137500
+volatile uint32_t g_normal_counter = 0; // ตัวนับรอบของ NormalTask
 
 void NormalTask(void *argument)
 {
@@ -1291,14 +1340,16 @@ void NormalTask(void *argument)
 	    // เริ่มจับเวลา TIM2
 	    uint32_t start_tim2 = __HAL_TIM_GET_COUNTER(&htim2);
 
-	    printf("\r\n=== FREQUENCY TEST MODE (Integer Math) ===\r\n");
-	    printf("Target: %d Hz | TickRate: %d\r\n", TARGET_FREQ_HZ, configTICK_RATE_HZ);
+//	    printf("\r\n=== FREQUENCY TEST MODE (Integer Math) ===\r\n");
+//	    printf("Target: %d Hz | TickRate: %d\r\n", TARGET_FREQ_HZ, configTICK_RATE_HZ);
 
 	    for (;;)
 	    {
 	        // 1. คุมจังหวะการทำงาน
 	        next_wake_time += period_os_ticks;
 	        osDelayUntil(next_wake_time);
+
+	        g_normal_counter++; // <-- เพิ่มบรรทัดนี้เพื่อให้นับรอบจริง
 
 	        // 2. นับรอบ
 	        loop_counter++;
@@ -1331,8 +1382,8 @@ void NormalTask(void *argument)
 
 	            if (xSemaphoreTake(uart_mutex, pdMS_TO_TICKS(10)) == pdTRUE) {
 	                // ปริ้นโดยใช้ %lu ทั้งหมด
-	                printf("Time: %lu.%03lu s | Count: %lu | ActFreq: %lu.%02lu Hz\r\n",
-	                       time_s_int, time_s_dec, loop_counter, freq_int, freq_dec);
+//	                printf("Time: %lu.%03lu s | Count: %lu | ActFreq: %lu.%02lu Hz\r\n",
+//	                       time_s_int, time_s_dec, loop_counter, freq_int, freq_dec);
 	                xSemaphoreGive(uart_mutex);
 	            }
 
@@ -1341,6 +1392,64 @@ void NormalTask(void *argument)
 	            start_tim2 = current_tim2;
 	        }
 	    }
+}
+
+void SMARM_Experiment_Task(void *argument)
+{
+    (void) argument;
+
+    portALLOCATE_SECURE_CONTEXT(4096);
+
+    uint8_t digest[32];
+    uint8_t challenge[16];
+
+    osDelay(3000);
+
+    for(;;)
+    {
+
+        uint32_t seed = osKernelGetTickCount();
+        for(int k=0; k<4; k++) {
+            uint32_t rnd = seed ^ (seed << 13) ^ (k * 0x5DEECE66D);
+            memcpy(&challenge[k*4], &rnd, 4);
+        }
+
+        uint32_t start_tim2 = __HAL_TIM_GET_COUNTER(&htim2);
+        uint32_t start_systick = osKernelGetTickCount();
+        uint32_t start_count = g_normal_counter;
+
+        SECURE_ShuffledHMAC_secure(digest, sizeof(digest), challenge, sizeof(challenge));
+
+        uint32_t end_tim2 = __HAL_TIM_GET_COUNTER(&htim2);
+        uint32_t end_systick = osKernelGetTickCount();
+        uint32_t end_count = g_normal_counter;
+
+        uint32_t actual_run = end_count - start_count; // จำนวนรอบที่ NormalTask รันได้จริง
+        uint32_t duration_os_ms = end_systick - start_systick;
+        uint32_t tim2_diff = end_tim2 - start_tim2;
+        uint32_t actual_duration_ms = ((uint64_t)tim2_diff * 1000) / 137500; // แปลง Ticks เป็น ms
+        uint32_t expected_run = actual_duration_ms;     // เพราะ 1000Hz = 1 รอบต่อ 1ms
+        int32_t missed_cycles = (int32_t)expected_run - (int32_t)actual_run;
+
+//	    printf("dur: %d  | tim: %d\r\n", duration_os_ms, tim2_diff);
+
+        if (xSemaphoreTake(uart_mutex, pdMS_TO_TICKS(10)) == pdTRUE) {
+                    printf("\r\n--- Attestation Event Analysis ---\r\n");
+                    printf("Duration (TIM2): %lu ms\r\n", actual_duration_ms);
+                    printf("NormalTask Run: %lu / %lu cycles\r\n", actual_run, expected_run);
+                    printf("Missed Cycles: %ld\r\n", missed_cycles);
+
+                    // คำนวณ FAR เฉพาะช่วงเวลาที่รัน Secure Call
+                    if (expected_run > 0) {
+                        uint32_t local_far_x100 = (actual_run * 100) / expected_run;
+                        printf("Local FAR: %lu.%02lu\r\n", local_far_x100 / 100, local_far_x100 % 100);
+                    }
+                    xSemaphoreGive(uart_mutex);
+                }
+
+
+        osDelay(2000);
+    }
 }
 
 void LinearHMAC(void *argument)
