@@ -8,7 +8,7 @@ C:/Users/PC/STM32CubeIDE/workspace_2.0.0/freertos/Secure/Src/secure_nsc.c:243:6:
 C:/Users/PC/STM32CubeIDE/workspace_2.0.0/freertos/Secure/Src/secure_nsc.c:277:6:SECURE_ShuffledHMAC	7
 C:/Users/PC/STM32CubeIDE/workspace_2.0.0/freertos/Secure/Src/secure_nsc.c:489:6:SECURE_ShuffledHMAC_secure	11
 C:/Users/PC/STM32CubeIDE/workspace_2.0.0/freertos/Secure/Src/secure_nsc.c:523:6:SECURE_SMARM	6
-C:/Users/PC/STM32CubeIDE/workspace_2.0.0/freertos/Secure/Src/secure_nsc.c:576:6:SECURE_TEST	8
+C:/Users/PC/STM32CubeIDE/workspace_2.0.0/freertos/Secure/Src/secure_nsc.c:576:6:SECURE_TEST	7
 C:/Users/PC/STM32CubeIDE/workspace_2.0.0/freertos/Secure/Src/secure_nsc.c:947:6:Secure_FlashTest	8
 C:/Users/PC/STM32CubeIDE/workspace_2.0.0/freertos/Secure/Src/secure_nsc.c:1124:6:Secure_EraseWriteVerify	8
 C:/Users/PC/STM32CubeIDE/workspace_2.0.0/freertos/Secure/Src/secure_nsc.c:1243:6:Simulate_flash_write_128KB	11

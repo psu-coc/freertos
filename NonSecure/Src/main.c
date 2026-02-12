@@ -24,6 +24,12 @@
 #include "stm32l5xx_hal.h"
 #include <stdint.h>
 #include <stdio.h>
+#include "hmac-sha256.h"
+#include <math.h>
+#include "aes.h"   // tiny-AES header ของคุณ
+#include "speck.h"
+#include "ff1_speck.h"
+
 
 SemaphoreHandle_t uart_mutex;
 #define ADDR_FLASH_PAGE_4     ((uint32_t)0x08002000) /* Base @ of Page 4, 2 Kbytes */
@@ -52,6 +58,90 @@ SemaphoreHandle_t uart_mutex;
 
 TIM_HandleTypeDef htim2;
 
+static FF1_Key_Speck ff1_speck_key;
+
+typedef struct {
+    SimSpk_Cipher cipher;
+} SpeckShuffleKey;
+
+static inline void SpeckShuffle_Init(SpeckShuffleKey *sk, const uint8_t key[16])
+{
+    Speck_Init(&sk->cipher, cfg_128_128, MODE_ECB, (void *)key, NULL, NULL);
+}
+
+// speck_shuffle.c
+//#include "speck_shuffle.h"
+
+// เข้ารหัส 128-bit (i, pass, seed) ด้วย Speck128 แล้ว map เป็น index
+uint32_t SpeckShuffle_Index(const SpeckShuffleKey *sk,
+                            uint32_t i,
+                            uint32_t pass,
+                            uint32_t seed,
+                            uint32_t max_blocks)
+{
+    uint64_t pt[2];
+    uint64_t ct[2];
+
+    // pack ค่าเข้า 128 บิต (เลือก layout ตามใจ)
+    pt[0] = ((uint64_t)i    << 32) | (uint64_t)pass;
+    pt[1] = ((uint64_t)seed << 32) | (uint64_t)i;
+
+    Speck_Encrypt_128(
+        sk->cipher.round_limit,
+        sk->cipher.key_schedule,
+        (const uint8_t *)pt,
+        (uint8_t *)ct
+    );
+
+    uint32_t raw = (uint32_t)(ct[0] ^ ct[1]);
+    return raw % max_blocks;
+}
+
+static SpeckShuffleKey g_speck_shuffle;
+
+void InitSpeckShuffle(void)
+{
+    static const uint8_t speck_raw_key[16] = {
+        0x00,0x01,0x02,0x03,
+        0x04,0x05,0x06,0x07,
+        0x08,0x09,0x0A,0x0B,
+        0x0C,0x0D,0x0E,0x0F
+    };
+    SpeckShuffle_Init(&g_speck_shuffle, speck_raw_key);
+}
+
+void Init_FF1_Speck(void)
+{
+    const uint8_t rawkey[16] = {
+        0x00,0x01,0x02,0x03,
+        0x04,0x05,0x06,0x07,
+        0x08,0x09,0x0A,0x0B,
+        0x0C,0x0D,0x0E,0x0F
+    };
+    FF1_SetKey_Speck(&ff1_speck_key, rawkey);
+}
+
+
+
+typedef struct {
+    struct AES_ctx ctx;
+} FF1_Key;
+
+// เรียกครั้งเดียวตอน init
+void FF1_SetKey(FF1_Key *k, const uint8_t raw_key[16]) {
+    AES_init_ctx(&k->ctx, raw_key);
+}
+
+// in[16] -> out[16]
+static void AES128_Encrypt_Block(const uint8_t in[16],
+                                 uint8_t out[16],
+                                 const FF1_Key *k)
+{
+    uint8_t buf[16];
+    memcpy(buf, in, 16);
+    AES_ECB_encrypt(&k->ctx, buf);
+    memcpy(out, buf, 16);
+}
 
 //#define SAFE_FLASH_PAGE   150
 //#define TARGET_FLASH_ADDR 0x0806B800
@@ -152,6 +242,9 @@ void LinearHMAC(void *argument);
 void NormalTask(void *argument);
 void SMARM_Experiment_Task(void *argument);
 void Test_Simulation(void *argument);
+void NS_SMARM_Benchmark_Experiment(void *argument); // เอาไว้ดูว่า SMARM vs Feistel เกิด overhead ต่างกันเท่าไรเ
+void NS_SMARM_measurement(void *argument); // เช็๕ t_disabled
+void Test_SpeckShuffle_Basic(void *argument);
 
 UART_HandleTypeDef huart1;  // or whichever UART you're using
 
@@ -226,12 +319,14 @@ int main(void)
 
   /* Create the thread(s) */
   /* creation of LEDThreadHandle */
-  LEDThreadHandleHandle = osThreadNew(NormalTask, NULL, &LEDThreadHandle_attributes);
+//  LEDThreadHandleHandle = osThreadNew(NormalTask, NULL, &LEDThreadHandle_attributes);
+  LEDThreadHandleHandle = osThreadNew(NS_SMARM_Benchmark_Experiment, NULL, &LEDThreadHandle_attributes);
+
 
   /* creation of myTask02 */
 //  myTask02Handle = osThreadNew(LED_Thread, NULL, &myTask02_attributes);
 
-  myTask02Handle = osThreadNew(SMARM_Experiment_Task, NULL, &myTask02_attributes);
+//  myTask02Handle = osThreadNew(SMARM_Experiment_Task, NULL, &myTask02_attributes);
 
   /* USER CODE BEGIN RTOS_THREADS */
   /* add threads, ... */
@@ -417,6 +512,16 @@ static void MX_GPIO_Init(void)
 }
 
 /* USER CODE BEGIN 4 */
+
+// ใส่เข้ามาเพระาติดปัญหา Linker
+#include <sys/time.h>
+
+// เพิ่มฟังก์ชันนี้ลงไปเพื่อแก้ Linker Error
+int _gettimeofday(struct timeval *tv, void *tzvp) {
+    (void)tv;
+    (void)tzvp;
+    return 0;  // คืนค่า 0 เพื่อบอกว่าทำงานสำเร็จ (แม้จะไม่ได้คืนเวลาจริงก็ตาม)
+}
 	/**
 	 * @brief  Callback called by secure code following a secure fault interrupt
 	 * @note   This callback is called by secure code thanks to the registration
@@ -613,6 +718,30 @@ HAL_StatusTypeDef EraseFlashPages_256KB(void)
 }
 
 
+// ประกาศตัวแปรและค่าคงที่ (อ้างอิงจากขนาดที่คุณใช้ใน Secure World)
+//#define NS_CHUNK_SIZE  0x40000
+//#define NS_BLOCK_SIZE  1024
+//#define NS_TOTAL_SIZE  0x3F000 // 512KB
+//#define NS_BLOCKS      (NS_TOTAL_SIZE / NS_BLOCK_SIZE)
+
+
+uint8_t *ns_test_memory = (uint8_t *)0x08040000;
+
+
+#define NS_CHUNK_SIZE     0x40000  // 256KB (พื้นที่ปลอดภัยใน Bank 2)
+#define NS_BLOCK_SIZE     4096
+#define NS_BLOCKS         (NS_CHUNK_SIZE / NS_BLOCK_SIZE) // 256 Blocks
+#define TARGET_TOTAL_KB   512
+#define PASSES_REQUIRED   (TARGET_TOTAL_KB * 1024 / NS_CHUNK_SIZE)
+
+// จอง RAM สำหรับวิธีเดิม (Stored Array) - วิธีนี้กิน RAM ตามจำนวน Block
+static int stored_indices[NS_BLOCKS];
+
+
+// ตรวจสอบที่อยู่ Memory ที่จะสแกน (ต้องเป็นที่อยู่ที่ NS เข้าถึงได้)
+
+
+
 HAL_StatusTypeDef EraseFlashPages(void)
 {
     FLASH_EraseInitTypeDef EraseInitStruct;
@@ -650,29 +779,197 @@ HAL_StatusTypeDef EraseFlashPages(void)
     return HAL_OK;
 }
 
-void uint32_to_str(uint32_t value, char *buffer) {
-    char temp[11];  // Max 10 digits for 32-bit unsigned + null terminator
-    int i = 0;
+static void FF1_PRF(const FF1_Key *key,
+                    const uint8_t *M, size_t Mlen,
+                    uint8_t Y[16])
+{
+    uint8_t X[16] = {0};           // Y0 = 0^128
+    size_t blocks = Mlen / 16;     // Mlen ต้องหาร 16 ลงตัว
 
-    if (value == 0) {
-        buffer[0] = '0';
-        buffer[1] = '\0';
-        return;
+    for (size_t j = 0; j < blocks; j++) {
+        uint8_t tmp[16];
+        const uint8_t *Mj = M + 16*j;
+        for (int i = 0; i < 16; i++) {
+            tmp[i] = X[i] ^ Mj[i];
+        }
+        AES128_Encrypt_Block(tmp, X, key);
     }
-
-    while (value != 0) {
-        temp[i++] = '0' + (value % 10);
-        value /= 10;
-    }
-
-    // Reverse the string into the output buffer
-    int j = 0;
-    while (i > 0) {
-        buffer[j++] = temp[--i];
-    }
-    buffer[j] = '\0';
+    memcpy(Y, X, 16);
 }
 
+// =========================
+// 3. NUM/STR base-2
+// =========================
+
+static uint32_t NUM2(const uint8_t *X, size_t m) {
+    uint32_t x = 0;
+    for (size_t i = 0; i < m; i++) {
+        x = (x << 1) | (X[i] & 1);
+    }
+    return x;
+}
+
+static void STR2(uint32_t x, uint8_t *X, size_t m) {
+    for (size_t i = 0; i < m; i++) {
+        X[m - 1 - i] = (uint8_t)(x & 1);
+        x >>= 1;
+    }
+}
+
+// =========================
+// 4. ceil(log2(x))
+// =========================
+
+static uint32_t ceil_log2(uint32_t x) {
+    uint32_t n = 0;
+    uint32_t v = x - 1;
+    while (v > 0) {
+        v >>= 1;
+        n++;
+    }
+    return n;
+}
+
+// =========================
+// 5. FF1 core (radix = 2)
+// =========================
+
+static void FF1_Encrypt_Binary(const FF1_Key *K,
+                               uint8_t *X, size_t n,
+                               const uint8_t *T, size_t t)
+{
+    size_t u = n / 2;
+    size_t v = n - u;
+
+    uint8_t *A = X;       // length u
+    uint8_t *B = X + u;   // length v
+
+    // สร้าง P แบบง่ายสำหรับ radix=2
+    uint8_t P[16] = {0};
+    P[0] = 0x01;          // บอกว่า FF1
+    P[1] = 0x00; P[2] = 0x00; P[3] = 0x02;  // radix = 2
+    P[4] = 0x0A;          // Mode FF1
+    P[5] = (uint8_t)((n >> 24) & 0xFF);
+    P[6] = (uint8_t)((n >> 16) & 0xFF);
+    P[7] = (uint8_t)((n >>  8) & 0xFF);
+    P[8] = (uint8_t)(n & 0xFF);
+    P[9]  = 0x00;
+    P[10] = 0x00;
+    P[11] = (uint8_t)t;
+    // P[12..15] = 0
+
+    // d = 4 * ceil(v / 16) (log2(radix)=1)
+    size_t d = 4 * ((v + 15) / 16);
+    if (d < 4) d = 4;
+
+    // beta = ceil(t/16), b = 16*beta (อย่างน้อย 1 block)
+    size_t beta = (t + 15) / 16;
+    size_t b    = 16 * beta;
+    if (b == 0) b = 16;
+
+    uint8_t Q[64];
+    uint8_t PQ[16 + 64];
+
+    for (int i = 0; i < 10; i++) {
+        size_t m    = (i % 2 == 0) ? u : v;
+        size_t mlen = m;
+
+        uint32_t numB = (i % 2 == 0) ? NUM2(B, v) : NUM2(A, u);
+
+        memset(Q, 0, sizeof(Q));
+        if (t > 0) memcpy(Q, T, t);
+        Q[b - 1] = (uint8_t)i;
+
+        uint32_t tmp = numB;
+        for (size_t k = 0; k < d; k++) {
+            Q[b + d - 1 - k] = (uint8_t)(tmp & 0xFF);
+            tmp >>= 8;
+        }
+
+        size_t Qlen  = b + d;
+        size_t PQlen = 16 + Qlen;
+        memcpy(PQ, P, 16);
+        memcpy(PQ + 16, Q, Qlen);
+
+        size_t pad = (16 - (PQlen % 16)) % 16;
+        memset(PQ + PQlen, 0, pad);
+        PQlen += pad;
+
+        uint8_t Y[16];
+        FF1_PRF(K, PQ, PQlen, Y);
+
+        uint32_t y = 0;
+        for (size_t k = 0; k < d; k++) {
+            y = (y << 8) | Y[k % 16];
+        }
+
+        uint32_t a = NUM2(A, mlen);
+        uint32_t mod = (mlen == 32) ? 0xFFFFFFFFu : (1u << mlen);
+        uint32_t c = (a + y) % mod;
+
+        uint8_t C[32];
+        STR2(c, C, mlen);
+
+        if (i % 2 == 0) {
+            if (v > 0) memcpy(A, B, v);
+            memcpy(B, C, mlen);
+        } else {
+            memcpy(B, A, u);
+            memcpy(A, C, mlen);
+        }
+    }
+}
+
+// =========================
+// 6. public permute (แทน FeistelPermute)
+// =========================
+
+uint32_t FF1Permute(uint32_t index,
+                    uint32_t max_blocks,
+                    const FF1_Key *key,
+                    uint32_t tweak)
+{
+    if (index >= max_blocks) return index;
+
+    uint32_t n = ceil_log2(max_blocks);
+    if (n == 0) return index;
+    if (n > 32) n = 32;
+
+    uint8_t X[32];
+    for (uint32_t i = 0; i < n; i++) {
+        X[n - 1 - i] = (uint8_t)((index >> i) & 1u);
+    }
+
+    uint8_t T[4];
+    T[0] = (uint8_t)((tweak >> 24) & 0xFF);
+    T[1] = (uint8_t)((tweak >> 16) & 0xFF);
+    T[2] = (uint8_t)((tweak >>  8) & 0xFF);
+    T[3] = (uint8_t)( tweak        & 0xFF);
+
+    FF1_Encrypt_Binary(key, X, n, T, sizeof(T));
+
+    uint32_t out = 0;
+    for (uint32_t i = 0; i < n; i++) {
+        out = (out << 1) | (X[i] & 1u);
+    }
+
+    if (out >= max_blocks) {
+        return FF1Permute(out, max_blocks, key, tweak + 1);
+    }
+    return out;
+}
+
+static FF1_Key ff1_key;
+
+void Init_FF1_Key(void) {
+    const uint8_t raw_key[16] = {
+        0x00,0x01,0x02,0x03,
+        0x04,0x05,0x06,0x07,
+        0x08,0x09,0x0A,0x0B,
+        0x0C,0x0D,0x0E,0x0F
+    };
+    FF1_SetKey(&ff1_key, raw_key);
+}
 
 void StartTask09(void *argument){
 
@@ -1382,8 +1679,7 @@ void NormalTask(void *argument)
 
 	            if (xSemaphoreTake(uart_mutex, pdMS_TO_TICKS(10)) == pdTRUE) {
 	                // ปริ้นโดยใช้ %lu ทั้งหมด
-//	                printf("Time: %lu.%03lu s | Count: %lu | ActFreq: %lu.%02lu Hz\r\n",
-//	                       time_s_int, time_s_dec, loop_counter, freq_int, freq_dec);
+//	                printf("normal : %lu.%",g_normal_counter);
 	                xSemaphoreGive(uart_mutex);
 	            }
 
@@ -1393,6 +1689,8 @@ void NormalTask(void *argument)
 	        }
 	    }
 }
+
+
 
 void SMARM_Experiment_Task(void *argument)
 {
@@ -1418,7 +1716,11 @@ void SMARM_Experiment_Task(void *argument)
         uint32_t start_systick = osKernelGetTickCount();
         uint32_t start_count = g_normal_counter;
 
+//        SECURE_ShuffledHMAC_secure(digest, sizeof(digest), challenge, sizeof(challenge));
+
+
         SECURE_ShuffledHMAC_secure(digest, sizeof(digest), challenge, sizeof(challenge));
+
 
         uint32_t end_tim2 = __HAL_TIM_GET_COUNTER(&htim2);
         uint32_t end_systick = osKernelGetTickCount();
@@ -1428,8 +1730,12 @@ void SMARM_Experiment_Task(void *argument)
         uint32_t duration_os_ms = end_systick - start_systick;
         uint32_t tim2_diff = end_tim2 - start_tim2;
         uint32_t actual_duration_ms = ((uint64_t)tim2_diff * 1000) / 137500; // แปลง Ticks เป็น ms
-        uint32_t expected_run = actual_duration_ms;     // เพราะ 1000Hz = 1 รอบต่อ 1ms
+
+        uint32_t expected_run = (actual_duration_ms * TARGET_FREQ_HZ) / 1000;
         int32_t missed_cycles = (int32_t)expected_run - (int32_t)actual_run;
+
+       // uint32_t expected_run = actual_duration_ms;     // เพราะ 1000Hz = 1 รอบต่อ 1ms
+        //int32_t missed_cycles = (int32_t)expected_run - (int32_t)actual_run;
 
 //	    printf("dur: %d  | tim: %d\r\n", duration_os_ms, tim2_diff);
 
@@ -1438,11 +1744,14 @@ void SMARM_Experiment_Task(void *argument)
                     printf("Duration (TIM2): %lu ms\r\n", actual_duration_ms);
                     printf("NormalTask Run: %lu / %lu cycles\r\n", actual_run, expected_run);
                     printf("Missed Cycles: %ld\r\n", missed_cycles);
+                    printf("Systick: %ld\r\n", duration_os_ms);
 
                     // คำนวณ FAR เฉพาะช่วงเวลาที่รัน Secure Call
                     if (expected_run > 0) {
-                        uint32_t local_far_x100 = (actual_run * 100) / expected_run;
-                        printf("Local FAR: %lu.%02lu\r\n", local_far_x100 / 100, local_far_x100 % 100);
+                       // uint32_t local_far_x100 = (actual_run * 100) / expected_run;
+                        // printf("Local FAR: %lu.%02lu\r\n", local_far_x100 / 100, local_far_x100 % 100);
+                    	uint32_t local_far_x100 = (actual_run * 100) / expected_run;
+                    	printf("Local FAR: %lu.%02lu\r\n", local_far_x100 / 100, local_far_x100 % 100);
                     }
                     xSemaphoreGive(uart_mutex);
                 }
@@ -1451,6 +1760,281 @@ void SMARM_Experiment_Task(void *argument)
         osDelay(2000);
     }
 }
+void NS_SMARM_measurement(void *argument) {
+    uint8_t digest[32];
+    hmac_sha256 hmac_ctx;
+    uint32_t start_tim, end_tim;
+
+    printf("\r\n--- 512KB Multi-Pass Attestation Measurement (10 rounds) ---\r\n");
+
+    for (int run = 1; run <= 10; run++) {
+
+        // 1) เตรียม shuffle index
+        for (int i = 0; i < NS_BLOCKS; i++) stored_indices[i] = i;
+        for (int i = NS_BLOCKS - 1; i > 0; i--) {
+            int j = rand() % (i + 1);
+            int tmp = stored_indices[i];
+            stored_indices[i] = stored_indices[j];
+            stored_indices[j] = tmp;
+        }
+
+        // 2) เตรียม HMAC
+        hmac_sha256_initialize(&hmac_ctx, (uint8_t*)"key", 3);
+
+        // จุดที่จะวัด (5 ตำแหน่ง) – ปรับได้ตามต้องการ
+        int p1 = 10;                  // “เริ่มสักรอบที่ 10”
+        int p2 = NS_BLOCKS / 4;       // ประมาณ 1/4
+        int p3 = NS_BLOCKS / 2;       // ครึ่งหนึ่ง
+        int p4 = (3 * NS_BLOCKS) / 4; // 3/4
+        int p5 = NS_BLOCKS - 2;       // รอบก่อนรอบสุดท้าย (index N-2; N-1 คือสุดท้าย)
+
+        // 3) วนลูป 2 pass เพื่อให้ได้ 512KB
+        for (int pass = 0; pass < PASSES_REQUIRED; pass++) {
+            for (int j = 0; j < NS_BLOCKS; j++) {
+
+                uint8_t *block_ptr = ns_test_memory + (stored_indices[j] * NS_BLOCK_SIZE);
+
+                start_tim = __HAL_TIM_GET_COUNTER(&htim2);
+                hmac_sha256_update(&hmac_ctx, block_ptr, NS_BLOCK_SIZE);
+                end_tim = __HAL_TIM_GET_COUNTER(&htim2);
+
+                // วัดเฉพาะบางตำแหน่ง
+                if (j == p1 || j == p2 || j == p3 || j == p4 || j == p5) {
+                    uint32_t cycles = end_tim - start_tim;
+                    printf("Round %d | idx %d/%d | Stored: %lu cycles\r\n",
+                           run, j, NS_BLOCKS, (unsigned long)cycles);
+                }
+
+                // ถ้าไม่อยากหน่วงก็เอา osDelay ออก
+                // osDelay(200);
+            }
+        }
+
+        hmac_sha256_finalize(&hmac_ctx, digest, 0);
+    }
+}
+
+
+void Test_SpeckShuffle_Basic(void *argument)
+{
+	uint32_t maxblocks = NS_BLOCKS;
+	    uint32_t seed = 0x12345678;  // หรือ osKernelGetTickCount() ก็ได้
+
+	    for (int pass = 0; pass < 10; pass++) {   // 10 รอบตามที่ขอ
+	        uint32_t tweak = seed + pass;
+
+	        printf("\r\nPass %d (tweak = 0x%08lX):\r\n[", pass,
+	               (unsigned long)tweak);
+
+	        for (uint32_t i = 0; i < maxblocks; i++) {
+	            uint32_t p = FF1Permute_Speck(i, maxblocks, &ff1_speck_key, tweak);
+
+	            printf("%lu", (unsigned long)p);
+	            if (i + 1 < maxblocks) {
+	                printf(", ");
+	            }
+	        }
+
+	        printf("]\r\n");
+	    }
+}
+
+
+void NS_SMARM_Benchmark_Experiment(void *argument) {
+    uint8_t digest[32];
+    hmac_sha256 hmac_ctx;
+    uint32_t start_tim, end_tim;
+    uint64_t sum_stored = 0, sum_feistel = 0;
+
+    printf("\r\n Block Size  %d---\r\n", NS_BLOCK_SIZE);
+
+    for (int run = 1; run <= 10; run++) {
+    	// Store
+        for (int i = 0; i < NS_BLOCKS; i++) stored_indices[i] = i;
+        for (int i = NS_BLOCKS - 1; i > 0; i--) {
+            int j = rand() % (i + 1);
+            int tmp = stored_indices[i];
+            stored_indices[i] = stored_indices[j];
+            stored_indices[j] = tmp;
+        }
+
+        start_tim = __HAL_TIM_GET_COUNTER(&htim2);
+        hmac_sha256_initialize(&hmac_ctx, (uint8_t*)"key", 3);
+
+        // วนลูป 2 รอบเพื่อให้ได้ 512KB
+        for (int pass = 0; pass < PASSES_REQUIRED; pass++) {
+            for (int i = 0; i < NS_BLOCKS; i++) {
+                uint8_t *block_ptr = ns_test_memory + (stored_indices[i] * NS_BLOCK_SIZE);
+                hmac_sha256_update(&hmac_ctx, block_ptr, NS_BLOCK_SIZE);
+            }
+        }
+        hmac_sha256_finalize(&hmac_ctx, digest, 0);
+        end_tim = __HAL_TIM_GET_COUNTER(&htim2);
+
+        uint32_t round_stored = (end_tim - start_tim);
+        sum_stored += round_stored;
+
+        // ==========================================================
+        // 2. METHOD: FEISTEL ON-THE-FLY (512KB)
+        // ==========================================================
+
+// Custom FF1
+//        for (int pass = 0; pass < PASSES_REQUIRED; pass++) {
+//            for (uint32_t i = 0; i < NS_BLOCKS; i++) {
+//                uint32_t next_idx = FeistelPermute(i, NS_BLOCKS, f_seed + pass);
+//                uint8_t *block_ptr = ns_test_memory + (next_idx * NS_BLOCK_SIZE);
+//                hmac_sha256_update(&hmac_ctx, block_ptr, NS_BLOCK_SIZE);
+//            }
+//        }
+
+//        FF1
+
+
+
+        uint32_t f_seed = (uint32_t)osKernelGetTickCount() + run;
+
+        start_tim = __HAL_TIM_GET_COUNTER(&htim2);
+        hmac_sha256_initialize(&hmac_ctx, (uint8_t*)"key", 3);
+
+//
+//        for (int pass = 0; pass < PASSES_REQUIRED; pass++) {
+//            for (uint32_t i = 0; i < NS_BLOCKS; i++) {
+//                uint32_t tweak = f_seed + pass;
+//                uint32_t next_idx = FF1Permute(i, NS_BLOCKS, &ff1_key, tweak);
+//                uint8_t *block_ptr = ns_test_memory + (next_idx * NS_BLOCK_SIZE);
+//                hmac_sha256_update(&hmac_ctx, block_ptr, NS_BLOCK_SIZE);
+//            }
+//        }
+
+        for (int pass = 0; pass < PASSES_REQUIRED; pass++) {
+            uint32_t tweak = f_seed + pass;
+
+            for (uint32_t i = 0; i < NS_BLOCKS; i++) {
+                uint32_t next_idx = FF1Permute_Speck(i, NS_BLOCKS, &ff1_speck_key, tweak);
+                uint8_t *block_ptr = ns_test_memory + (next_idx * NS_BLOCK_SIZE);
+                hmac_sha256_update(&hmac_ctx, block_ptr, NS_BLOCK_SIZE);
+            }
+        }
+
+//
+//        for (int pass = 0; pass < PASSES_REQUIRED; pass++) {
+//            uint32_t tweak = f_seed + pass;         // ใช้เป็น seed/nonce ต่อ pass
+//
+//            for (uint32_t i = 0; i < NS_BLOCKS; i++) {
+//                uint32_t next_idx = SpeckShuffle_Index(&g_speck_shuffle,
+//                                                       i,
+//                                                       pass,
+//                                                       tweak,
+//                                                       NS_BLOCKS);
+//
+//                uint8_t *block_ptr = ns_test_memory + (next_idx * NS_BLOCK_SIZE);
+//                hmac_sha256_update(&hmac_ctx, block_ptr, NS_BLOCK_SIZE);
+//            }
+//        }
+//
+        hmac_sha256_finalize(&hmac_ctx, digest, 0);
+        end_tim = __HAL_TIM_GET_COUNTER(&htim2);
+
+        uint32_t round_feistel = (end_tim - start_tim);
+        sum_feistel += round_feistel;
+
+        printf("Round %d | Stored: %lu | Feistel: %lu (Cycles)\r\n", run, round_stored, round_feistel);
+        osDelay(500);
+    }
+
+    // --- สรุปผลเฉลี่ย ---
+    printf("\r\n--- Final Result for 512KB ---\r\n");
+    printf("Average Stored Array: %llu cycles\r\n", sum_stored / 7);
+    printf("Average Feistel Mode:  %llu cycles\r\n", sum_feistel / 7);
+    printf("------------------------------\r\n");
+}
+
+
+void NS_SMARM_Benchmark_Experiment_test(void *argument) {
+    uint8_t digest[32];
+    hmac_sha256 hmac_ctx;
+    uint32_t start_tim, end_tim;
+
+    // ตัวแปรเก็บผลลัพธ์รวมเพื่อหาค่าเฉลี่ย
+    uint64_t sum_stored = 0;
+    uint64_t sum_feistel = 0;
+    uint32_t total_stored, total_feistel;
+
+    if (xSemaphoreTake(uart_mutex, pdMS_TO_TICKS(100)) == pdTRUE) {
+        printf("\r\n==============================================\r\n");
+        printf("   SMARM BENCHMARK - 7 ROUNDS TEST\r\n");
+        printf("   Blocks: %d | Block Size: %d Bytes\r\n", NS_BLOCKS, NS_BLOCK_SIZE);
+        printf("==============================================\r\n");
+        xSemaphoreGive(uart_mutex);
+    }
+
+    for (int run = 1; run <= 7; run++) {
+        // --- 1. METHOD: STORED ARRAY ---
+        // เราจะไม่เอาเวลา Shuffle มารวมในลูป Hash เพื่อให้เห็นความต่างชัดเจน
+        uint32_t s_start = __HAL_TIM_GET_COUNTER(&htim2);
+        for (int i = 0; i < NS_BLOCKS; i++) stored_indices[i] = i;
+        // Shuffle (Simulated with rand for NS test)
+        for (int i = NS_BLOCKS - 1; i > 0; i--) {
+            int j = rand() % (i + 1);
+            int tmp = stored_indices[i];
+            stored_indices[i] = stored_indices[j];
+            stored_indices[j] = tmp;
+        }
+
+        start_tim = __HAL_TIM_GET_COUNTER(&htim2);
+//        __disable_irq();
+        hmac_sha256_initialize(&hmac_ctx, (uint8_t*)"key", 3);
+        for (int i = 0; i < NS_BLOCKS; i++) {
+            uint8_t *block_ptr = ns_test_memory + (stored_indices[i] * NS_BLOCK_SIZE);
+            hmac_sha256_update(&hmac_ctx, block_ptr, NS_BLOCK_SIZE);
+        }
+        hmac_sha256_finalize(&hmac_ctx, digest, 0);
+//        __enable_irq();
+        end_tim = __HAL_TIM_GET_COUNTER(&htim2);
+
+        total_stored = (end_tim - s_start); // รวมทั้ง Shuffle และ Hash
+        sum_stored += total_stored;
+
+        // --- 2. METHOD: FEISTEL ON-THE-FLY ---
+        uint32_t f_seed = (uint32_t)osKernelGetTickCount() + run;
+
+        start_tim = __HAL_TIM_GET_COUNTER(&htim2);
+//        __disable_irq();
+        hmac_sha256_initialize(&hmac_ctx, (uint8_t*)"key", 3);
+        for (uint32_t i = 0; i < NS_BLOCKS; i++) {
+            uint32_t next_idx = FeistelPermute(i, NS_BLOCKS, f_seed);
+            uint8_t *block_ptr = ns_test_memory + (next_idx * NS_BLOCK_SIZE);
+            hmac_sha256_update(&hmac_ctx, block_ptr, NS_BLOCK_SIZE);
+        }
+        hmac_sha256_finalize(&hmac_ctx, digest, 0);
+//        __enable_irq();
+        end_tim = __HAL_TIM_GET_COUNTER(&htim2);
+
+        total_feistel = (end_tim - start_tim);
+        sum_feistel += total_feistel;
+
+        // พิมพ์ผลรายรอบ
+        if (xSemaphoreTake(uart_mutex, pdMS_TO_TICKS(100)) == pdTRUE) {
+            printf("Round %d | Stored: %lu cycles | Feistel: %lu cycles\r\n",
+                    run, total_stored, total_feistel);
+            xSemaphoreGive(uart_mutex);
+        }
+        osDelay(1000); // พักช่วงสั้นๆ
+    }
+
+    // --- สรุปผลการทดลอง ---
+    if (xSemaphoreTake(uart_mutex, pdMS_TO_TICKS(100)) == pdTRUE) {
+        printf("----------------------------------------------\r\n");
+        printf("AVERAGE RESULTS (7 Rounds)\r\n");
+        printf(" - Avg Stored Array:  %llu cycles\r\n", sum_stored / 7);
+        printf(" - Avg Feistel Mode:   %llu cycles\r\n", sum_feistel / 7);
+        printf(" - RAM Saving:        %d bytes\r\n", sizeof(stored_indices));
+        printf("==============================================\r\n");
+        xSemaphoreGive(uart_mutex);
+    }
+}
+
+
 
 void LinearHMAC(void *argument)
 {

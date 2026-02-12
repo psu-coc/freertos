@@ -1,0 +1,3 @@
+../Application/User/aes-gcm/aes-omac1.c:12:13:gf_mulx	3
+../Application/User/aes-gcm/aes-omac1.c:38:5:omac1_aes_128_vector	12
+../Application/User/aes-gcm/aes-omac1.c:111:5:omac1_aes_128	1

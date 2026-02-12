@@ -1,0 +1,3 @@
+../Application/User/Speck/ff1_speck.c:56:17:NUM2_Speck	0	static
+../Application/User/Speck/ff1_speck.c:7:6:FF1_SetKey_Speck	16	static
+../Application/User/Speck/ff1_speck.c:170:10:FF1Permute_Speck	320	static

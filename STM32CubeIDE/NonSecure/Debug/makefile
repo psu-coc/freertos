@@ -13,6 +13,10 @@ RM := rm -rf
 -include Drivers/STM32L5xx_HAL_Driver/subdir.mk
 -include Drivers/CMSIS/subdir.mk
 -include Drivers/BSP/STM32L5xx_Nucleo/subdir.mk
+-include Application/User/aes-gcm/subdir.mk
+-include Application/User/Speck/subdir.mk
+-include Application/User/Crypto/hmac-sha256/subdir.mk
+-include Application/User/Aesnew/subdir.mk
 -include Application/User/subdir.mk
 -include Application/Startup/subdir.mk
 -include objects.mk
@@ -63,7 +67,7 @@ all: main-build
 main-build: FreeRTOS_SecureIOToggle_TrustZone_NonSecure.elf secondary-outputs
 
 dependents:
-	-cd C:/Users/PC/STM32CubeIDE/workspace_2.0.0/freertos/STM32CubeIDE/Secure/Debug && $(MAKE) clean all
+	-cd C:/Users/PC/STM32CubeIDE/workspace_2.0.0/freertos/STM32CubeIDE/Secure/Debug && $(MAKE) all
 
 # Tool invocations
 FreeRTOS_SecureIOToggle_TrustZone_NonSecure.elf FreeRTOS_SecureIOToggle_TrustZone_NonSecure.map: $(OBJS) $(USER_OBJS) C:/Users/PC/STM32CubeIDE/workspace_2.0.0/freertos/STM32CubeIDE/Secure/Debug/FreeRTOS_SecureIOToggle_TrustZone_Secure.elf C:\Users\PC\STM32CubeIDE\workspace_2.0.0\freertos\STM32CubeIDE\NonSecure\STM32L552ZETXQ_FLASH.ld makefile objects.list $(OPTIONAL_TOOL_DEPS)

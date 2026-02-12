@@ -1,0 +1,6 @@
+../Application/User/aes-gcm/aes-ccm.c:13:13:xor_aes_block	0	static
+../Application/User/aes-gcm/aes-ccm.c:60:13:aes_ccm_auth	24	static
+../Application/User/aes-gcm/aes-ccm.c:88:13:aes_ccm_encr.constprop	48	static
+../Application/User/aes-gcm/aes-ccm.c:24:13:aes_ccm_auth_start.constprop	72	static
+../Application/User/aes-gcm/aes-ccm.c:144:5:aes_ccm_ae	96	static
+../Application/User/aes-gcm/aes-ccm.c:174:5:aes_ccm_ad	104	static

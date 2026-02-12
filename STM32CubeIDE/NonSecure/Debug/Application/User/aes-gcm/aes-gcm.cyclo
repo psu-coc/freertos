@@ -1,0 +1,15 @@
+../Application/User/aes-gcm/aes-common.h:181:24:AES_GET_BE32	1
+../Application/User/aes-gcm/aes-common.h:186:20:AES_PUT_BE32	1
+../Application/User/aes-gcm/aes-common.h:215:20:AES_PUT_BE64	1
+../Application/User/aes-gcm/aes-gcm.c:21:13:xor_block	1
+../Application/User/aes-gcm/aes-gcm.c:32:13:shift_right_block	1
+../Application/User/aes-gcm/aes-gcm.c:61:13:gf_mult	6
+../Application/User/aes-gcm/aes-gcm.c:171:15:aes_gcm_init_hash_subkey	2
+../Application/User/aes-gcm/aes-gcm.c:99:13:ghash	5
+../Application/User/aes-gcm/aes-gcm.c:224:13:aes_gcm_ghash	1
+../Application/User/aes-gcm/aes-gcm.c:139:13:aes_gctr.part.0	5
+../Application/User/aes-gcm/aes-gcm.c:187:13:aes_gcm_prepare_j0	2
+../Application/User/aes-gcm/aes-gcm.c:210:13:aes_gcm_gctr.part.0	3
+../Application/User/aes-gcm/aes-gcm.c:249:5:aes_gcm_ae	3
+../Application/User/aes-gcm/aes-gcm.c:283:5:aes_gcm_ad	3
+../Application/User/aes-gcm/aes-gcm.c:317:5:aes_gmac	1
