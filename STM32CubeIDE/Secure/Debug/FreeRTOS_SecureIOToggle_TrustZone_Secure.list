@@ -24950,7 +24950,7 @@ secureportNON_SECURE_CALLABLE void SecureInit_EnableNSFPUAccess( void )
 	.weak	Reset_Handler
 Reset_Handler:
 
-  ldr   sp, =_estack    /* set stack pointer */
+;  ldr   sp, =_estack    /* set stack pointer */
  c009740:	f8df d034 	ldr.w	sp, [pc, #52]	@ c009778 <LoopForever+0x2>
 	.type	Reset_Handler, %function
 
@@ -25023,7 +25023,7 @@ LoopFillZerobss:
 LoopForever:
     b LoopForever
  c009776:	e7fe      	b.n	c009776 <LoopForever>
-  ldr   sp, =_estack    /* set stack pointer */
+;  ldr   sp, =_estack    /* set stack pointer */
  c009778:	30018000 	.word	0x30018000
 	ldr	r3, =_sidata
  c00977c:	0c00b3e8 	.word	0x0c00b3e8

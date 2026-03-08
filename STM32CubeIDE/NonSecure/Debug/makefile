@@ -67,7 +67,7 @@ all: main-build
 main-build: FreeRTOS_SecureIOToggle_TrustZone_NonSecure.elf secondary-outputs
 
 dependents:
-	-cd C:/Users/PC/STM32CubeIDE/workspace_2.0.0/freertos/STM32CubeIDE/Secure/Debug && $(MAKE) all
+	-cd C:/Users/PC/STM32CubeIDE/workspace_2.0.0/freertos/STM32CubeIDE/Secure/Debug && $(MAKE) clean all
 
 # Tool invocations
 FreeRTOS_SecureIOToggle_TrustZone_NonSecure.elf FreeRTOS_SecureIOToggle_TrustZone_NonSecure.map: $(OBJS) $(USER_OBJS) C:/Users/PC/STM32CubeIDE/workspace_2.0.0/freertos/STM32CubeIDE/Secure/Debug/FreeRTOS_SecureIOToggle_TrustZone_Secure.elf C:\Users\PC\STM32CubeIDE\workspace_2.0.0\freertos\STM32CubeIDE\NonSecure\STM32L552ZETXQ_FLASH.ld makefile objects.list $(OPTIONAL_TOOL_DEPS)

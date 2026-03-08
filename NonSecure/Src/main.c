@@ -320,13 +320,13 @@ int main(void)
   /* Create the thread(s) */
   /* creation of LEDThreadHandle */
 //  LEDThreadHandleHandle = osThreadNew(NormalTask, NULL, &LEDThreadHandle_attributes);
-  LEDThreadHandleHandle = osThreadNew(NS_SMARM_Benchmark_Experiment, NULL, &LEDThreadHandle_attributes);
+//  LEDThreadHandleHandle = osThreadNew(NormalTask, NULL, &LEDThreadHandle_attributes);
 
 
   /* creation of myTask02 */
 //  myTask02Handle = osThreadNew(LED_Thread, NULL, &myTask02_attributes);
 
-//  myTask02Handle = osThreadNew(SMARM_Experiment_Task, NULL, &myTask02_attributes);
+  myTask02Handle = osThreadNew(SMARM_Experiment_Task, NULL, &myTask02_attributes);
 
   /* USER CODE BEGIN RTOS_THREADS */
   /* add threads, ... */
@@ -1620,7 +1620,7 @@ void Test_Simulation(void *argument) {
 
 
 
-#define TARGET_FREQ_HZ   1000
+#define TARGET_FREQ_HZ   10
 #define TIM2_TICKS_PER_SEC  137500
 volatile uint32_t g_normal_counter = 0; // ตัวนับรอบของ NormalTask
 
@@ -1700,12 +1700,13 @@ void SMARM_Experiment_Task(void *argument)
 
     uint8_t digest[32];
     uint8_t challenge[16];
-
+    uint8_t round = 0;
     osDelay(3000);
 
     for(;;)
     {
 
+    	round++;
         uint32_t seed = osKernelGetTickCount();
         for(int k=0; k<4; k++) {
             uint32_t rnd = seed ^ (seed << 13) ^ (k * 0x5DEECE66D);
@@ -1718,9 +1719,10 @@ void SMARM_Experiment_Task(void *argument)
 
 //        SECURE_ShuffledHMAC_secure(digest, sizeof(digest), challenge, sizeof(challenge));
 
-
+//        __disable_irq();
+//        osDelay(1000);
         SECURE_ShuffledHMAC_secure(digest, sizeof(digest), challenge, sizeof(challenge));
-
+//        __enable_irq();
 
         uint32_t end_tim2 = __HAL_TIM_GET_COUNTER(&htim2);
         uint32_t end_systick = osKernelGetTickCount();
@@ -1740,18 +1742,18 @@ void SMARM_Experiment_Task(void *argument)
 //	    printf("dur: %d  | tim: %d\r\n", duration_os_ms, tim2_diff);
 
         if (xSemaphoreTake(uart_mutex, pdMS_TO_TICKS(10)) == pdTRUE) {
-                    printf("\r\n--- Attestation Event Analysis ---\r\n");
-                    printf("Duration (TIM2): %lu ms\r\n", actual_duration_ms);
-                    printf("NormalTask Run: %lu / %lu cycles\r\n", actual_run, expected_run);
-                    printf("Missed Cycles: %ld\r\n", missed_cycles);
+//                    printf("\r\n--- Attestation Event Analysis ---\r\n");
+//                    printf("Duration (TIM2): %lu ms\r\n", actual_duration_ms);
+                    printf("Round %u NS: %lu / %lu cycles\r\n", round ,actual_run, expected_run);
+//                    printf("Missed Cycles: %ld\r\n", missed_cycles);
                     printf("Systick: %ld\r\n", duration_os_ms);
 
                     // คำนวณ FAR เฉพาะช่วงเวลาที่รัน Secure Call
                     if (expected_run > 0) {
                        // uint32_t local_far_x100 = (actual_run * 100) / expected_run;
                         // printf("Local FAR: %lu.%02lu\r\n", local_far_x100 / 100, local_far_x100 % 100);
-                    	uint32_t local_far_x100 = (actual_run * 100) / expected_run;
-                    	printf("Local FAR: %lu.%02lu\r\n", local_far_x100 / 100, local_far_x100 % 100);
+//                    	uint32_t local_far_x100 = (actual_run * 100) / expected_run;
+//                    	printf("Local FAR: %lu.%02lu\r\n", local_far_x100 / 100, local_far_x100 % 100);
                     }
                     xSemaphoreGive(uart_mutex);
                 }
