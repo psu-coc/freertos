@@ -44,7 +44,6 @@ SemaphoreHandle_t uart_mutex;
 // flasherase 0x08082000 อันเก่า
 #define FLASH_TEST_START_ADDR   0x080BE000
 #define FLASH_TEST_DATA         0x1234567812345678ULL
-#define FLASH_PAGE_SIZE     	0x800  // 4 KB
 #define SAFE_FLASH_BANK     	FLASH_BANK_1
 
 
@@ -238,6 +237,8 @@ void SecureFault_Callback(void);
 void SecureError_Callback(void);
 void NormalTask(void *argument);
 void SMARM_Experiment_Task(void *argument);
+void RTSMARM_Test_NormalWorld(void *argument);
+
 
 
 UART_HandleTypeDef huart1;  // or whichever UART you're using
@@ -563,9 +564,21 @@ uint8_t *ns_test_memory = (uint8_t *)0x08040000;
 static int stored_indices[NS_BLOCKS];
 
 
-#define TARGET_FREQ_HZ   10
+#define TARGET_FREQ_HZ   1000
 #define TIM2_TICKS_PER_SEC  137500
 volatile uint32_t g_normal_counter = 0; // ตัวนับรอบของ NormalTask
+
+// ---------- RT-SMARM test in Normal world (10 blocks, printf verification) ----------
+#define RTSMARM_TEST_BLOCKS      100
+#define RTSMARM_TEST_BLOCK_SIZE  32
+#define RTSMARM_SHA256_DIGEST    32
+
+static uint8_t rtsmarm_test_memory[RTSMARM_TEST_BLOCKS * RTSMARM_TEST_BLOCK_SIZE];
+static uint8_t rtsmarm_used_bits[(RTSMARM_TEST_BLOCKS + 7) / 8];
+#define RTSMARM_MAX_BLOCKS 128
+static int rtsmarm_order[RTSMARM_MAX_BLOCKS];
+static int rtsmarm_seen[RTSMARM_MAX_BLOCKS];
+
 
 void NormalTask(void *argument)
 {
@@ -664,7 +677,8 @@ void SMARM_Experiment_Task(void *argument)
 
 //        __disable_irq();
 //        osDelay(1000);
-        SECURE_ShuffledHMAC_secure(digest, sizeof(digest), challenge, sizeof(challenge));
+         SECURE_ShuffledHMAC_secure(digest, sizeof(digest), challenge, sizeof(challenge));
+//        SECURE_RTSMARM_ShuffledHMAC_secure(digest, sizeof(digest), challenge, sizeof(challenge));
 //        __enable_irq();
 
         uint32_t end_tim2 = __HAL_TIM_GET_COUNTER(&htim2);
@@ -707,6 +721,140 @@ void SMARM_Experiment_Task(void *argument)
 }
 
 
+
+/**
+ * RT-SMARM test: one function, all logic inside Normal world.
+ * Uses 10 blocks by default; constants above can be changed.
+ * Prints round, k, idx and verifies no duplicate indices.
+ * ทดสอบใน Normal World
+ */
+ void RTSMARM_Test_NormalWorld(void *argument)
+ {
+ #define N          RTSMARM_TEST_BLOCKS
+ #define BLK        RTSMARM_TEST_BLOCK_SIZE
+ #define DIGEST_LEN RTSMARM_SHA256_DIGEST
+ 
+     static const uint8_t key[] = "MySecureKey123";
+     uint8_t key16[16], iv16[16];
+     uint8_t challenge[16] = { 0x00, 0x01, 0x02, 0x03, 0x04, 0x05, 0x06, 0x07,
+                               0x08, 0x09, 0x0A, 0x0B, 0x0C, 0x0D, 0x0E, 0x0F };
+     size_t challenge_len = 16;
+ 
+     /* PRNG state (AES-CTR) */
+     struct AES_ctx prng_ctx;
+     uint8_t prng_buf[16];
+     int prng_idx;
+ 
+     hmac_sha256 hmac_deriv;
+     hmac_sha256 hmac_attest;
+    uint8_t digest[DIGEST_LEN];
+    if (N > RTSMARM_MAX_BLOCKS) return;
+
+     /* Fill test memory with a simple pattern (optional) */
+     for (int i = 0; i < N * BLK; i++)
+         rtsmarm_test_memory[i] = (uint8_t)(i & 0xFF);
+ 
+     /* ---- Derive key/IV from challenge (HMAC) ---- */
+     hmac_sha256_initialize(&hmac_deriv, key, strlen((const char*)key));
+     hmac_sha256_update(&hmac_deriv, challenge, challenge_len);
+     hmac_sha256_finalize(&hmac_deriv, NULL, 0);
+     memcpy(key16, hmac_deriv.digest, 16);
+     memcpy(iv16,  hmac_deriv.digest + 16, 16);
+ 
+     /* ---- PRNG init (AES-CTR) ---- */
+     AES_init_ctx_iv(&prng_ctx, key16, iv16);
+     memset(prng_buf, 0, sizeof(prng_buf));
+     prng_idx = 16;
+ 
+     /* ---- Clear bit array ---- */
+     memset(rtsmarm_used_bits, 0, sizeof(rtsmarm_used_bits));
+ 
+     /* ---- HMAC for attestation ---- */
+     hmac_sha256_initialize(&hmac_attest, key, strlen((const char*)key));
+ 
+     for (int round = 0; round < N; round++) {
+         int remaining = N - round;
+         /* prng_uniform: get uniform in [0, remaining) */
+         uint32_t lim = 0xFFFFFFFFu - (0xFFFFFFFFu % (uint32_t)remaining);
+         uint32_t r;
+         for (;;) {
+             if (prng_idx > 12) {
+                 uint8_t zero[16] = {0};
+                 memcpy(prng_buf, zero, 16);
+                 AES_CTR_xcrypt_buffer(&prng_ctx, prng_buf, 16);
+                 prng_idx = 0;
+             }
+             memcpy(&r, &prng_buf[prng_idx], 4);
+             prng_idx += 4;
+             if (r < lim) break;
+         }
+         int k = (int)(r % (uint32_t)remaining);
+ 
+         /* Find k-th zero in bit array (constant-time: scan all N) */
+         int count = 0, idx = 0;
+         for (int i = 0; i < N; i++) {
+             int b = (rtsmarm_used_bits[i/8] >> (i%8)) & 1;
+             if (b == 0) {
+                 if (count == k) idx = i;
+                 count++;
+             }
+         }
+        rtsmarm_used_bits[idx/8] |= (1U << (idx%8));
+        rtsmarm_order[round] = idx;
+        hmac_sha256_update(&hmac_attest, &rtsmarm_test_memory[(size_t)idx * BLK], BLK);
+ 
+        //  if (xSemaphoreTake(uart_mutex, pdMS_TO_TICKS(10)) == pdTRUE) {
+        //      printf("RTSMARM round %d: k=%d idx=%d\r\n", round, k, idx);
+        //      xSemaphoreGive(uart_mutex);
+        //  }
+        if (round + 1 == 1 || round + 1 == 5 || round + 1 == 10 || round + 1 == N) {
+            if (xSemaphoreTake(uart_mutex, pdMS_TO_TICKS(10)) == pdTRUE) {
+                printf("RTSMARM round %d: k=%d idx=%d\r\n", round, k, idx);
+                printf("RTSMARM round %d bits = [", round + 1);
+                for (int i = 0; i < N; i++) {
+                    int b = (rtsmarm_used_bits[i/8] >> (i%8)) & 1;
+                    printf("%d", b);
+                    if (i < N - 1) printf(",");
+                }
+                printf("]\r\n");
+                xSemaphoreGive(uart_mutex);
+            }
+        } else {
+            if (xSemaphoreTake(uart_mutex, pdMS_TO_TICKS(10)) == pdTRUE) {
+                printf("RTSMARM round %d: k=%d idx=%d\r\n", round, k, idx);
+                xSemaphoreGive(uart_mutex);
+            }
+        }
+     }
+ 
+     hmac_sha256_finalize(&hmac_attest, NULL, 0);
+     memcpy(digest, hmac_attest.digest, DIGEST_LEN);
+ 
+     /* ---- Verify no duplicate: each 0..N-1 appears exactly once ---- */
+     memset(rtsmarm_seen, 0, (size_t)N * sizeof(int));
+     for (int i = 0; i < N; i++) {
+         if (rtsmarm_order[i] >= 0 && rtsmarm_order[i] < N)
+             rtsmarm_seen[rtsmarm_order[i]]++;
+     }
+     int ok = 1;
+     for (int i = 0; i < N; i++)
+         if (rtsmarm_seen[i] != 1) { ok = 0; break; }
+
+     if (xSemaphoreTake(uart_mutex, pdMS_TO_TICKS(10)) == pdTRUE) {
+         printf("RTSMARM order: ");
+         for (int i = 0; i < N; i++) printf("%d ", rtsmarm_order[i]);
+         printf("\r\n");
+         printf("RTSMARM no duplicate: %s\r\n", ok ? "OK" : "FAIL");
+         printf("RTSMARM digest: ");
+         for (int i = 0; i < 8; i++) printf("%02X", digest[i]);
+         printf("...\r\n");
+         xSemaphoreGive(uart_mutex);
+     }
+ 
+ #undef N
+ #undef BLK
+ #undef DIGEST_LEN
+ }
 
 
 

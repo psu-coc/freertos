@@ -32,7 +32,7 @@
 #include "arm_cmse.h"
 
 #define SHA256_DIGEST_SIZE 32
-#define BLOCK_SIZE 4096         // // <--- แก้ตัวเลขตรงนี้ครับ (256, 512, 1024, 2048, 4096)
+#define BLOCK_SIZE 64         // // <--- แก้ตัวเลขตรงนี้ครับ (256, 512, 1024, 2048, 4096)
 #define TOTAL_SIZE 0x80000 // 0x40000
 #define BLOCKS (TOTAL_SIZE / BLOCK_SIZE)
 
@@ -161,6 +161,85 @@ static void shuffle_secure_aes_ctr(int *arr, int n,
         int j = prng_uniform_u32(&prng, i + 1);
         int tmp = arr[i]; arr[i] = arr[j]; arr[j] = tmp;
     }
+}
+
+// ========== RT-SMARM: bit array + k-th zero (constant-time) ==========
+#define RTSMARM_BITARRAY_BYTES  ((BLOCKS + 7) / 8)
+static uint8_t rtsmarm_used_bits[RTSMARM_BITARRAY_BYTES];
+
+// O(1)
+static int rtsmarm_get_bit(int i)
+{
+    return (rtsmarm_used_bits[i / 8] >> (i % 8)) & 1;
+}
+
+// O(1)
+static void rtsmarm_set_bit(int i)
+{
+    rtsmarm_used_bits[i / 8] |= (1U << (i % 8));
+}
+
+// O(n)
+static void rtsmarm_clear_bits(int n)
+{
+    memset(rtsmarm_used_bits, 0, (size_t)((n + 7) / 8));
+}
+
+/**
+  * @brief  Find index of the k-th zero (0-based) in bit array.
+  *         Constant-time: always scans all n positions.
+  */
+// O(n)
+static int rtsmarm_find_kth_zero(int n, int k)
+{
+    int count = 0;
+    int result = 0;
+    for (int i = 0; i < n; i++) {
+        if (rtsmarm_get_bit(i) == 0) {
+            if (count == k) {
+                result = i;
+            }
+            count++;
+        }
+    }
+    return result;
+}
+
+/**
+  * @brief  RT-SMARM: attest via HMAC over blocks in PRNG-derived order.
+  *         Uses bit array [0,0,...,0]; each round picks k = rand(round, remaining),
+  *         finds k-th remaining zero (constant-time scan), measures that block.
+  *         Same measure scope as SMARM (BLOCKS, BLOCK_SIZE, real_memory, HMAC).
+  */
+__attribute__((cmse_nonsecure_entry))
+void SECURE_RTSMARM_ShuffledHMAC_secure(uint8_t *out_digest, size_t out_len,
+                                        const uint8_t *challenge, size_t challenge_len)
+{
+    if (!out_digest || out_len < SHA256_DIGEST_SIZE) return;
+
+    uint8_t key16[16], iv16[16];
+    derive_aes_key_iv_from_challenge(key16, iv16, challenge, challenge_len);
+
+    ctr_prng_t prng;
+    prng_init(&prng, key16, iv16);
+
+    //เริ่มรอบใหม่ให้กลายเป็น 0 ทั้งหมดก่อน
+    rtsmarm_clear_bits(BLOCKS);
+
+    hmac_sha256_initialize(&hmac, (const uint8_t *)key, strlen(key));
+
+    for (int round = 0; round < BLOCKS; round++) {
+        int remaining = BLOCKS - round;
+        int k = prng_uniform_u32(&prng, remaining);   /* 0-based: pick k-th of remaining zeros */
+        int idx = rtsmarm_find_kth_zero(BLOCKS, k);
+        rtsmarm_set_bit(idx);
+        __disable_irq();
+        hmac_sha256_update(&hmac, &real_memory[(size_t)idx * BLOCK_SIZE], BLOCK_SIZE);
+        __enable_irq();
+    }
+
+    hmac_sha256_finalize(&hmac, NULL, 0);
+    memcpy(out_digest, hmac.digest, SHA256_DIGEST_SIZE);
 }
 
 // ---- Non-secure callable: secure shuffle + HMAC over blocks
