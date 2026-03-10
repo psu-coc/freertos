@@ -27,27 +27,27 @@ Idx Name          Size      VMA       LMA       File off  Algn
                   ALLOC
  11 .ARM.attributes 00000036  00000000  00000000  00007070  2**0
                   CONTENTS, READONLY
- 12 .debug_line   00025e7c  00000000  00000000  000070a6  2**0
+ 12 .debug_line   00025e78  00000000  00000000  000070a6  2**0
                   CONTENTS, READONLY, DEBUGGING, OCTETS
- 13 .debug_line_str 0000007f  00000000  00000000  0002cf22  2**0
+ 13 .debug_line_str 0000007f  00000000  00000000  0002cf1e  2**0
                   CONTENTS, READONLY, DEBUGGING, OCTETS
- 14 .debug_info   0002993b  00000000  00000000  0002cfa1  2**0
+ 14 .debug_info   0002993b  00000000  00000000  0002cf9d  2**0
                   CONTENTS, READONLY, DEBUGGING, OCTETS
- 15 .debug_abbrev 000051c9  00000000  00000000  000568dc  2**0
+ 15 .debug_abbrev 000051c9  00000000  00000000  000568d8  2**0
                   CONTENTS, READONLY, DEBUGGING, OCTETS
  16 .debug_aranges 00001960  00000000  00000000  0005baa8  2**3
                   CONTENTS, READONLY, DEBUGGING, OCTETS
- 17 .debug_str    00118f17  00000000  00000000  0005d408  2**0
+ 17 .debug_str    00118f1f  00000000  00000000  0005d408  2**0
                   CONTENTS, READONLY, DEBUGGING, OCTETS
- 18 .debug_rnglists 00001b58  00000000  00000000  0017631f  2**0
+ 18 .debug_rnglists 00001b58  00000000  00000000  00176327  2**0
                   CONTENTS, READONLY, DEBUGGING, OCTETS
- 19 .debug_macro  0002afa7  00000000  00000000  00177e77  2**0
+ 19 .debug_macro  0002afa7  00000000  00000000  00177e7f  2**0
                   CONTENTS, READONLY, DEBUGGING, OCTETS
- 20 .comment      00000043  00000000  00000000  001a2e1e  2**0
+ 20 .comment      00000043  00000000  00000000  001a2e26  2**0
                   CONTENTS, READONLY
- 21 .debug_frame  00004cdc  00000000  00000000  001a2e64  2**2
+ 21 .debug_frame  00004cdc  00000000  00000000  001a2e6c  2**2
                   CONTENTS, READONLY, DEBUGGING, OCTETS
- 22 .debug_loclists 00012a98  00000000  00000000  001a7b40  2**0
+ 22 .debug_loclists 00012a98  00000000  00000000  001a7b48  2**0
                   CONTENTS, READONLY, DEBUGGING, OCTETS
 
 Disassembly of section .text:
@@ -659,24 +659,23 @@ void SMARM_Experiment_Task(void *argument)
  80406b6:	f002 fc43 	bl	8042f40 <osKernelGetTickCount>
         uint32_t start_count = g_normal_counter;
  80406ba:	f8df 80a0 	ldr.w	r8, [pc, #160]	@ 804075c <SMARM_Experiment_Task+0xe4>
-
 //        SECURE_ShuffledHMAC_secure(digest, sizeof(digest), challenge, sizeof(challenge));
 
 //        __disable_irq();
 //        osDelay(1000);
-         SECURE_ShuffledHMAC_secure(digest, sizeof(digest), challenge, sizeof(challenge));
+//         SECURE_ShuffledHMAC_secure(digest, sizeof(digest), challenge, sizeof(challenge));
+        SECURE_RTSMARM_ShuffledHMAC_secure(digest, sizeof(digest), challenge, sizeof(challenge));
  80406be:	2120      	movs	r1, #32
  80406c0:	aa02      	add	r2, sp, #8
  80406c2:	2310      	movs	r3, #16
         uint32_t start_systick = osKernelGetTickCount();
  80406c4:	4606      	mov	r6, r0
-         SECURE_ShuffledHMAC_secure(digest, sizeof(digest), challenge, sizeof(challenge));
+        SECURE_RTSMARM_ShuffledHMAC_secure(digest, sizeof(digest), challenge, sizeof(challenge));
  80406c6:	a806      	add	r0, sp, #24
         uint32_t start_count = g_normal_counter;
  80406c8:	f8d8 a000 	ldr.w	sl, [r8]
-         SECURE_ShuffledHMAC_secure(digest, sizeof(digest), challenge, sizeof(challenge));
- 80406cc:	f005 f8b4 	bl	8045838 <__SECURE_ShuffledHMAC_secure_veneer>
-//        SECURE_RTSMARM_ShuffledHMAC_secure(digest, sizeof(digest), challenge, sizeof(challenge));
+        SECURE_RTSMARM_ShuffledHMAC_secure(digest, sizeof(digest), challenge, sizeof(challenge));
+ 80406cc:	f005 f8b4 	bl	8045838 <__SECURE_RTSMARM_ShuffledHMAC_secure_veneer>
 //        __enable_irq();
 
         uint32_t end_tim2 = __HAL_TIM_GET_COUNTER(&htim2);
@@ -13292,9 +13291,9 @@ Timer_t * const pxTimer = ( Timer_t * ) listGET_OWNER_OF_HEAD_ENTRY( pxCurrentTi
  8045830:	f85f f000 	ldr.w	pc, [pc]	@ 8045834 <__SecureContext_FreeContext_veneer+0x4>
  8045834:	0c03e049 	.word	0x0c03e049
 
-08045838 <__SECURE_ShuffledHMAC_secure_veneer>:
- 8045838:	f85f f000 	ldr.w	pc, [pc]	@ 804583c <__SECURE_ShuffledHMAC_secure_veneer+0x4>
- 804583c:	0c03e019 	.word	0x0c03e019
+08045838 <__SECURE_RTSMARM_ShuffledHMAC_secure_veneer>:
+ 8045838:	f85f f000 	ldr.w	pc, [pc]	@ 804583c <__SECURE_RTSMARM_ShuffledHMAC_secure_veneer+0x4>
+ 804583c:	0c03e051 	.word	0x0c03e051
 
 08045840 <__SECURE_SystemCoreClockUpdate_veneer>:
  8045840:	f85f f000 	ldr.w	pc, [pc]	@ 8045844 <__SECURE_SystemCoreClockUpdate_veneer+0x4>

@@ -677,8 +677,8 @@ void SMARM_Experiment_Task(void *argument)
 
 //        __disable_irq();
 //        osDelay(1000);
-         SECURE_ShuffledHMAC_secure(digest, sizeof(digest), challenge, sizeof(challenge));
-//        SECURE_RTSMARM_ShuffledHMAC_secure(digest, sizeof(digest), challenge, sizeof(challenge));
+//         SECURE_ShuffledHMAC_secure(digest, sizeof(digest), challenge, sizeof(challenge));
+        SECURE_RTSMARM_ShuffledHMAC_secure(digest, sizeof(digest), challenge, sizeof(challenge));
 //        __enable_irq();
 
         uint32_t end_tim2 = __HAL_TIM_GET_COUNTER(&htim2);
