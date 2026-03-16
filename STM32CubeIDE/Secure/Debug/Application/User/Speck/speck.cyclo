@@ -1,0 +1,13 @@
+../Application/User/Speck/speck.c:114:6:Speck_Encrypt_32	2
+../Application/User/Speck/speck.c:131:6:Speck_Encrypt_48	2
+../Application/User/Speck/speck.c:154:6:Speck_Encrypt_64	2
+../Application/User/Speck/speck.c:171:6:Speck_Encrypt_96	2
+../Application/User/Speck/speck.c:193:6:Speck_Encrypt_128	2
+../Application/User/Speck/speck.c:215:6:Speck_Decrypt_32	2
+../Application/User/Speck/speck.c:231:6:Speck_Decrypt_48	2
+../Application/User/Speck/speck.c:255:6:Speck_Decrypt_64	2
+../Application/User/Speck/speck.c:272:6:Speck_Decrypt_96	2
+../Application/User/Speck/speck.c:295:6:Speck_Decrypt_128	2
+../Application/User/Speck/speck.c:21:9:Speck_Init	9
+../Application/User/Speck/speck.c:109:9:Speck_Encrypt	1
+../Application/User/Speck/speck.c:210:9:Speck_Decrypt	1

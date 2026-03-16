@@ -1,5 +1,6 @@
-C:/Users/PC/STM32CubeIDE/workspace_2.0.0/freertos/Secure/Src/secure_nsc.c:92:13:derive_aes_key_iv_from_challenge	32	static
-C:/Users/PC/STM32CubeIDE/workspace_2.0.0/freertos/Secure/Src/secure_nsc.c:143:12:prng_uniform_u32	48	static
-C:/Users/PC/STM32CubeIDE/workspace_2.0.0/freertos/Secure/Src/secure_nsc.c:67:20:SECURE_RegisterCallback	0	static
-C:/Users/PC/STM32CubeIDE/workspace_2.0.0/freertos/Secure/Src/secure_nsc.c:215:6:SECURE_RTSMARM_ShuffledHMAC_secure	272	static,ignoring_inline_asm
-C:/Users/PC/STM32CubeIDE/workspace_2.0.0/freertos/Secure/Src/secure_nsc.c:247:6:SECURE_ShuffledHMAC_secure	272	static
+C:/Users/PC/STM32CubeIDE/workspace_2.0.0/freertos/Secure/Src/secure_nsc.c:94:13:derive_aes_key_iv_from_challenge	32	static
+C:/Users/PC/STM32CubeIDE/workspace_2.0.0/freertos/Secure/Src/secure_nsc.c:145:12:prng_uniform_u32	48	static
+C:/Users/PC/STM32CubeIDE/workspace_2.0.0/freertos/Secure/Src/secure_nsc.c:69:20:SECURE_RegisterCallback	0	static
+C:/Users/PC/STM32CubeIDE/workspace_2.0.0/freertos/Secure/Src/secure_nsc.c:217:6:SECURE_RTSMARM_ShuffledHMAC_secure	272	static,ignoring_inline_asm
+C:/Users/PC/STM32CubeIDE/workspace_2.0.0/freertos/Secure/Src/secure_nsc.c:249:6:SECURE_ShuffledHMAC_secure	272	static
+C:/Users/PC/STM32CubeIDE/workspace_2.0.0/freertos/Secure/Src/secure_nsc.c:280:6:SECURE_RTSMARM_FF1_Speck_ShuffledHMAC_secure	64	static,ignoring_inline_asm

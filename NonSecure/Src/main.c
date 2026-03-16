@@ -238,6 +238,7 @@ void SecureError_Callback(void);
 void NormalTask(void *argument);
 void SMARM_Experiment_Task(void *argument);
 void RTSMARM_Test_NormalWorld(void *argument);
+void RTSMARM_FF1_Speck_Test_NormalWorld(void *argument);
 
 
 
@@ -314,7 +315,7 @@ int main(void)
 
   /* Create the thread(s) */
   /* creation of LEDThreadHandle */
- LEDThreadHandleHandle = osThreadNew(NormalTask, NULL, &LEDThreadHandle_attributes);
+// LEDThreadHandleHandle = osThreadNew(NormalTask, NULL, &LEDThreadHandle_attributes);
 
 
   /* creation of myTask02 */
@@ -327,7 +328,7 @@ int main(void)
 
   /* USER CODE BEGIN RTOS_EVENTS */
   /* add events, ... */
-  /* USER CODE END RTOS_EVENTS */
+  /* USER CODE END RTOS_EVENTS */   
 
   /* Start scheduler */
   osKernelStart();
@@ -580,6 +581,11 @@ static int rtsmarm_order[RTSMARM_MAX_BLOCKS];
 static int rtsmarm_seen[RTSMARM_MAX_BLOCKS];
 
 
+#define RTSMARM_FF1_TEST_BLOCKS  4096
+#define RTSMARM_FF1_BLOCK_SIZE   RTSMARM_TEST_BLOCK_SIZE
+
+
+
 void NormalTask(void *argument)
 {
 	(void) argument;
@@ -678,7 +684,8 @@ void SMARM_Experiment_Task(void *argument)
 //        __disable_irq();
 //        osDelay(1000);
 //         SECURE_ShuffledHMAC_secure(digest, sizeof(digest), challenge, sizeof(challenge));
-        SECURE_RTSMARM_ShuffledHMAC_secure(digest, sizeof(digest), challenge, sizeof(challenge));
+//         SECURE_RTSMARM_ShuffledHMAC_secure(digest, sizeof(digest), challenge, sizeof(challenge));
+         SECURE_RTSMARM_FF1_Speck_ShuffledHMAC_secure(digest, sizeof(digest), challenge, sizeof(challenge));
 //        __enable_irq();
 
         uint32_t end_tim2 = __HAL_TIM_GET_COUNTER(&htim2);
@@ -856,6 +863,77 @@ void SMARM_Experiment_Task(void *argument)
  #undef DIGEST_LEN
  }
 
+
+
+ void RTSMARM_FF1_Speck_Test_NormalWorld(void *argument)
+{
+    (void)argument;
+
+#define N       RTSMARM_FF1_TEST_BLOCKS
+#define BLK     RTSMARM_FF1_BLOCK_SIZE
+#define DIGEST_LEN 32
+
+    static const uint8_t key[] = "MySecureKey123";
+    uint32_t tweak = 0x12345678u;
+
+    if (N > RTSMARM_MAX_BLOCKS) {
+        if (xSemaphoreTake(uart_mutex, pdMS_TO_TICKS(100)) == pdTRUE) {
+            printf("RTSMARM_FF1_Speck: N=%d > RTSMARM_MAX_BLOCKS\r\n", N);
+            xSemaphoreGive(uart_mutex);
+        }
+        return;
+    }
+
+    Init_FF1_Speck();
+
+    for (int i = 0; i < N * (int)BLK; i++)
+        rtsmarm_test_memory[i] = (uint8_t)(i & 0xFF);
+
+    memset(rtsmarm_seen, 0, (size_t)N * sizeof(int));
+
+    hmac_sha256 hmac_attest;
+    hmac_sha256_initialize(&hmac_attest, (const uint8_t *)key, strlen((const char *)key));
+
+    for (uint32_t i = 0; i < (uint32_t)N; i++) {
+        uint32_t idx = FF1Permute_Speck(i, (uint32_t)N, &ff1_speck_key, tweak);
+        if (idx >= (uint32_t)N) {
+            if (xSemaphoreTake(uart_mutex, pdMS_TO_TICKS(100)) == pdTRUE) {
+                printf("RTSMARM_FF1_Speck: round %lu idx %lu out of range\r\n", (unsigned long)i, (unsigned long)idx);
+                xSemaphoreGive(uart_mutex);
+            }
+            return;
+        }
+        rtsmarm_order[i] = (int)idx;
+        rtsmarm_seen[idx]++;
+        hmac_sha256_update(&hmac_attest, &rtsmarm_test_memory[(size_t)idx * BLK], BLK);
+    }
+
+    hmac_sha256_finalize(&hmac_attest, NULL, 0);
+    uint8_t digest[DIGEST_LEN];
+    memcpy(digest, hmac_attest.digest, DIGEST_LEN);
+
+    int ok = 1;
+    for (int i = 0; i < N; i++)
+        if (rtsmarm_seen[i] != 1) { ok = 0; break; }
+
+    if (xSemaphoreTake(uart_mutex, pdMS_TO_TICKS(100)) == pdTRUE) {
+        printf("\r\n--- RTSMARM FF1-Speck Test (Normal World) ---\r\n");
+        printf("Blocks: %d, BlockSize: %d, Tweak: 0x%08lX\r\n", N, (int)BLK, (unsigned long)tweak);
+        printf("No duplicate: %s\r\n", ok ? "OK" : "FAIL");
+        printf("Order (first 16): ");
+        for (int i = 0; i < 16 && i < N; i++) printf("%d ", rtsmarm_order[i]);
+        printf("...\r\n");
+        printf("Digest: ");
+        for (int i = 0; i < 8; i++) printf("%02X", digest[i]);
+        printf("...\r\n");
+        printf("----------------------------------------\r\n\r\n");
+        xSemaphoreGive(uart_mutex);
+    }
+
+#undef N
+#undef BLK
+#undef DIGEST_LEN
+}
 
 
 /**

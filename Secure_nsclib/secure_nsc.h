@@ -85,7 +85,8 @@ void Secure_Flash256KB(FlashResult_t *result);
 void Secure_WriteFlash_128KB(uint32_t *success_words, uint32_t *failed_words);
 void Secure_WriteFlash_128KB_2(uint32_t *success_words, uint32_t *failed_words);
 void Simulate_flash_write_128KB(uint32_t start_addr, uint8_t start_val, uint32_t *success);
-
+void SECURE_RTSMARM_FF1_Speck_ShuffledHMAC_secure(uint8_t *out_digest, size_t out_len,
+                                                  const uint8_t *challenge, size_t challenge_len);
 
 //const char* SECURE_GetMessage(void);
 //void SECURE_RunHMAC(void);

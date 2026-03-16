@@ -30,9 +30,11 @@
 #include "aes-gcm/aes.h"   // รวม AES CBC, CTR, ECB ไว้หมด
 #include "Aesnew/aes.h"
 #include "arm_cmse.h"
+#include "Speck/speck.h"
+#include "Speck/ff1_speck.h"
 
 #define SHA256_DIGEST_SIZE 32
-#define BLOCK_SIZE 256         // // <--- แก้ตัวเลขตรงนี้ครับ (256, 512, 1024, 2048, 4096)
+#define BLOCK_SIZE 4096	         // // <--- แก้ตัวเลขตรงนี้ครับ (256, 512, 1024, 2048, 4096)
 #define TOTAL_SIZE 0x80000 // 0x40000
 #define BLOCKS (TOTAL_SIZE / BLOCK_SIZE)
 
@@ -170,7 +172,7 @@ static uint8_t rtsmarm_used_bits[RTSMARM_BITARRAY_BYTES];
 // O(1)
 static int rtsmarm_get_bit(int i)
 {
-    return (rtsmarm_used_bits[i / 8] >> (i % 8)) & 1;
+    return (rtsmarm_used_bits[i / 8] >> (i % 8)) & 1; 
 }
 
 // O(1)
@@ -270,6 +272,38 @@ void SECURE_ShuffledHMAC_secure(uint8_t *out_digest, size_t out_len,
     memcpy(out_digest, hmac.digest, SHA256_DIGEST_SIZE);
 }
 
+
+// ---- RT-SMARM FF1-Speck: ไม่เก็บ permutation, ใช้ FF1Permute_Speck(i, BLOCKS, key, tweak) ได้ order ไม่ซ้ำ ----
+static FF1_Key_Speck s_ff1_speck_key;
+
+__attribute__((cmse_nonsecure_entry))
+void SECURE_RTSMARM_FF1_Speck_ShuffledHMAC_secure(uint8_t *out_digest, size_t out_len,
+                                                  const uint8_t *challenge, size_t challenge_len)
+{
+    if (!out_digest || out_len < SHA256_DIGEST_SIZE) return;
+
+    uint8_t key16[16], iv16[16];
+    derive_aes_key_iv_from_challenge(key16, iv16, challenge, challenge_len);
+
+    FF1_SetKey_Speck(&s_ff1_speck_key, key16);
+    uint32_t tweak = 0u;
+    if (challenge && challenge_len >= 4u)
+        tweak = ((uint32_t)challenge[0] << 24) | ((uint32_t)challenge[1] << 16)
+              | ((uint32_t)challenge[2] << 8) | (uint32_t)challenge[3];
+
+    hmac_sha256_initialize(&hmac, (const uint8_t *)key, strlen(key));
+
+    for (uint32_t i = 0u; i < (uint32_t)BLOCKS; i++) {
+        uint32_t idx = FF1Permute_Speck(i, (uint32_t)BLOCKS, &s_ff1_speck_key, tweak);
+        if (idx >= (uint32_t)BLOCKS) continue;
+        __disable_irq();
+        hmac_sha256_update(&hmac, &real_memory[(size_t)idx * BLOCK_SIZE], BLOCK_SIZE);
+        __enable_irq();
+    }
+
+    hmac_sha256_finalize(&hmac, NULL, 0);
+    memcpy(out_digest, hmac.digest, SHA256_DIGEST_SIZE);
+}
 /**
   * @}
   */

@@ -25,6 +25,7 @@ SUBDIRS := \
 Application/Startup \
 Application/User/Aesnew \
 Application/User/Crypto/hmac-sha256 \
+Application/User/Speck \
 Application/User/aes-gcm \
 Application/User \
 Drivers/BSP/STM32L5xx_Nucleo \
