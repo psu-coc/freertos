@@ -563,7 +563,7 @@ uint8_t *ns_test_memory = (uint8_t *)0x08040000;
 static int stored_indices[NS_BLOCKS];
 
 
-#define TARGET_FREQ_HZ   10
+#define TARGET_FREQ_HZ   1000
 #define TIM2_TICKS_PER_SEC  137500
 volatile uint32_t g_normal_counter = 0; // ตัวนับรอบของ NormalTask
 
