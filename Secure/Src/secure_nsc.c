@@ -27,19 +27,17 @@
 #include "secure_port_macros.h"
 #include <string.h>
 #include "Crypto/hmac-sha256/hmac-sha256.h"
-#include "aes-gcm/aes.h"   // รวม AES CBC, CTR, ECB ไว้หมด
+#include "aes-gcm/aes.h"
 #include "Aesnew/aes.h"
 #include "arm_cmse.h"
-#include "Speck/speck.h"
-#include "Speck/ff1_speck.h"
 
 #define SHA256_DIGEST_SIZE 32
-#define BLOCK_SIZE 64	         // // <--- แก้ตัวเลขตรงนี้ครับ (256, 512, 1024, 2048, 4096)
-#define TOTAL_SIZE 0x80000 // 0x40000
+#define BLOCK_SIZE 2048
+#define TOTAL_SIZE 0x80000
 #define BLOCKS (TOTAL_SIZE / BLOCK_SIZE)
 
 __attribute__((section(".gnu.linkonce.b._ns_work_buffer")))
-static uint8_t ns_work_buffer[256] __attribute__((aligned(8)));
+static uint8_t ns_work_buffer[256] __attribute__((aligned(8))) __attribute__((unused));
 
 /** @addtogroup STM32L5xx_HAL_Examples
   * @{
@@ -53,11 +51,6 @@ static uint8_t ns_work_buffer[256] __attribute__((aligned(8)));
 void *pSecureFaultCallback = NULL;   /* Pointer to secure fault callback in Non-secure */
 void *pSecureErrorCallback = NULL;   /* Pointer to secure error callback in Non-secure */
 
-/* Private typedef -----------------------------------------------------------*/
-/* Private define ------------------------------------------------------------*/
-/* Private macro -------------------------------------------------------------*/
-/* Private variables ---------------------------------------------------------*/
-/* Private function prototypes -----------------------------------------------*/
 /* Private functions ---------------------------------------------------------*/
 
 /**
@@ -87,20 +80,18 @@ CMSE_NS_ENTRY void SECURE_RegisterCallback(SECURE_CallbackIDTypeDef CallbackId, 
 
 uint8_t *real_memory = (uint8_t *)0x8000000;
 
-static const uint8_t key[] = "MySecureKey123";
+static const char key[] = "MySecureKey123";
 static hmac_sha256 hmac;
 
-// ---- Key/IV derivation: HMAC(secret, challenge) -> 32B -> 16B key + 16B iv
 static void derive_aes_key_iv_from_challenge(uint8_t key16[16],
                                              uint8_t iv16[16],
                                              const uint8_t *challenge,
                                              size_t clen)
 {
-    hmac_sha256_initialize(&hmac, (const uint8_t*)key, strlen(key));
+    hmac_sha256_initialize(&hmac, (const uint8_t *)key, strlen(key));
     if (challenge && clen) {
         hmac_sha256_update(&hmac, challenge, clen);
     } else {
-        // fallback entropy so it's never constant
         uint32_t tick = (uint32_t)SysTick->VAL;
         hmac_sha256_update(&hmac, (uint8_t*)&tick, sizeof(tick));
     }
@@ -109,18 +100,17 @@ static void derive_aes_key_iv_from_challenge(uint8_t key16[16],
     memcpy(iv16,  hmac.digest + 16, 16);
 }
 
-// ---- PRNG: AES-CTR keystream -> 32-bit samples
 typedef struct {
     struct AES_ctx ctx;
     uint8_t  buf[16];
-    int      idx;   // next unread byte in buf (0..16)
+    int      idx;
 } ctr_prng_t;
 
 static void prng_init(ctr_prng_t *p, const uint8_t key16[16], const uint8_t iv16[16])
 {
     AES_init_ctx_iv(&p->ctx, key16, iv16);
     memset(p->buf, 0, sizeof(p->buf));
-    p->idx = 16; // force refill on first use
+    p->idx = 16;
 }
 
 static void prng_refill_block(ctr_prng_t *p)
@@ -151,47 +141,24 @@ static int prng_uniform_u32(ctr_prng_t *p, int n)
     }
 }
 
-// ---- Fisher–Yates using the PRNG above
-static void shuffle_secure_aes_ctr(int *arr, int n,
-                                   const uint8_t key16[16],
-                                   const uint8_t iv16[16])
-{
-    ctr_prng_t prng;
-    prng_init(&prng, key16, iv16);
-
-    for (int i = n - 1; i > 0; i--) {
-        int j = prng_uniform_u32(&prng, i + 1);
-        int tmp = arr[i]; arr[i] = arr[j]; arr[j] = tmp;
-    }
-}
-
-// ========== RT-SMARM: bit array + k-th zero (constant-time) ==========
 #define RTSMARM_BITARRAY_BYTES  ((BLOCKS + 7) / 8)
 static uint8_t rtsmarm_used_bits[RTSMARM_BITARRAY_BYTES];
 
-// O(1)
 static int rtsmarm_get_bit(int i)
 {
-    return (rtsmarm_used_bits[i / 8] >> (i % 8)) & 1; 
+    return (rtsmarm_used_bits[i / 8] >> (i % 8)) & 1;
 }
 
-// O(1)
 static void rtsmarm_set_bit(int i)
 {
     rtsmarm_used_bits[i / 8] |= (1U << (i % 8));
 }
 
-// O(n)
 static void rtsmarm_clear_bits(int n)
 {
     memset(rtsmarm_used_bits, 0, (size_t)((n + 7) / 8));
 }
 
-/**
-  * @brief  Find index of the k-th zero (0-based) in bit array.
-  *         Constant-time: always scans all n positions.
-  */
-// O(n)
 static int rtsmarm_find_kth_zero(int n, int k)
 {
     int count = 0;
@@ -207,12 +174,6 @@ static int rtsmarm_find_kth_zero(int n, int k)
     return result;
 }
 
-/**
-  * @brief  RT-SMARM: attest via HMAC over blocks in PRNG-derived order.
-  *         Uses bit array [0,0,...,0]; each round picks k = rand(round, remaining),
-  *         finds k-th remaining zero (constant-time scan), measures that block.
-  *         Same measure scope as SMARM (BLOCKS, BLOCK_SIZE, real_memory, HMAC).
-  */
 __attribute__((cmse_nonsecure_entry))
 void SECURE_RTSMARM_ShuffledHMAC_secure(uint8_t *out_digest, size_t out_len,
                                         const uint8_t *challenge, size_t challenge_len)
@@ -225,77 +186,15 @@ void SECURE_RTSMARM_ShuffledHMAC_secure(uint8_t *out_digest, size_t out_len,
     ctr_prng_t prng;
     prng_init(&prng, key16, iv16);
 
-    //เริ่มรอบใหม่ให้กลายเป็น 0 ทั้งหมดก่อน
     rtsmarm_clear_bits(BLOCKS);
 
     hmac_sha256_initialize(&hmac, (const uint8_t *)key, strlen(key));
 
     for (int round = 0; round < BLOCKS; round++) {
         int remaining = BLOCKS - round;
-        int k = prng_uniform_u32(&prng, remaining);   /* 0-based: pick k-th of remaining zeros */
+        int k = prng_uniform_u32(&prng, remaining);
         int idx = rtsmarm_find_kth_zero(BLOCKS, k);
         rtsmarm_set_bit(idx);
-//        __disable_irq();
-        hmac_sha256_update(&hmac, &real_memory[(size_t)idx * BLOCK_SIZE], BLOCK_SIZE);
-//        __enable_irq();
-    }
-
-    hmac_sha256_finalize(&hmac, NULL, 0);
-    memcpy(out_digest, hmac.digest, SHA256_DIGEST_SIZE);
-}
-
-// ---- Non-secure callable: secure shuffle + HMAC over blocks
-__attribute__((cmse_nonsecure_entry))
-void SECURE_ShuffledHMAC_secure(uint8_t *out_digest, size_t out_len,
-                                const uint8_t *challenge, size_t challenge_len)
-{
-    if (!out_digest || out_len < SHA256_DIGEST_SIZE) return;
-
-    // 1) indices = 0..BLOCKS-1
-    static int indices[BLOCKS];
-    for (int i = 0; i < BLOCKS; i++) indices[i] = i;
-
-    // 2) derive AES key/IV from challenge
-    uint8_t key16[16], iv16[16];
-    derive_aes_key_iv_from_challenge(key16, iv16, challenge, challenge_len);
-
-    // 3) secure shuffle
-    shuffle_secure_aes_ctr(indices, BLOCKS, key16, iv16);
-
-    // 4) HMAC over shuffled blocks
-    hmac_sha256_initialize(&hmac, (const uint8_t*)key, strlen(key));
-    for (int i = 0; i < BLOCKS; i++) {
-        const uint8_t *blk = &real_memory[(size_t)indices[i] * BLOCK_SIZE];
-        hmac_sha256_update(&hmac, blk, BLOCK_SIZE);
-    }
-    hmac_sha256_finalize(&hmac, NULL, 0);
-    memcpy(out_digest, hmac.digest, SHA256_DIGEST_SIZE);
-}
-
-
-// ---- RT-SMARM FF1-Speck: ไม่เก็บ permutation, ใช้ FF1Permute_Speck(i, BLOCKS, key, tweak) ได้ order ไม่ซ้ำ ----
-static FF1_Key_Speck s_ff1_speck_key;
-
-__attribute__((cmse_nonsecure_entry))
-void SECURE_RTSMARM_FF1_Speck_ShuffledHMAC_secure(uint8_t *out_digest, size_t out_len,
-                                                  const uint8_t *challenge, size_t challenge_len)
-{
-    if (!out_digest || out_len < SHA256_DIGEST_SIZE) return;
-
-    uint8_t key16[16], iv16[16];
-    derive_aes_key_iv_from_challenge(key16, iv16, challenge, challenge_len);
-
-    FF1_SetKey_Speck(&s_ff1_speck_key, key16);
-    uint32_t tweak = 0u;
-    if (challenge && challenge_len >= 4u)
-        tweak = ((uint32_t)challenge[0] << 24) | ((uint32_t)challenge[1] << 16)
-              | ((uint32_t)challenge[2] << 8) | (uint32_t)challenge[3];
-
-    hmac_sha256_initialize(&hmac, (const uint8_t *)key, strlen(key));
-
-    for (uint32_t i = 0u; i < (uint32_t)BLOCKS; i++) {
-        uint32_t idx = FF1Permute_Speck(i, (uint32_t)BLOCKS, &s_ff1_speck_key, tweak);
-        if (idx >= (uint32_t)BLOCKS) continue;
         __disable_irq();
         hmac_sha256_update(&hmac, &real_memory[(size_t)idx * BLOCK_SIZE], BLOCK_SIZE);
         __enable_irq();
@@ -304,6 +203,7 @@ void SECURE_RTSMARM_FF1_Speck_ShuffledHMAC_secure(uint8_t *out_digest, size_t ou
     hmac_sha256_finalize(&hmac, NULL, 0);
     memcpy(out_digest, hmac.digest, SHA256_DIGEST_SIZE);
 }
+
 /**
   * @}
   */
