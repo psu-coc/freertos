@@ -315,7 +315,7 @@ int main(void)
 
   /* Create the thread(s) */
   /* creation of LEDThreadHandle */
-// LEDThreadHandleHandle = osThreadNew(NormalTask, NULL, &LEDThreadHandle_attributes);
+LEDThreadHandleHandle = osThreadNew(NormalTask, NULL, &LEDThreadHandle_attributes);
 
 
   /* creation of myTask02 */
@@ -565,12 +565,12 @@ uint8_t *ns_test_memory = (uint8_t *)0x08040000;
 static int stored_indices[NS_BLOCKS];
 
 
-#define TARGET_FREQ_HZ   1000
+#define TARGET_FREQ_HZ   10
 #define TIM2_TICKS_PER_SEC  137500
 volatile uint32_t g_normal_counter = 0; // ตัวนับรอบของ NormalTask
 
 // ---------- RT-SMARM test in Normal world (10 blocks, printf verification) ----------
-#define RTSMARM_TEST_BLOCKS      100
+#define RTSMARM_TEST_BLOCKS      10
 #define RTSMARM_TEST_BLOCK_SIZE  32
 #define RTSMARM_SHA256_DIGEST    32
 
@@ -684,8 +684,8 @@ void SMARM_Experiment_Task(void *argument)
 //        __disable_irq();
 //        osDelay(1000);
 //         SECURE_ShuffledHMAC_secure(digest, sizeof(digest), challenge, sizeof(challenge));
-//         SECURE_RTSMARM_ShuffledHMAC_secure(digest, sizeof(digest), challenge, sizeof(challenge));
-         SECURE_RTSMARM_FF1_Speck_ShuffledHMAC_secure(digest, sizeof(digest), challenge, sizeof(challenge));
+        SECURE_RTSMARM_ShuffledHMAC_secure(digest, sizeof(digest), challenge, sizeof(challenge));
+        //  SECURE_RTSMARM_FF1_Speck_ShuffledHMAC_secure(digest, sizeof(digest), challenge, sizeof(challenge));
 //        __enable_irq();
 
         uint32_t end_tim2 = __HAL_TIM_GET_COUNTER(&htim2);

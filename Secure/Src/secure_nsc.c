@@ -34,7 +34,7 @@
 #include "Speck/ff1_speck.h"
 
 #define SHA256_DIGEST_SIZE 32
-#define BLOCK_SIZE 4096	         // // <--- แก้ตัวเลขตรงนี้ครับ (256, 512, 1024, 2048, 4096)
+#define BLOCK_SIZE 64	         // // <--- แก้ตัวเลขตรงนี้ครับ (256, 512, 1024, 2048, 4096)
 #define TOTAL_SIZE 0x80000 // 0x40000
 #define BLOCKS (TOTAL_SIZE / BLOCK_SIZE)
 
@@ -235,9 +235,9 @@ void SECURE_RTSMARM_ShuffledHMAC_secure(uint8_t *out_digest, size_t out_len,
         int k = prng_uniform_u32(&prng, remaining);   /* 0-based: pick k-th of remaining zeros */
         int idx = rtsmarm_find_kth_zero(BLOCKS, k);
         rtsmarm_set_bit(idx);
-        __disable_irq();
+//        __disable_irq();
         hmac_sha256_update(&hmac, &real_memory[(size_t)idx * BLOCK_SIZE], BLOCK_SIZE);
-        __enable_irq();
+//        __enable_irq();
     }
 
     hmac_sha256_finalize(&hmac, NULL, 0);

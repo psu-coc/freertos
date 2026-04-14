@@ -1,3 +1,4 @@
+C:/Users/PC/STM32CubeIDE/workspace_2.0.0/freertos/NonSecure/Src/main.c:589:6:NormalTask	3
 C:/Users/PC/STM32CubeIDE/workspace_2.0.0/freertos/NonSecure/Src/main.c:657:6:SMARM_Experiment_Task	2
 C:/Users/PC/STM32CubeIDE/workspace_2.0.0/freertos/NonSecure/Src/main.c:75:10:SpeckShuffle_Index	1
 C:/Users/PC/STM32CubeIDE/workspace_2.0.0/freertos/NonSecure/Src/main.c:101:6:InitSpeckShuffle	1
@@ -5,8 +6,7 @@ C:/Users/PC/STM32CubeIDE/workspace_2.0.0/freertos/NonSecure/Src/main.c:112:6:Ini
 C:/Users/PC/STM32CubeIDE/workspace_2.0.0/freertos/NonSecure/Src/main.c:130:6:FF1_SetKey	1
 C:/Users/PC/STM32CubeIDE/workspace_2.0.0/freertos/NonSecure/Src/main.c:514:5:_gettimeofday	1
 C:/Users/PC/STM32CubeIDE/workspace_2.0.0/freertos/NonSecure/Src/main.c:533:6:__io_putchar	1
-C:/Users/PC/STM32CubeIDE/workspace_2.0.0/freertos/NonSecure/Src/main.c:589:6:NormalTask	3
-C:/Users/PC/STM32CubeIDE/workspace_2.0.0/freertos/NonSecure/Src/main.c:738:7:RTSMARM_Test_NormalWorld	22
+C:/Users/PC/STM32CubeIDE/workspace_2.0.0/freertos/NonSecure/Src/main.c:738:7:RTSMARM_Test_NormalWorld	20
 C:/Users/PC/STM32CubeIDE/workspace_2.0.0/freertos/NonSecure/Src/main.c:868:7:RTSMARM_FF1_Speck_Test_NormalWorld	2
 C:/Users/PC/STM32CubeIDE/workspace_2.0.0/freertos/NonSecure/Src/main.c:947:6:HAL_TIM_PeriodElapsedCallback	2
 C:/Users/PC/STM32CubeIDE/workspace_2.0.0/freertos/NonSecure/Src/main.c:965:6:Error_Handler	1
