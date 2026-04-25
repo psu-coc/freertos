@@ -1,9 +1,9 @@
 C:/Users/PC/STM32CubeIDE/workspace_2.0.0/freertos/NonSecure/Src/main.c:377:6:NormalTask	32	static
-C:/Users/PC/STM32CubeIDE/workspace_2.0.0/freertos/NonSecure/Src/main.c:429:6:SMARM_Experiment_Task	96	static
+C:/Users/PC/STM32CubeIDE/workspace_2.0.0/freertos/NonSecure/Src/main.c:429:6:SMARM_Experiment_Task	144	static
 C:/Users/PC/STM32CubeIDE/workspace_2.0.0/freertos/NonSecure/Src/main.c:333:5:_gettimeofday	0	static
 C:/Users/PC/STM32CubeIDE/workspace_2.0.0/freertos/NonSecure/Src/main.c:352:6:__io_putchar	16	static
-C:/Users/PC/STM32CubeIDE/workspace_2.0.0/freertos/NonSecure/Src/main.c:492:6:HAL_TIM_PeriodElapsedCallback	0	static
-C:/Users/PC/STM32CubeIDE/workspace_2.0.0/freertos/NonSecure/Src/main.c:510:6:Error_Handler	8	static
+C:/Users/PC/STM32CubeIDE/workspace_2.0.0/freertos/NonSecure/Src/main.c:533:6:HAL_TIM_PeriodElapsedCallback	0	static
+C:/Users/PC/STM32CubeIDE/workspace_2.0.0/freertos/NonSecure/Src/main.c:551:6:Error_Handler	8	static
 C:/Users/PC/STM32CubeIDE/workspace_2.0.0/freertos/NonSecure/Src/main.c:174:6:SystemClock_Config	104	static
 C:/Users/PC/STM32CubeIDE/workspace_2.0.0/freertos/NonSecure/Src/main.c:80:5:main	40	static
 C:/Users/PC/STM32CubeIDE/workspace_2.0.0/freertos/NonSecure/Src/main.c:345:7:SecureFault_Callback	8	static
