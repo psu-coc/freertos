@@ -462,7 +462,7 @@ void SMARM_Experiment_Task(void *argument)
         uint32_t duration_os_ms = end_systick - start_systick;
         uint32_t tim2_diff = end_tim2 - start_tim2;
         uint32_t actual_duration_ms = ((uint64_t)tim2_diff * 1000) / 137500;
-
+        durations_ms[round] = actual_duration_ms;
         uint32_t expected_run = (actual_duration_ms * TARGET_FREQ_HZ) / 1000;
         int32_t missed_cycles = (int32_t)expected_run - (int32_t)actual_run;
         (void)missed_cycles;

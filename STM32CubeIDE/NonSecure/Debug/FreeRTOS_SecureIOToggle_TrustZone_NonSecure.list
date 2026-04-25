@@ -27,27 +27,27 @@ Idx Name          Size      VMA       LMA       File off  Algn
                   ALLOC
  11 .ARM.attributes 00000036  00000000  00000000  00007070  2**0
                   CONTENTS, READONLY
- 12 .debug_line   00025a70  00000000  00000000  000070a6  2**0
+ 12 .debug_line   00025a89  00000000  00000000  000070a6  2**0
                   CONTENTS, READONLY, DEBUGGING, OCTETS
- 13 .debug_line_str 0000007f  00000000  00000000  0002cb16  2**0
+ 13 .debug_line_str 0000007f  00000000  00000000  0002cb2f  2**0
                   CONTENTS, READONLY, DEBUGGING, OCTETS
- 14 .debug_info   00028c36  00000000  00000000  0002cb95  2**0
+ 14 .debug_info   00028c4b  00000000  00000000  0002cbae  2**0
                   CONTENTS, READONLY, DEBUGGING, OCTETS
- 15 .debug_abbrev 0000507a  00000000  00000000  000557cb  2**0
+ 15 .debug_abbrev 0000507a  00000000  00000000  000557f9  2**0
                   CONTENTS, READONLY, DEBUGGING, OCTETS
- 16 .debug_aranges 00001938  00000000  00000000  0005a848  2**3
+ 16 .debug_aranges 00001938  00000000  00000000  0005a878  2**3
                   CONTENTS, READONLY, DEBUGGING, OCTETS
- 17 .debug_str    0011776d  00000000  00000000  0005c180  2**0
+ 17 .debug_str    0011776d  00000000  00000000  0005c1b0  2**0
                   CONTENTS, READONLY, DEBUGGING, OCTETS
- 18 .debug_rnglists 00001aa9  00000000  00000000  001738ed  2**0
+ 18 .debug_rnglists 00001aa9  00000000  00000000  0017391d  2**0
                   CONTENTS, READONLY, DEBUGGING, OCTETS
- 19 .debug_macro  0002acea  00000000  00000000  00175396  2**0
+ 19 .debug_macro  0002acea  00000000  00000000  001753c6  2**0
                   CONTENTS, READONLY, DEBUGGING, OCTETS
- 20 .comment      00000043  00000000  00000000  001a0080  2**0
+ 20 .comment      00000043  00000000  00000000  001a00b0  2**0
                   CONTENTS, READONLY
- 21 .debug_frame  00004c80  00000000  00000000  001a00c4  2**2
+ 21 .debug_frame  00004c80  00000000  00000000  001a00f4  2**2
                   CONTENTS, READONLY, DEBUGGING, OCTETS
- 22 .debug_loclists 00012789  00000000  00000000  001a4d44  2**0
+ 22 .debug_loclists 0001278e  00000000  00000000  001a4d74  2**0
                   CONTENTS, READONLY, DEBUGGING, OCTETS
 
 Disassembly of section .text:
@@ -614,146 +614,156 @@ void SMARM_Experiment_Task(void *argument)
     uint8_t challenge[16];
     // uint8_t round = 0;
     osDelay(3000);
- 8040686:	f640 30b8 	movw	r0, #3000	@ 0xbb8
- 804068a:	f002 fcf6 	bl	804307a <osDelay>
- 804068e:	2401      	movs	r4, #1
+ 8040686:	ad10      	add	r5, sp, #64	@ 0x40
+ 8040688:	f640 30b8 	movw	r0, #3000	@ 0xbb8
+ 804068c:	f002 fcf5 	bl	804307a <osDelay>
+ 8040690:	46a8      	mov	r8, r5
+ 8040692:	2601      	movs	r6, #1
 
     	// round++;
         uint32_t seed = osKernelGetTickCount();
         for(int k=0; k<4; k++) {
             uint32_t rnd = seed ^ (seed << 13) ^ (k * 0x5DEECE66D);
             memcpy(&challenge[k*4], &rnd, 4);
- 8040690:	4e4d      	ldr	r6, [pc, #308]	@ (80407c8 <SMARM_Experiment_Task+0x150>)
- 8040692:	4f4e      	ldr	r7, [pc, #312]	@ (80407cc <SMARM_Experiment_Task+0x154>)
- 8040694:	f8df 8164 	ldr.w	r8, [pc, #356]	@ 80407fc <SMARM_Experiment_Task+0x184>
+ 8040694:	f8df 9164 	ldr.w	r9, [pc, #356]	@ 80407fc <SMARM_Experiment_Task+0x184>
         uint32_t seed = osKernelGetTickCount();
  8040698:	f002 fca2 	bl	8042fe0 <osKernelGetTickCount>
+            memcpy(&challenge[k*4], &rnd, 4);
+ 804069c:	4b4a      	ldr	r3, [pc, #296]	@ (80407c8 <SMARM_Experiment_Task+0x150>)
             uint32_t rnd = seed ^ (seed << 13) ^ (k * 0x5DEECE66D);
- 804069c:	ea80 3040 	eor.w	r0, r0, r0, lsl #13
+ 804069e:	ea80 3040 	eor.w	r0, r0, r0, lsl #13
+            memcpy(&challenge[k*4], &rnd, 4);
+ 80406a2:	4043      	eors	r3, r0
+ 80406a4:	9305      	str	r3, [sp, #20]
+ 80406a6:	4b49      	ldr	r3, [pc, #292]	@ (80407cc <SMARM_Experiment_Task+0x154>)
         }
 
         uint32_t start_tim2 = __HAL_TIM_GET_COUNTER(&htim2);
- 80406a0:	f8df b15c 	ldr.w	fp, [pc, #348]	@ 8040800 <SMARM_Experiment_Task+0x188>
+ 80406a8:	f8df b154 	ldr.w	fp, [pc, #340]	@ 8040800 <SMARM_Experiment_Task+0x188>
             memcpy(&challenge[k*4], &rnd, 4);
- 80406a4:	ea80 0306 	eor.w	r3, r0, r6
- 80406a8:	9305      	str	r3, [sp, #20]
- 80406aa:	ea80 0307 	eor.w	r3, r0, r7
+ 80406ac:	4043      	eors	r3, r0
  80406ae:	9306      	str	r3, [sp, #24]
         uint32_t start_tim2 = __HAL_TIM_GET_COUNTER(&htim2);
  80406b0:	f8db 3000 	ldr.w	r3, [fp]
             memcpy(&challenge[k*4], &rnd, 4);
  80406b4:	9004      	str	r0, [sp, #16]
- 80406b6:	ea80 0008 	eor.w	r0, r0, r8
+ 80406b6:	ea80 0009 	eor.w	r0, r0, r9
         uint32_t start_tim2 = __HAL_TIM_GET_COUNTER(&htim2);
- 80406ba:	f8d3 9024 	ldr.w	r9, [r3, #36]	@ 0x24
+ 80406ba:	6a5f      	ldr	r7, [r3, #36]	@ 0x24
             memcpy(&challenge[k*4], &rnd, 4);
- 80406be:	9007      	str	r0, [sp, #28]
+ 80406bc:	9007      	str	r0, [sp, #28]
         uint32_t start_systick = osKernelGetTickCount();
- 80406c0:	f002 fc8e 	bl	8042fe0 <osKernelGetTickCount>
+ 80406be:	f002 fc8f 	bl	8042fe0 <osKernelGetTickCount>
         uint32_t start_count = g_normal_counter;
 
         SECURE_RTSMARM_ShuffledHMAC_secure(digest, sizeof(digest), challenge, sizeof(challenge));
+ 80406c2:	2310      	movs	r3, #16
  80406c4:	2120      	movs	r1, #32
- 80406c6:	2310      	movs	r3, #16
         uint32_t start_count = g_normal_counter;
- 80406c8:	4d41      	ldr	r5, [pc, #260]	@ (80407d0 <SMARM_Experiment_Task+0x158>)
+ 80406c6:	4c42      	ldr	r4, [pc, #264]	@ (80407d0 <SMARM_Experiment_Task+0x158>)
         SECURE_RTSMARM_ShuffledHMAC_secure(digest, sizeof(digest), challenge, sizeof(challenge));
- 80406ca:	eb0d 0203 	add.w	r2, sp, r3
- 80406ce:	eb0d 0001 	add.w	r0, sp, r1
+ 80406c8:	eb0d 0203 	add.w	r2, sp, r3
+ 80406cc:	eb0d 0001 	add.w	r0, sp, r1
         uint32_t start_count = g_normal_counter;
- 80406d2:	f8d5 a000 	ldr.w	sl, [r5]
+ 80406d0:	f8d4 a000 	ldr.w	sl, [r4]
         SECURE_RTSMARM_ShuffledHMAC_secure(digest, sizeof(digest), challenge, sizeof(challenge));
- 80406d6:	f005 f953 	bl	8045980 <__SECURE_RTSMARM_ShuffledHMAC_secure_veneer>
+ 80406d4:	f005 f954 	bl	8045980 <__SECURE_RTSMARM_ShuffledHMAC_secure_veneer>
 
         uint32_t end_tim2 = __HAL_TIM_GET_COUNTER(&htim2);
- 80406da:	f8db 3000 	ldr.w	r3, [fp]
- 80406de:	6a5b      	ldr	r3, [r3, #36]	@ 0x24
- 80406e0:	9303      	str	r3, [sp, #12]
+ 80406d8:	f8db 3000 	ldr.w	r3, [fp]
+ 80406dc:	6a59      	ldr	r1, [r3, #36]	@ 0x24
+ 80406de:	9103      	str	r1, [sp, #12]
         uint32_t end_systick = osKernelGetTickCount();
- 80406e2:	f002 fc7d 	bl	8042fe0 <osKernelGetTickCount>
+ 80406e0:	f002 fc7e 	bl	8042fe0 <osKernelGetTickCount>
         uint32_t end_count = g_normal_counter;
- 80406e6:	f8d5 b000 	ldr.w	fp, [r5]
+
+        uint32_t actual_run = end_count - start_count;
+        uint32_t duration_os_ms = end_systick - start_systick;
+        uint32_t tim2_diff = end_tim2 - start_tim2;
+ 80406e4:	9903      	ldr	r1, [sp, #12]
+        uint32_t actual_duration_ms = ((uint64_t)tim2_diff * 1000) / 137500;
+ 80406e6:	4a3b      	ldr	r2, [pc, #236]	@ (80407d4 <SMARM_Experiment_Task+0x15c>)
+        uint32_t tim2_diff = end_tim2 - start_tim2;
+ 80406e8:	1bc9      	subs	r1, r1, r7
+        uint32_t actual_duration_ms = ((uint64_t)tim2_diff * 1000) / 137500;
+ 80406ea:	f44f 777a 	mov.w	r7, #1000	@ 0x3e8
+ 80406ee:	2300      	movs	r3, #0
+ 80406f0:	fba1 0107 	umull	r0, r1, r1, r7
+ 80406f4:	f7ff fda4 	bl	8040240 <__aeabi_uldivmod>
+        uint32_t end_count = g_normal_counter;
+ 80406f8:	f8d4 b000 	ldr.w	fp, [r4]
         //   printf("Round %u NS: %lu / %lu cycles\r\n", round, actual_run, expected_run);
         //   printf("Runtime (ms): %lu\r\n", actual_duration_ms);
         //   xSemaphoreGive(uart_mutex);
         // }
 
         if (xSemaphoreTake(uart_mutex, pdMS_TO_TICKS(10)) == pdTRUE) {
- 80406ea:	4d3a      	ldr	r5, [pc, #232]	@ (80407d4 <SMARM_Experiment_Task+0x15c>)
- 80406ec:	210a      	movs	r1, #10
- 80406ee:	6828      	ldr	r0, [r5, #0]
- 80406f0:	f003 fa09 	bl	8043b06 <xQueueSemaphoreTake>
- 80406f4:	2801      	cmp	r0, #1
- 80406f6:	9b03      	ldr	r3, [sp, #12]
- 80406f8:	d11b      	bne.n	8040732 <SMARM_Experiment_Task+0xba>
-        uint32_t tim2_diff = end_tim2 - start_tim2;
- 80406fa:	eba3 0009 	sub.w	r0, r3, r9
-        uint32_t actual_duration_ms = ((uint64_t)tim2_diff * 1000) / 137500;
- 80406fe:	f44f 797a 	mov.w	r9, #1000	@ 0x3e8
- 8040702:	2300      	movs	r3, #0
- 8040704:	4a34      	ldr	r2, [pc, #208]	@ (80407d8 <SMARM_Experiment_Task+0x160>)
- 8040706:	fba0 0109 	umull	r0, r1, r0, r9
- 804070a:	f7ff fd99 	bl	8040240 <__aeabi_uldivmod>
+ 80406fc:	4c36      	ldr	r4, [pc, #216]	@ (80407d8 <SMARM_Experiment_Task+0x160>)
+        durations_ms[round] = actual_duration_ms;
+ 80406fe:	f848 0b04 	str.w	r0, [r8], #4
+ 8040702:	9003      	str	r0, [sp, #12]
+        if (xSemaphoreTake(uart_mutex, pdMS_TO_TICKS(10)) == pdTRUE) {
+ 8040704:	210a      	movs	r1, #10
+ 8040706:	6820      	ldr	r0, [r4, #0]
+ 8040708:	f003 f9fd 	bl	8043b06 <xQueueSemaphoreTake>
+ 804070c:	2801      	cmp	r0, #1
+ 804070e:	9a03      	ldr	r2, [sp, #12]
+ 8040710:	d110      	bne.n	8040734 <SMARM_Experiment_Task+0xbc>
         uint32_t expected_run = (actual_duration_ms * TARGET_FREQ_HZ) / 1000;
- 804070e:	fb09 f300 	mul.w	r3, r9, r0
- 8040712:	fbb3 f3f9 	udiv	r3, r3, r9
-        uint32_t actual_duration_ms = ((uint64_t)tim2_diff * 1000) / 137500;
- 8040716:	4602      	mov	r2, r0
+ 8040712:	fb07 f302 	mul.w	r3, r7, r2
+ 8040716:	fbb3 f3f7 	udiv	r3, r3, r7
           printf("Round %u: Runtime=%lu ms, NS=%lu/%lu cycles\r\n",
- 8040718:	4621      	mov	r1, r4
- 804071a:	9300      	str	r3, [sp, #0]
- 804071c:	482f      	ldr	r0, [pc, #188]	@ (80407dc <SMARM_Experiment_Task+0x164>)
- 804071e:	ebab 030a 	sub.w	r3, fp, sl
- 8040722:	f004 fae7 	bl	8044cf4 <iprintf>
+ 804071a:	4631      	mov	r1, r6
+ 804071c:	9300      	str	r3, [sp, #0]
+ 804071e:	482f      	ldr	r0, [pc, #188]	@ (80407dc <SMARM_Experiment_Task+0x164>)
+ 8040720:	ebab 030a 	sub.w	r3, fp, sl
+ 8040724:	f004 fae6 	bl	8044cf4 <iprintf>
                  round + 1, actual_duration_ms, actual_run, expected_run);
           xSemaphoreGive(uart_mutex);
- 8040726:	2300      	movs	r3, #0
- 8040728:	6828      	ldr	r0, [r5, #0]
- 804072a:	461a      	mov	r2, r3
- 804072c:	4619      	mov	r1, r3
- 804072e:	f003 f884 	bl	804383a <xQueueGenericSend>
+ 8040728:	2300      	movs	r3, #0
+ 804072a:	6820      	ldr	r0, [r4, #0]
+ 804072c:	461a      	mov	r2, r3
+ 804072e:	4619      	mov	r1, r3
+ 8040730:	f003 f883 	bl	804383a <xQueueGenericSend>
         }
 
         osDelay(2000);
- 8040732:	f44f 60fa 	mov.w	r0, #2000	@ 0x7d0
+ 8040734:	f44f 60fa 	mov.w	r0, #2000	@ 0x7d0
     for(uint8_t round = 0; round < 10; round++)
- 8040736:	3401      	adds	r4, #1
+ 8040738:	3601      	adds	r6, #1
         osDelay(2000);
- 8040738:	f002 fc9f 	bl	804307a <osDelay>
+ 804073a:	f002 fc9e 	bl	804307a <osDelay>
     for(uint8_t round = 0; round < 10; round++)
- 804073c:	2c0b      	cmp	r4, #11
- 804073e:	d1ab      	bne.n	8040698 <SMARM_Experiment_Task+0x20>
+ 804073e:	2e0b      	cmp	r6, #11
+ 8040740:	d1aa      	bne.n	8040698 <SMARM_Experiment_Task+0x20>
 
     // === คำนวณและ print summary ===
     uint32_t sum = 0;
     uint32_t min_val = durations_ms[0];
     uint32_t max_val = durations_ms[0];
     for (int i = 0; i < 10; i++) {
- 8040740:	2400      	movs	r4, #0
+ 8040742:	2600      	movs	r6, #0
     uint32_t min_val = durations_ms[0];
- 8040742:	9e10      	ldr	r6, [sp, #64]	@ 0x40
-    for (int i = 0; i < 10; i++) {
- 8040744:	af10      	add	r7, sp, #64	@ 0x40
-    uint32_t min_val = durations_ms[0];
- 8040746:	463a      	mov	r2, r7
+ 8040744:	9f10      	ldr	r7, [sp, #64]	@ 0x40
+ 8040746:	462a      	mov	r2, r5
     uint32_t max_val = durations_ms[0];
- 8040748:	46b0      	mov	r8, r6
+ 8040748:	46b8      	mov	r8, r7
     uint32_t sum = 0;
- 804074a:	46a1      	mov	r9, r4
+ 804074a:	46b1      	mov	r9, r6
         sum += durations_ms[i];
  804074c:	f852 3b04 	ldr.w	r3, [r2], #4
     for (int i = 0; i < 10; i++) {
- 8040750:	3401      	adds	r4, #1
+ 8040750:	3601      	adds	r6, #1
         if (durations_ms[i] < min_val) min_val = durations_ms[i];
- 8040752:	429e      	cmp	r6, r3
+ 8040752:	429f      	cmp	r7, r3
  8040754:	bf28      	it	cs
- 8040756:	461e      	movcs	r6, r3
+ 8040756:	461f      	movcs	r7, r3
         if (durations_ms[i] > max_val) max_val = durations_ms[i];
  8040758:	4598      	cmp	r8, r3
  804075a:	bf38      	it	cc
  804075c:	4698      	movcc	r8, r3
     for (int i = 0; i < 10; i++) {
- 804075e:	2c0a      	cmp	r4, #10
+ 804075e:	2e0a      	cmp	r6, #10
         sum += durations_ms[i];
  8040760:	4499      	add	r9, r3
     for (int i = 0; i < 10; i++) {
@@ -762,8 +772,8 @@ void SMARM_Experiment_Task(void *argument)
     uint32_t mean = sum / 10;
 
     if (xSemaphoreTake(uart_mutex, pdMS_TO_TICKS(10)) == pdTRUE) {
- 8040764:	4621      	mov	r1, r4
- 8040766:	6828      	ldr	r0, [r5, #0]
+ 8040764:	4631      	mov	r1, r6
+ 8040766:	6820      	ldr	r0, [r4, #0]
  8040768:	f003 f9cd 	bl	8043b06 <xQueueSemaphoreTake>
  804076c:	2801      	cmp	r0, #1
  804076e:	d125      	bne.n	80407bc <SMARM_Experiment_Task+0x144>
@@ -771,11 +781,11 @@ void SMARM_Experiment_Task(void *argument)
  8040770:	481b      	ldr	r0, [pc, #108]	@ (80407e0 <SMARM_Experiment_Task+0x168>)
  8040772:	f004 fb27 	bl	8044dc4 <puts>
         printf("Mean: %lu ms\r\n", mean);
- 8040776:	fbb9 f1f4 	udiv	r1, r9, r4
+ 8040776:	fbb9 f1f6 	udiv	r1, r9, r6
  804077a:	481a      	ldr	r0, [pc, #104]	@ (80407e4 <SMARM_Experiment_Task+0x16c>)
  804077c:	f004 faba 	bl	8044cf4 <iprintf>
         printf("Min:  %lu ms\r\n", min_val);
- 8040780:	4631      	mov	r1, r6
+ 8040780:	4639      	mov	r1, r7
  8040782:	4819      	ldr	r0, [pc, #100]	@ (80407e8 <SMARM_Experiment_Task+0x170>)
  8040784:	f004 fab6 	bl	8044cf4 <iprintf>
         printf("Max:  %lu ms\r\n", max_val);
@@ -786,17 +796,17 @@ void SMARM_Experiment_Task(void *argument)
  8040790:	4817      	ldr	r0, [pc, #92]	@ (80407f0 <SMARM_Experiment_Task+0x178>)
  8040792:	f004 faaf 	bl	8044cf4 <iprintf>
         for (int i = 0; i < 10; i++) {
- 8040796:	2400      	movs	r4, #0
+ 8040796:	2600      	movs	r6, #0
             printf("%lu ", durations_ms[i]);
- 8040798:	4e16      	ldr	r6, [pc, #88]	@ (80407f4 <SMARM_Experiment_Task+0x17c>)
- 804079a:	4630      	mov	r0, r6
- 804079c:	f857 1b04 	ldr.w	r1, [r7], #4
+ 8040798:	4f16      	ldr	r7, [pc, #88]	@ (80407f4 <SMARM_Experiment_Task+0x17c>)
+ 804079a:	4638      	mov	r0, r7
+ 804079c:	f855 1b04 	ldr.w	r1, [r5], #4
         for (int i = 0; i < 10; i++) {
- 80407a0:	3401      	adds	r4, #1
+ 80407a0:	3601      	adds	r6, #1
             printf("%lu ", durations_ms[i]);
  80407a2:	f004 faa7 	bl	8044cf4 <iprintf>
         for (int i = 0; i < 10; i++) {
- 80407a6:	2c0a      	cmp	r4, #10
+ 80407a6:	2e0a      	cmp	r6, #10
  80407a8:	d1f7      	bne.n	804079a <SMARM_Experiment_Task+0x122>
         }
         printf("\r\n===========================\r\n");
@@ -804,7 +814,7 @@ void SMARM_Experiment_Task(void *argument)
  80407ac:	f004 fb0a 	bl	8044dc4 <puts>
         xSemaphoreGive(uart_mutex);
  80407b0:	2300      	movs	r3, #0
- 80407b2:	6828      	ldr	r0, [r5, #0]
+ 80407b2:	6820      	ldr	r0, [r4, #0]
  80407b4:	461a      	mov	r2, r3
  80407b6:	4619      	mov	r1, r3
  80407b8:	f003 f83f 	bl	804383a <xQueueGenericSend>
@@ -821,8 +831,8 @@ void SMARM_Experiment_Task(void *argument)
  80407c8:	deece66d 	.word	0xdeece66d
  80407cc:	bdd9ccda 	.word	0xbdd9ccda
  80407d0:	2001808c 	.word	0x2001808c
- 80407d4:	20018178 	.word	0x20018178
- 80407d8:	0002191c 	.word	0x0002191c
+ 80407d4:	0002191c 	.word	0x0002191c
+ 80407d8:	20018178 	.word	0x20018178
  80407dc:	080459c0 	.word	0x080459c0
  80407e0:	080459ee 	.word	0x080459ee
  80407e4:	08045a0d 	.word	0x08045a0d
