@@ -1,6 +1,8 @@
 "./Application/Startup/startup_stm32l552zetxq.o"
 "./Application/User/Aesnew/aes.o"
 "./Application/User/Crypto/hmac-sha256/hmac-sha256.o"
+"./Application/User/Speck/ff1_speck.o"
+"./Application/User/Speck/speck.o"
 "./Application/User/aes-gcm/aes-cbc.o"
 "./Application/User/aes-gcm/aes-ccm.o"
 "./Application/User/aes-gcm/aes-ctr.o"

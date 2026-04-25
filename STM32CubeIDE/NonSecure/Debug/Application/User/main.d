@@ -50,11 +50,7 @@ Application/User/main.o: \
  ../../../Middlewares/Third_Party/FreeRTOS/Source/CMSIS_RTOS_V2/cmsis_os2.h \
  ../../../Middlewares/Third_Party/FreeRTOS/Source/include/semphr.h \
  ../../../Middlewares/Third_Party/FreeRTOS/Source/include/queue.h \
- ../../../Middlewares/Third_Party/FreeRTOS/Source/include/task.h \
- ../Application/User/Crypto/hmac-sha256/hmac-sha256.h \
- ../Application/User/Aesnew/aes.h ../Application/User/Speck/speck.h \
- ../Application/User/Speck/cipher_constants.h \
- ../Application/User/Speck/ff1_speck.h ../Application/User/Speck/speck.h
+ ../../../Middlewares/Third_Party/FreeRTOS/Source/include/task.h
 ../../../NonSecure/Inc/main.h:
 ../../../Drivers/STM32L5xx_HAL_Driver/Inc/stm32l5xx_hal.h:
 ../../../NonSecure/Inc/stm32l5xx_hal_conf.h:
@@ -106,9 +102,3 @@ Application/User/main.o: \
 ../../../Middlewares/Third_Party/FreeRTOS/Source/include/semphr.h:
 ../../../Middlewares/Third_Party/FreeRTOS/Source/include/queue.h:
 ../../../Middlewares/Third_Party/FreeRTOS/Source/include/task.h:
-../Application/User/Crypto/hmac-sha256/hmac-sha256.h:
-../Application/User/Aesnew/aes.h:
-../Application/User/Speck/speck.h:
-../Application/User/Speck/cipher_constants.h:
-../Application/User/Speck/ff1_speck.h:
-../Application/User/Speck/speck.h:

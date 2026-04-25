@@ -40,10 +40,7 @@ Application/User/secure_nsc.o: \
  ../../../Secure_nsclib/secure_nsc.h \
  ../../../Middlewares/Third_Party/FreeRTOS/Source/portable/GCC/ARM_CM33/secure/secure_port_macros.h \
  ../Application/User/Crypto/hmac-sha256/hmac-sha256.h \
- ../Application/User/aes-gcm/aes.h \
- ../Application/User/aes-gcm/aes-common.h \
- ../Application/User/aes-gcm/aes-internal.h \
- ../Application/User/aes-gcm/aes-debug.h ../Application/User/Aesnew/aes.h
+ ../Application/User/Aesnew/aes.h
 ../../../Secure/Inc/main.h:
 ../../../Drivers/STM32L5xx_HAL_Driver/Inc/stm32l5xx_hal.h:
 ../../../Secure/Inc/stm32l5xx_hal_conf.h:
@@ -84,8 +81,4 @@ Application/User/secure_nsc.o: \
 ../../../Secure_nsclib/secure_nsc.h:
 ../../../Middlewares/Third_Party/FreeRTOS/Source/portable/GCC/ARM_CM33/secure/secure_port_macros.h:
 ../Application/User/Crypto/hmac-sha256/hmac-sha256.h:
-../Application/User/aes-gcm/aes.h:
-../Application/User/aes-gcm/aes-common.h:
-../Application/User/aes-gcm/aes-internal.h:
-../Application/User/aes-gcm/aes-debug.h:
 ../Application/User/Aesnew/aes.h:

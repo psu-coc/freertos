@@ -17,14 +17,14 @@
 #include "secure_port_macros.h"
 #include <string.h>
 #include "Crypto/hmac-sha256/hmac-sha256.h"
-#include "aes-gcm/aes.h"   // รวม AES CBC, CTR, ECB ไว้หมด
+//#include "aes-gcm/aes.h"   // รวม AES CBC, CTR, ECB ไว้หมด
 #include "Aesnew/aes.h"
 #include "arm_cmse.h"
-#include "Speck/speck.h"
-#include "Speck/ff1_speck.h"
+//#include "Speck/speck.h"
+//#include "Speck/ff1_speck.h"
 
 #define SHA256_DIGEST_SIZE 32
-#define BLOCK_SIZE 4096         // // <--- แก้ตัวเลขตรงนี้ครับ (256, 512, 1024, 2048, 4096)
+#define BLOCK_SIZE 64         // // <--- แก้ตัวเลขตรงนี้ครับ (256, 512, 1024, 2048, 4096)
 #define TOTAL_SIZE 0x80000 // 0x40000
 #define BLOCKS (TOTAL_SIZE / BLOCK_SIZE)
 

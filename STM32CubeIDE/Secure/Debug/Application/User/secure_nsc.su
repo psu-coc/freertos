@@ -1,0 +1,5 @@
+C:/Users/PC/STM32CubeIDE/workspace_2.0.0/freertos/Secure/Src/secure_nsc.c:36:20:SECURE_RegisterPrintCallback	0	static
+C:/Users/PC/STM32CubeIDE/workspace_2.0.0/freertos/Secure/Src/secure_nsc.c:41:20:SECURE_Print	8	static
+C:/Users/PC/STM32CubeIDE/workspace_2.0.0/freertos/Secure/Src/secure_nsc.c:55:20:SECURE_RegisterCallback	0	static
+C:/Users/PC/STM32CubeIDE/workspace_2.0.0/freertos/Secure/Src/secure_nsc.c:74:53:SECURE_LEDToggle	8	static
+C:/Users/PC/STM32CubeIDE/workspace_2.0.0/freertos/Secure/Src/secure_nsc.c:164:6:SECURE_ShuffledHMAC_secure	312	static,ignoring_inline_asm

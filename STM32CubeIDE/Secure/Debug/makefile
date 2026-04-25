@@ -14,6 +14,7 @@ RM := rm -rf
 -include Drivers/CMSIS/subdir.mk
 -include Drivers/BSP/STM32L5xx_Nucleo/subdir.mk
 -include Application/User/aes-gcm/subdir.mk
+-include Application/User/Speck/subdir.mk
 -include Application/User/Crypto/hmac-sha256/subdir.mk
 -include Application/User/Aesnew/subdir.mk
 -include Application/User/subdir.mk
