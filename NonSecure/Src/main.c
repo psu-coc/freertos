@@ -1698,15 +1698,13 @@ void SMARM_Experiment_Task(void *argument)
 
     portALLOCATE_SECURE_CONTEXT(4096);
 
+    static uint32_t durations_ms[10];
     uint8_t digest[32];
     uint8_t challenge[16];
-    uint8_t round = 0;
     osDelay(3000);
 
-    for(;;)
+    for(uint8_t round = 0; round < 10; round++)
     {
-
-    	round++;
         uint32_t seed = osKernelGetTickCount();
         for(int k=0; k<4; k++) {
             uint32_t rnd = seed ^ (seed << 13) ^ (k * 0x5DEECE66D);
@@ -1714,53 +1712,51 @@ void SMARM_Experiment_Task(void *argument)
         }
 
         uint32_t start_tim2 = __HAL_TIM_GET_COUNTER(&htim2);
-        uint32_t start_systick = osKernelGetTickCount();
         uint32_t start_count = g_normal_counter;
 
-//        SECURE_ShuffledHMAC_secure(digest, sizeof(digest), challenge, sizeof(challenge));
-
-//        __disable_irq();
-//        osDelay(1000);
         SECURE_ShuffledHMAC_secure(digest, sizeof(digest), challenge, sizeof(challenge));
-//        __enable_irq();
 
         uint32_t end_tim2 = __HAL_TIM_GET_COUNTER(&htim2);
-        uint32_t end_systick = osKernelGetTickCount();
         uint32_t end_count = g_normal_counter;
 
-        uint32_t actual_run = end_count - start_count; // จำนวนรอบที่ NormalTask รันได้จริง
-        uint32_t duration_os_ms = end_systick - start_systick;
+        uint32_t actual_run = end_count - start_count;
         uint32_t tim2_diff = end_tim2 - start_tim2;
-        uint32_t actual_duration_ms = ((uint64_t)tim2_diff * 1000) / 137500; // แปลง Ticks เป็น ms
+        uint32_t actual_duration_ms = ((uint64_t)tim2_diff * 1000) / 137500;
+
+        durations_ms[round] = actual_duration_ms;
 
         uint32_t expected_run = (actual_duration_ms * TARGET_FREQ_HZ) / 1000;
-        int32_t missed_cycles = (int32_t)expected_run - (int32_t)actual_run;
-
-       // uint32_t expected_run = actual_duration_ms;     // เพราะ 1000Hz = 1 รอบต่อ 1ms
-        //int32_t missed_cycles = (int32_t)expected_run - (int32_t)actual_run;
-
-//	    printf("dur: %d  | tim: %d\r\n", duration_os_ms, tim2_diff);
 
         if (xSemaphoreTake(uart_mutex, pdMS_TO_TICKS(10)) == pdTRUE) {
-//                    printf("\r\n--- Attestation Event Analysis ---\r\n");
-//                    printf("Duration (TIM2): %lu ms\r\n", actual_duration_ms);
-                    printf("Round %u NS: %lu / %lu cycles\r\n", round ,actual_run, expected_run);
-//                    printf("Missed Cycles: %ld\r\n", missed_cycles);
-                    printf("Systick: %ld\r\n", duration_os_ms);
-
-                    // คำนวณ FAR เฉพาะช่วงเวลาที่รัน Secure Call
-                    if (expected_run > 0) {
-                       // uint32_t local_far_x100 = (actual_run * 100) / expected_run;
-                        // printf("Local FAR: %lu.%02lu\r\n", local_far_x100 / 100, local_far_x100 % 100);
-//                    	uint32_t local_far_x100 = (actual_run * 100) / expected_run;
-//                    	printf("Local FAR: %lu.%02lu\r\n", local_far_x100 / 100, local_far_x100 % 100);
-                    }
-                    xSemaphoreGive(uart_mutex);
-                }
-
+            printf("Round %u: Runtime=%lu ms, NS=%lu/%lu cycles\r\n",
+                   round + 1, actual_duration_ms, actual_run, expected_run);
+            xSemaphoreGive(uart_mutex);
+        }
 
         osDelay(2000);
     }
+
+    // Summary
+    uint32_t sum = 0;
+    uint32_t min_val = durations_ms[0];
+    uint32_t max_val = durations_ms[0];
+    for (int i = 0; i < 10; i++) {
+        sum += durations_ms[i];
+        if (durations_ms[i] < min_val) min_val = durations_ms[i];
+        if (durations_ms[i] > max_val) max_val = durations_ms[i];
+    }
+    uint32_t mean = sum / 10;
+
+    if (xSemaphoreTake(uart_mutex, pdMS_TO_TICKS(10)) == pdTRUE) {
+        printf("\r\n=== SUMMARY SMARM Baseline (10 rounds) ===\r\n");
+        printf("Mean: %lu ms\r\n", mean);
+        printf("Min:  %lu ms\r\n", min_val);
+        printf("Max:  %lu ms\r\n", max_val);
+        printf("==========================================\r\n");
+        xSemaphoreGive(uart_mutex);
+    }
+
+    for(;;) { osDelay(10000); }
 }
 void NS_SMARM_measurement(void *argument) {
     uint8_t digest[32];
