@@ -20,6 +20,8 @@
 #include "aes-gcm/aes.h"   // รวม AES CBC, CTR, ECB ไว้หมด
 #include "Aesnew/aes.h"
 #include "arm_cmse.h"
+#include "Speck/speck.h"
+#include "Speck/ff1_speck.h"
 
 #define SHA256_DIGEST_SIZE 32
 #define BLOCK_SIZE 4096         // // <--- แก้ตัวเลขตรงนี้ครับ (256, 512, 1024, 2048, 4096)
