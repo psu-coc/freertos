@@ -370,7 +370,7 @@ int _gettimeofday(struct timeval *tv, void *tzvp) {
 /* USER CODE END 4 */
 
 
-#define TARGET_FREQ_HZ   10
+#define TARGET_FREQ_HZ   1000
 #define TIM2_TICKS_PER_SEC  137500
 volatile uint32_t g_normal_counter = 0;
 
@@ -432,15 +432,17 @@ void SMARM_Experiment_Task(void *argument)
 
     portALLOCATE_SECURE_CONTEXT(4096);
 
+    static uint32_t durations_ms[10];
+
     uint8_t digest[32];
     uint8_t challenge[16];
-    uint8_t round = 0;
+    // uint8_t round = 0;
     osDelay(3000);
 
-    for(;;)
+    for(uint8_t round = 0; round < 10; round++)
     {
 
-    	round++;
+    	// round++;
         uint32_t seed = osKernelGetTickCount();
         for(int k=0; k<4; k++) {
             uint32_t rnd = seed ^ (seed << 13) ^ (k * 0x5DEECE66D);
@@ -461,21 +463,48 @@ void SMARM_Experiment_Task(void *argument)
         uint32_t duration_os_ms = end_systick - start_systick;
         uint32_t tim2_diff = end_tim2 - start_tim2;
         uint32_t actual_duration_ms = ((uint64_t)tim2_diff * 1000) / 137500;
+        durations_ms[round] = actual_duration_ms;
 
         uint32_t expected_run = (actual_duration_ms * TARGET_FREQ_HZ) / 1000;
         int32_t missed_cycles = (int32_t)expected_run - (int32_t)actual_run;
         (void)missed_cycles;
 
         if (xSemaphoreTake(uart_mutex, pdMS_TO_TICKS(10)) == pdTRUE) {
-                    printf("Round %u NS: %lu / %lu cycles\r\n", round ,actual_run, expected_run);
-                    printf("Systick: %ld\r\n", duration_os_ms);
+                  printf("Round %u: Runtime=%lu ms, NS=%lu/%lu cycles\r\n",
+                         round + 1, actual_duration_ms, actual_run, expected_run);
+                  xSemaphoreGive(uart_mutex);
+              }
 
-                    xSemaphoreGive(uart_mutex);
-                }
-
-
-        osDelay(2000);
+              osDelay(2000);
     }
+
+     // === Summary ===
+     uint32_t sum = 0;
+     uint32_t min_val = durations_ms[0];
+     uint32_t max_val = durations_ms[0];
+     for (int i = 0; i < 10; i++) {
+         sum += durations_ms[i];
+         if (durations_ms[i] < min_val) min_val = durations_ms[i];
+         if (durations_ms[i] > max_val) max_val = durations_ms[i];
+     }
+     uint32_t mean = sum / 10;
+ 
+     if (xSemaphoreTake(uart_mutex, pdMS_TO_TICKS(10)) == pdTRUE) {
+         printf("\r\n=== SUMMARY (10 rounds) ===\r\n");
+         printf("Mean: %lu ms\r\n", mean);
+         printf("Min:  %lu ms\r\n", min_val);
+         printf("Max:  %lu ms\r\n", max_val);
+         printf("All values: ");
+         for (int i = 0; i < 10; i++) {
+             printf("%lu ", durations_ms[i]);
+         }
+         printf("\r\n===========================\r\n");
+         xSemaphoreGive(uart_mutex);
+     }
+ 
+     for(;;) {
+         osDelay(10000);
+     }
 }
 
 
