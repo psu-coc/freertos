@@ -15,6 +15,9 @@
 #include <stdint.h>
 #include <stdio.h>
 #include <string.h>
+#include <stddef.h>
+#include "hmac-sha256.h"
+#include "aes.h"
 
 SemaphoreHandle_t uart_mutex;
 TIM_HandleTypeDef htim2;
@@ -30,7 +33,8 @@ osThreadId_t myTask02Handle;
 const osThreadAttr_t myTask02_attributes = {
   .name = "myTask02",
   .priority = (osPriority_t) osPriorityNormal,
-  .stack_size = 512 * 4
+  /* sha256_update uses ~300B locals; shuffle/AES adds more — keep generous margin */
+  .stack_size = 16 * 1024
 };
 
 void SystemClock_Config(void);
@@ -41,6 +45,7 @@ void SecureFault_Callback(void);
 void SecureError_Callback(void);
 void NormalTask(void *argument);
 void SMARM_Experiment_Task(void *argument);
+void NS_HashBenchmark_Task(void *argument);
 
 int main(void)
 {
@@ -57,7 +62,11 @@ int main(void)
   }
   //  LEDThreadHandleHandle = osThreadNew(NormalTask, NULL, &LEDThreadHandle_attributes);
   //  LEDThreadHandleHandle = osThreadNew(NormalTask, NULL, &LEDThreadHandle_attributes);
-  myTask02Handle = osThreadNew(SMARM_Experiment_Task, NULL, &myTask02_attributes);
+  /* NS: per-update TIM2 benchmark (same crypto steps as secure NSC). SMARM → SMARM_Experiment_Task. */
+  myTask02Handle = osThreadNew(NS_HashBenchmark_Task, NULL, &myTask02_attributes);
+  if (myTask02Handle == NULL) {
+    Error_Handler();
+  }
   osKernelStart();
   while (1) {}
 }
@@ -169,6 +178,317 @@ void NormalTask(void *argument)
             start_tim2 = current_tim2;
         }
     }
+}
+
+/* NonSecure FLASH: STM32CubeIDE/NonSecure/STM32L552ZETXQ_FLASH.ld → ROM ORIGIN 0x08040000, LENGTH 256K.
+ * Do NOT use 0x08000000 here — that window is Secure flash; NS loads cause SecureFault (you saw this on blk[0]). */
+#define NS_HMAC_NS_FLASH_BASE      0x08040000U
+#define NS_HMAC_NS_FLASH_BYTES     (256U * 1024U)
+
+/* Match secure_nsc TOTAL/BLOCK only if it fits NS flash; 0x80000 span exceeds 256K — cap for NS. */
+#define NS_HMAC_SHA256_DIGEST_SIZE 32
+#define NS_HMAC_BLOCK_SIZE         64
+#define NS_HMAC_TOTAL_SIZE         0x40000
+#define NS_HMAC_BLOCKS             (NS_HMAC_TOTAL_SIZE / NS_HMAC_BLOCK_SIZE)
+/** How many hmac_sha256_update calls to time per benchmark run (digest differs from full scan). */
+#define NS_HMAC_TIMING_ITERATIONS  5
+
+#if NS_HMAC_TOTAL_SIZE > NS_HMAC_NS_FLASH_BYTES
+#error NS_HMAC_TOTAL_SIZE larger than NonSecure FLASH LENGTH — reduce or split regions.
+#endif
+
+static uint8_t *const ns_hmac_real_memory = (uint8_t *)NS_HMAC_NS_FLASH_BASE;
+static const uint8_t ns_hmac_key[] = "MySecureKey123";
+static hmac_sha256 ns_hmac_state;
+static int ns_hmac_indices[NS_HMAC_BLOCKS];
+/** Scratch for copy-then-hash: IRQ disabled only during memcpy; HMAC runs on RAM. */
+static uint8_t ns_hmac_copy_buf[NS_HMAC_BLOCK_SIZE];
+
+typedef struct {
+  struct AES_ctx ctx;
+  uint8_t buf[16];
+  int idx;
+} ns_ctr_prng_t;
+
+static void ns_derive_aes_key_iv_from_challenge(uint8_t key16[16], uint8_t iv16[16],
+                                                const uint8_t *challenge, size_t clen)
+{
+  hmac_sha256_initialize(&ns_hmac_state, ns_hmac_key, strlen((const char *)ns_hmac_key));
+  if (challenge && clen) {
+    hmac_sha256_update(&ns_hmac_state, challenge, clen);
+  } else {
+    uint32_t tick = (uint32_t)SysTick->VAL;
+    hmac_sha256_update(&ns_hmac_state, (uint8_t *)&tick, sizeof(tick));
+  }
+  hmac_sha256_finalize(&ns_hmac_state, NULL, 0);
+  memcpy(key16, ns_hmac_state.digest, 16);
+  memcpy(iv16, ns_hmac_state.digest + 16, 16);
+}
+
+static void ns_prng_init(ns_ctr_prng_t *p, const uint8_t key16[16], const uint8_t iv16[16])
+{
+  AES_init_ctx_iv(&p->ctx, key16, iv16);
+  memset(p->buf, 0, sizeof(p->buf));
+  p->idx = 16;
+}
+
+static void ns_prng_refill_block(ns_ctr_prng_t *p)
+{
+  uint8_t zero[16] = {0};
+  memcpy(p->buf, zero, 16);
+  AES_CTR_xcrypt_buffer(&p->ctx, p->buf, 16);
+  p->idx = 0;
+}
+
+static uint32_t ns_prng_next_u32(ns_ctr_prng_t *p)
+{
+  if (p->idx > 12) {
+    ns_prng_refill_block(p);
+  }
+  uint32_t v;
+  memcpy(&v, &p->buf[p->idx], 4);
+  p->idx += 4;
+  return v;
+}
+
+static int ns_prng_uniform_u32(ns_ctr_prng_t *p, int n)
+{
+  const uint32_t lim = 0xFFFFFFFFu - (0xFFFFFFFFu % (uint32_t)n);
+  for (;;) {
+    uint32_t r = ns_prng_next_u32(p);
+    if (r < lim) {
+      return (int)(r % (uint32_t)n);
+    }
+  }
+}
+
+static void ns_shuffle_aes_ctr(int *arr, int n, const uint8_t key16[16], const uint8_t iv16[16])
+{
+  ns_ctr_prng_t prng;
+  ns_prng_init(&prng, key16, iv16);
+  for (int i = n - 1; i > 0; i--) {
+    int j = ns_prng_uniform_u32(&prng, i + 1);
+    int tmp = arr[i];
+    arr[i] = arr[j];
+    arr[j] = tmp;
+  }
+}
+
+/** Format duration as decimal milliseconds with 6 fractional digits (no float, no %llu — nano libc friendly). */
+static void ns_fmt_ticks_ms6(char out[32], uint32_t ticks)
+{
+  uint64_t dur_ns = ((uint64_t)ticks * 1000000000ULL) / (uint64_t)TIM2_TICKS_PER_SEC;
+  uint32_t ms_int = (uint32_t)(dur_ns / 1000000ULL);
+  uint32_t frac6 = (uint32_t)(dur_ns % 1000000ULL);
+  (void)snprintf(out, 32, "%lu.%06lu", (unsigned long)ms_int, (unsigned long)frac6);
+}
+
+/** Summarize min/max/mean over @p timed_updates samples (not necessarily NS_HMAC_BLOCKS). */
+static void ns_uart_hmac_timing_summary(unsigned round, unsigned timed_updates, uint32_t min_ticks, uint32_t max_ticks,
+                                        uint64_t sum_ticks, uint32_t hash_loop_ticks)
+{
+  const unsigned tu = timed_updates ? timed_updates : 1U;
+  uint32_t mean_ticks = (uint32_t)(sum_ticks / (uint64_t)tu);
+  char ms_min[32], ms_max[32], ms_mean[32], ms_span[32];
+  ns_fmt_ticks_ms6(ms_min, min_ticks);
+  ns_fmt_ticks_ms6(ms_max, max_ticks);
+  ns_fmt_ticks_ms6(ms_mean, mean_ticks);
+  ns_fmt_ticks_ms6(ms_span, hash_loop_ticks);
+  char buf[288];
+  int n = snprintf(buf, sizeof(buf),
+                   "\r\n=== NS HMAC timing (UART) round %u ===\r\n"
+                   "BLOCK_SIZE=%u TOTAL=0x%X logical_BLOCKS=%u | timed_updates=%u\r\n"
+                   "Per IRQ-masked memcpy: min=%lu ticks (%s ms), max=%lu ticks (%s ms), "
+                   "mean=%lu ticks (%s ms)\r\n"
+                   "Sum ticks=%lu; hash-loop TIM2 span=%lu ticks (%s ms)\r\n",
+                   (unsigned)round, (unsigned)NS_HMAC_BLOCK_SIZE, (unsigned)NS_HMAC_TOTAL_SIZE,
+                   (unsigned)NS_HMAC_BLOCKS, tu, (unsigned long)min_ticks, ms_min,
+                   (unsigned long)max_ticks, ms_max, (unsigned long)mean_ticks, ms_mean,
+                   (unsigned long)sum_ticks, (unsigned long)hash_loop_ticks, ms_span);
+  if (n > 0 && n < (int)sizeof(buf)) {
+    HAL_UART_Transmit(&hlpuart1, (uint8_t *)buf, (uint16_t)n, HAL_MAX_DELAY);
+  }
+}
+
+/**
+ * Non-secure mirror of SECURE_ShuffledHMAC_secure crypto steps (derive → shuffle → HMAC).
+ * IRQs masked only around memcpy(ns_hmac_copy_buf ← blk); TIM2 measures that copy.
+ * hmac_sha256_update runs on RAM without IRQ masking.
+ */
+static void NS_ShuffledHMAC_benchmark(uint8_t *out_digest, size_t out_len,
+                                      const uint8_t *challenge, size_t challenge_len,
+                                      uint32_t *out_min_ticks, uint32_t *out_max_ticks,
+                                      uint64_t *out_sum_ticks, uint32_t *out_hash_loop_ticks)
+{
+  if (!out_digest || out_len < NS_HMAC_SHA256_DIGEST_SIZE) {
+    return;
+  }
+
+  for (int i = 0; i < NS_HMAC_BLOCKS; i++) {
+    ns_hmac_indices[i] = i;
+  }
+
+  uint8_t key16[16], iv16[16];
+  ns_derive_aes_key_iv_from_challenge(key16, iv16, challenge, challenge_len);
+  {
+    const char msg[] = "derive OK, shuffling indices...\r\n";
+    HAL_UART_Transmit(&hlpuart1, (uint8_t *)msg, (uint16_t)(sizeof(msg) - 1U), HAL_MAX_DELAY);
+  }
+  ns_shuffle_aes_ctr(ns_hmac_indices, NS_HMAC_BLOCKS, key16, iv16);
+  {
+    char msg[72];
+    int nn = snprintf(msg, sizeof(msg),
+                      "shuffle OK, IRQ-masked memcpy + HMAC from RAM (%u timed iters)...\r\n",
+                      (unsigned)NS_HMAC_TIMING_ITERATIONS);
+    if (nn > 0 && nn < (int)sizeof(msg)) {
+      HAL_UART_Transmit(&hlpuart1, (uint8_t *)msg, (uint16_t)nn, HAL_MAX_DELAY);
+    }
+  }
+
+  {
+    const char m[] = "calling hmac_sha256_initialize...\r\n";
+    HAL_UART_Transmit(&hlpuart1, (uint8_t *)m, (uint16_t)(sizeof(m) - 1U), HAL_MAX_DELAY);
+  }
+  hmac_sha256_initialize(&ns_hmac_state, ns_hmac_key, strlen((const char *)ns_hmac_key));
+  {
+    const char m[] = "hmac_sha256_initialize OK.\r\n";
+    HAL_UART_Transmit(&hlpuart1, (uint8_t *)m, (uint16_t)(sizeof(m) - 1U), HAL_MAX_DELAY);
+  }
+
+  uint32_t min_ticks = 0xFFFFFFFFu;
+  uint32_t max_ticks = 0;
+  uint64_t sum_ticks = 0;
+
+  uint32_t t_hash_start = __HAL_TIM_GET_COUNTER(&htim2);
+
+  for (int i = 0; i < NS_HMAC_TIMING_ITERATIONS; i++) {
+    const uint8_t *blk = &ns_hmac_real_memory[(size_t)ns_hmac_indices[i] * NS_HMAC_BLOCK_SIZE];
+    if (i == 0) {
+      char ibuf[100];
+      int ni = snprintf(ibuf, sizeof(ibuf),
+                        "iter[0]: idx=%d blk=%p copy=%p len=%u\r\n",
+                        ns_hmac_indices[i], (void *)blk, (void *)ns_hmac_copy_buf,
+                        (unsigned)NS_HMAC_BLOCK_SIZE);
+      if (ni > 0 && ni < (int)sizeof(ibuf)) {
+        HAL_UART_Transmit(&hlpuart1, (uint8_t *)ibuf, (uint16_t)ni, HAL_MAX_DELAY);
+      }
+    }
+    uint32_t t0;
+    uint32_t t1;
+    __disable_irq();
+    t0 = __HAL_TIM_GET_COUNTER(&htim2);
+    memcpy(ns_hmac_copy_buf, blk, NS_HMAC_BLOCK_SIZE);
+    t1 = __HAL_TIM_GET_COUNTER(&htim2);
+    __enable_irq();
+    uint32_t dt = t1 - t0;
+    if (dt < min_ticks) {
+      min_ticks = dt;
+    }
+    if (dt > max_ticks) {
+      max_ticks = dt;
+    }
+    sum_ticks += dt;
+    {
+      char msbuf[32];
+      ns_fmt_ticks_ms6(msbuf, dt);
+      char line[160];
+      int nn = snprintf(line, sizeof(line),
+                        "  [%d] memcpy TIM2 t0=%lu t1=%lu dt=%lu ticks (%s ms); then HMAC_Update(RAM)\r\n",
+                        i, (unsigned long)t0, (unsigned long)t1, (unsigned long)dt, msbuf);
+      if (nn > 0 && nn < (int)sizeof(line)) {
+        HAL_UART_Transmit(&hlpuart1, (uint8_t *)line, (uint16_t)nn, HAL_MAX_DELAY);
+      }
+    }
+    hmac_sha256_update(&ns_hmac_state, ns_hmac_copy_buf, (int)NS_HMAC_BLOCK_SIZE);
+  }
+
+  uint32_t t_hash_end = __HAL_TIM_GET_COUNTER(&htim2);
+  uint32_t total_hash_ticks = t_hash_end - t_hash_start;
+
+  hmac_sha256_finalize(&ns_hmac_state, NULL, 0);
+  memcpy(out_digest, ns_hmac_state.digest, NS_HMAC_SHA256_DIGEST_SIZE);
+
+  if (out_min_ticks) {
+    *out_min_ticks = min_ticks;
+  }
+  if (out_max_ticks) {
+    *out_max_ticks = max_ticks;
+  }
+  if (out_sum_ticks) {
+    *out_sum_ticks = sum_ticks;
+  }
+  if (out_hash_loop_ticks) {
+    *out_hash_loop_ticks = total_hash_ticks;
+  }
+}
+
+void NS_HashBenchmark_Task(void *argument)
+{
+  (void)argument;
+  uint8_t digest[NS_HMAC_SHA256_DIGEST_SIZE];
+  uint8_t challenge[16];
+
+  /* Immediate UART smoke test (no heap mutex); confirms wiring before long HMAC run */
+  {
+    const char banner[] = "\r\nNS_HashBenchmark_Task started.\r\n";
+    HAL_UART_Transmit(&hlpuart1, (uint8_t *)banner, (uint16_t)(sizeof(banner) - 1U), HAL_MAX_DELAY);
+  }
+
+  osDelay(3000);
+
+  for (uint8_t round = 0; round < 5; round++) {
+    uint32_t seed = osKernelGetTickCount();
+    for (int k = 0; k < 4; k++) {
+      uint32_t rnd = seed ^ (seed << 13) ^ (uint32_t)(k * 0x5DEECE66Du);
+      memcpy(&challenge[(size_t)k * 4], &rnd, 4);
+    }
+
+    uint32_t min_ticks = 0, max_ticks = 0;
+    uint64_t sum_ticks = 0;
+    uint32_t hash_loop_ticks = 0;
+
+    {
+      const char runmsg[] =
+          "Running NS benchmark (TIM2 = IRQ-masked memcpy only; HMAC from RAM, IRQ on).\r\n";
+      HAL_UART_Transmit(&hlpuart1, (uint8_t *)runmsg, (uint16_t)(sizeof(runmsg) - 1U), HAL_MAX_DELAY);
+    }
+
+    NS_ShuffledHMAC_benchmark(digest, sizeof(digest), challenge, sizeof(challenge),
+                              &min_ticks, &max_ticks, &sum_ticks, &hash_loop_ticks);
+
+    /* Always emit timing on UART (printf optional / mutex may fail). */
+    ns_uart_hmac_timing_summary((unsigned)(round + 1), NS_HMAC_TIMING_ITERATIONS,
+                                min_ticks, max_ticks, sum_ticks, hash_loop_ticks);
+
+    uint32_t mean_ticks = (uint32_t)(sum_ticks / (uint64_t)NS_HMAC_TIMING_ITERATIONS);
+
+    if (xSemaphoreTake(uart_mutex, pdMS_TO_TICKS(50)) == pdTRUE) {
+      char ms_min[32], ms_max[32], ms_mean[32], ms_span[32];
+      ns_fmt_ticks_ms6(ms_min, min_ticks);
+      ns_fmt_ticks_ms6(ms_max, max_ticks);
+      ns_fmt_ticks_ms6(ms_mean, mean_ticks);
+      ns_fmt_ticks_ms6(ms_span, hash_loop_ticks);
+      printf("\r\n=== NS HMAC benchmark round %u ===\r\n", (unsigned)(round + 1));
+      printf("BLOCK_SIZE=%u timed_updates=%u\r\n",
+             (unsigned)NS_HMAC_BLOCK_SIZE, (unsigned)NS_HMAC_TIMING_ITERATIONS);
+      printf("Per IRQ-masked memcpy: min=%lu ticks (%s ms), max=%lu ticks (%s ms), mean=%lu ticks (%s ms)\r\n",
+             (unsigned long)min_ticks, ms_min, (unsigned long)max_ticks, ms_max,
+             (unsigned long)mean_ticks, ms_mean);
+      printf("Sum of per-update deltas=%lu ticks; hash-loop TIM2 span=%lu ticks (%s ms)\r\n",
+             (unsigned long)sum_ticks, (unsigned long)hash_loop_ticks, ms_span);
+      xSemaphoreGive(uart_mutex);
+    }
+    osDelay(1000);
+  }
+
+  if (xSemaphoreTake(uart_mutex, pdMS_TO_TICKS(50)) == pdTRUE) {
+    printf("\r\nNS HMAC benchmark done. Idle.\r\n");
+    xSemaphoreGive(uart_mutex);
+  }
+
+  for (;;) {
+    osDelay(10000);
+  }
 }
 
 void SMARM_Experiment_Task(void *argument)

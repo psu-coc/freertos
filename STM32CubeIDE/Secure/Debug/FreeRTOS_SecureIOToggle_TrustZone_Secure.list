@@ -944,8 +944,9 @@ void sha256_initialize(sha256 *sha) {
  c000718:	b510      	push	{r4, lr}
  c00071a:	4604      	mov	r4, r0
     int i;
-    for (i = 0; i < 17; ++i) sha->buffer[i] = 0;
- c00071c:	2244      	movs	r2, #68	@ 0x44
+    /* buffer[] has 16 elements; writing [16] corrupted sha->state and could hang sha256_update */
+    for (i = 0; i < 16; ++i) sha->buffer[i] = 0;
+ c00071c:	2240      	movs	r2, #64	@ 0x40
  c00071e:	2100      	movs	r1, #0
  c000720:	3020      	adds	r0, #32
  c000722:	f007 fc4b 	bl	c007fbc <memset>
