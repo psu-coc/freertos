@@ -1,2 +1,2 @@
 C:/Users/PC/STM32CubeIDE/workspace_2.0.0/freertos/Secure/Src/secure_nsc.c:36:20:SECURE_RegisterCallback	0	static
-C:/Users/PC/STM32CubeIDE/workspace_2.0.0/freertos/Secure/Src/secure_nsc.c:120:6:SECURE_RTSMARM_FF1_Speck_ShuffledHMAC_secure	48	static
+C:/Users/PC/STM32CubeIDE/workspace_2.0.0/freertos/Secure/Src/secure_nsc.c:121:6:SECURE_RTSMARM_FF1_Speck_ShuffledHMAC_secure	48	static,ignoring_inline_asm

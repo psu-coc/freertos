@@ -86,7 +86,7 @@ typedef struct {
 
 void sha256_initialize(sha256 *sha) {
     int i;
-    for (i = 0; i < 17; ++i) sha->buffer[i] = 0;
+    for (i = 0; i < 16; ++i) sha->buffer[i] = 0;
     sha->state[0] = 0x6a09e667;
     sha->state[1] = 0xbb67ae85;
     sha->state[2] = 0x3c6ef372;

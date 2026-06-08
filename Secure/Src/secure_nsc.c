@@ -55,6 +55,7 @@ uint8_t *real_memory = (uint8_t *)0x8000000;
 
 static const char key[] = "MySecureKey123";
 static hmac_sha256 hmac;
+static uint8_t hmac_blk_scratch[BLOCK_SIZE];
 
 static void derive_aes_key_iv_from_challenge(uint8_t key16[16],
                                              uint8_t iv16[16],
@@ -136,9 +137,11 @@ void SECURE_RTSMARM_FF1_Speck_ShuffledHMAC_secure(uint8_t *out_digest, size_t ou
     for (uint32_t i = 0u; i < (uint32_t)BLOCKS; i++) {
         uint32_t idx = FF1Permute_Speck(i, (uint32_t)BLOCKS, &s_ff1_speck_key, tweak);
         if (idx >= (uint32_t)BLOCKS) continue;
-//        __disable_irq();
-        hmac_sha256_update(&hmac, &real_memory[(size_t)idx * BLOCK_SIZE], BLOCK_SIZE);
-//        __enable_irq();
+        const uint8_t *blk = &real_memory[(size_t)idx * BLOCK_SIZE];
+        __disable_irq();
+        memcpy(hmac_blk_scratch, blk, (size_t)BLOCK_SIZE);
+        __enable_irq();
+        hmac_sha256_update(&hmac, hmac_blk_scratch, BLOCK_SIZE);
     }
 
     hmac_sha256_finalize(&hmac, NULL, 0);
