@@ -24,7 +24,7 @@
 //#include "Speck/ff1_speck.h"
 
 #define SHA256_DIGEST_SIZE 32
-#define BLOCK_SIZE 64         // // <--- แก้ตัวเลขตรงนี้ครับ (256, 512, 1024, 2048, 4096)
+#define BLOCK_SIZE 4096         // // <--- แก้ตัวเลขตรงนี้ครับ (256, 512, 1024, 2048, 4096)
 #define TOTAL_SIZE 0x80000 // 0x40000
 #define BLOCKS (TOTAL_SIZE / BLOCK_SIZE)
 
@@ -79,6 +79,8 @@ CMSE_NS_ENTRY void SECURE_RegisterCallback(SECURE_CallbackIDTypeDef CallbackId, 
 uint8_t *real_memory = (uint8_t *)0x8000000; // อันเก่าใช้ 0x8040000
 static const uint8_t key[] = "MySecureKey123"; // Example key
 static hmac_sha256 hmac;
+/** IRQ-masked snapshot of one block; HMAC reads stable RAM. */
+static uint8_t hmac_blk_scratch[BLOCK_SIZE];
 
 // ---- Key/IV derivation: HMAC(secret, challenge) -> 32B -> 16B key + 16B iv
 static void derive_aes_key_iv_from_challenge(uint8_t key16[16],
@@ -181,9 +183,11 @@ void SECURE_ShuffledHMAC_secure(uint8_t *out_digest, size_t out_len,
     hmac_sha256_initialize(&hmac, (const uint8_t*)key, strlen((const char *)key));
     for (int i = 0; i < BLOCKS; i++) {
         const uint8_t *blk = &real_memory[(size_t)indices[i] * BLOCK_SIZE];
-        __disable_irq();
-        hmac_sha256_update(&hmac, blk, BLOCK_SIZE);
-        __enable_irq();
+//        __disable_irq();
+//        hmac_sha256_update(&hmac, blk, BLOCK_SIZE);
+        memcpy(hmac_blk_scratch, blk, (size_t)BLOCK_SIZE);
+//        __enable_irq();
+        hmac_sha256_update(&hmac, hmac_blk_scratch, BLOCK_SIZE);
     }
     hmac_sha256_finalize(&hmac, NULL, 0);
     memcpy(out_digest, hmac.digest, SHA256_DIGEST_SIZE);

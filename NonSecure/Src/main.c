@@ -56,7 +56,7 @@ int main(void)
       Error_Handler();
   }
   //  LEDThreadHandleHandle = osThreadNew(NormalTask, NULL, &LEDThreadHandle_attributes);
-  //  LEDThreadHandleHandle = osThreadNew(NormalTask, NULL, &LEDThreadHandle_attributes);
+    LEDThreadHandleHandle = osThreadNew(NormalTask, NULL, &LEDThreadHandle_attributes);
   myTask02Handle = osThreadNew(SMARM_Experiment_Task, NULL, &myTask02_attributes);
   osKernelStart();
   while (1) {}
@@ -136,7 +136,7 @@ void SecureFault_Callback(void) { Error_Handler(); }
 int __io_putchar(int ch) { HAL_UART_Transmit(&hlpuart1, (uint8_t *)&ch, 1, HAL_MAX_DELAY); return ch; }
 void SecureError_Callback(void) { Error_Handler(); }
 
-#define TARGET_FREQ_HZ   1000
+#define TARGET_FREQ_HZ   10
 #define TIM2_TICKS_PER_SEC  137500
 volatile uint32_t g_normal_counter = 0; // ตัวนับรอบของ NormalTask
 
