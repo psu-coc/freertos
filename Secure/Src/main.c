@@ -101,6 +101,10 @@ int main(void)
   /* USER CODE BEGIN 2 */
    /* Add your secure application code here prior to non-secure initialization
      */
+  /* Enable DWT cycle counter (used by NS energy estimate around SECURE_* calls). */
+  CoreDebug->DEMCR |= CoreDebug_DEMCR_TRCENA_Msk;
+  DWT->CYCCNT = 0U;
+  DWT->CTRL |= DWT_CTRL_CYCCNTENA_Msk;
 
   /* All IOs are by default allocated to secure */
   /* Release them all to non-secure except PC.07 (LED1) kept as secure */

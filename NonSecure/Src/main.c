@@ -41,6 +41,9 @@ void SecureFault_Callback(void);
 void SecureError_Callback(void);
 void NormalTask(void *argument);
 void SMARM_Experiment_Task(void *argument);
+static void ns_dwt_enable_cycle_counter(void);
+static uint64_t ns_cycles_to_energy_uj(uint32_t cycles);
+static void ns_fmt_energy_mj6(char out[32], uint64_t energy_uj);
 
 int main(void)
 {
@@ -50,6 +53,7 @@ int main(void)
   MX_LPUART1_UART_Init();
   MX_TIM2_Init();
   HAL_TIM_Base_Start(&htim2);
+  ns_dwt_enable_cycle_counter();
   osKernelInitialize();
   uart_mutex = xSemaphoreCreateMutex();
   if (uart_mutex == NULL) {
@@ -136,9 +140,35 @@ void SecureFault_Callback(void) { Error_Handler(); }
 int __io_putchar(int ch) { HAL_UART_Transmit(&hlpuart1, (uint8_t *)&ch, 1, HAL_MAX_DELAY); return ch; }
 void SecureError_Callback(void) { Error_Handler(); }
 
-#define TARGET_FREQ_HZ   10
-#define TIM2_TICKS_PER_SEC  137500
+#define TARGET_FREQ_HZ        1000
+#define TIM2_TICKS_PER_SEC    137500U
+#define SYSCLK_HZ             110000000UL
+/** Supply and average run current for E(mJ) estimate — calibrate if you have a meter. */
+#define SUPPLY_VOLTAGE_MV     3300U
+#define AVG_RUN_CURRENT_UA    8000U
+
 volatile uint32_t g_normal_counter = 0; // ตัวนับรอบของ NormalTask
+
+static void ns_dwt_enable_cycle_counter(void)
+{
+  CoreDebug->DEMCR |= CoreDebug_DEMCR_TRCENA_Msk;
+  DWT->CYCCNT = 0U;
+  DWT->CTRL |= DWT_CTRL_CYCCNTENA_Msk;
+}
+
+/** E(uJ) = V(mV) * I(uA) * cycles / (SYSCLK_HZ * 1000). Integer only. */
+static uint64_t ns_cycles_to_energy_uj(uint32_t cycles)
+{
+  return ((uint64_t)cycles * (uint64_t)SUPPLY_VOLTAGE_MV * (uint64_t)AVG_RUN_CURRENT_UA)
+         / ((uint64_t)SYSCLK_HZ * 1000ULL);
+}
+
+static void ns_fmt_energy_mj6(char out[32], uint64_t energy_uj)
+{
+  uint32_t mj_int = (uint32_t)(energy_uj / 1000ULL);
+  uint32_t frac6 = (uint32_t)(((energy_uj % 1000ULL) * 1000000ULL) / 1000ULL);
+  (void)snprintf(out, 32, "%lu.%06lu", (unsigned long)mj_int, (unsigned long)frac6);
+}
 
 void NormalTask(void *argument)
 {
@@ -176,6 +206,8 @@ void SMARM_Experiment_Task(void *argument)
     (void) argument;
     portALLOCATE_SECURE_CONTEXT(4096);
     static uint32_t durations_ms[10];
+    static uint32_t cycles_arr[10];
+    static uint64_t energy_uj_arr[10];
     uint8_t digest[32];
     uint8_t challenge[16];
     osDelay(3000);
@@ -188,28 +220,62 @@ void SMARM_Experiment_Task(void *argument)
         }
         uint32_t start_tim2 = __HAL_TIM_GET_COUNTER(&htim2);
         uint32_t start_count = g_normal_counter;
+        uint32_t start_cycles = DWT->CYCCNT;
         SECURE_ShuffledHMAC_secure(digest, sizeof(digest), challenge, sizeof(challenge));
+        uint32_t end_cycles = DWT->CYCCNT;
         uint32_t end_tim2 = __HAL_TIM_GET_COUNTER(&htim2);
         uint32_t end_count = g_normal_counter;
         uint32_t actual_run = end_count - start_count;
         uint32_t tim2_diff = end_tim2 - start_tim2;
-        uint32_t actual_duration_ms = ((uint64_t)tim2_diff * 1000) / 137500;
+        uint32_t cpu_cycles = end_cycles - start_cycles;
+        uint32_t actual_duration_ms = (uint32_t)(((uint64_t)tim2_diff * 1000ULL) / TIM2_TICKS_PER_SEC);
+        uint64_t energy_uj = ns_cycles_to_energy_uj(cpu_cycles);
         durations_ms[round] = actual_duration_ms;
+        cycles_arr[round] = cpu_cycles;
+        energy_uj_arr[round] = energy_uj;
         uint32_t expected_run = (actual_duration_ms * TARGET_FREQ_HZ) / 1000;
         if (xSemaphoreTake(uart_mutex, pdMS_TO_TICKS(10)) == pdTRUE) {
-            printf("Round %u: Runtime=%lu ms, NS=%lu/%lu cycles\r\n", round + 1, actual_duration_ms, actual_run, expected_run);
+            char emj[32];
+            ns_fmt_energy_mj6(emj, energy_uj);
+            printf("Round %u: Runtime=%lu ms, Cycles=%lu, EstEnergy=%s mJ, NS=%lu/%lu\r\n",
+                   (unsigned)(round + 1), (unsigned long)actual_duration_ms,
+                   (unsigned long)cpu_cycles, emj,
+                   (unsigned long)actual_run, (unsigned long)expected_run);
             xSemaphoreGive(uart_mutex);
         }
         osDelay(2000);
     }
-    uint32_t sum = 0, min_val = durations_ms[0], max_val = durations_ms[0];
-    for (int i = 0; i < 10; i++) { sum += durations_ms[i]; if (durations_ms[i] < min_val) min_val = durations_ms[i]; if (durations_ms[i] > max_val) max_val = durations_ms[i]; }
-    uint32_t mean = sum / 10;
+    uint32_t sum_ms = 0, min_ms = durations_ms[0], max_ms = durations_ms[0];
+    uint64_t sum_uj = 0, min_uj = energy_uj_arr[0], max_uj = energy_uj_arr[0];
+    uint32_t sum_cycles = 0, min_cycles = cycles_arr[0], max_cycles = cycles_arr[0];
+    for (int i = 0; i < 10; i++) {
+        sum_ms += durations_ms[i];
+        sum_cycles += cycles_arr[i];
+        sum_uj += energy_uj_arr[i];
+        if (durations_ms[i] < min_ms) min_ms = durations_ms[i];
+        if (durations_ms[i] > max_ms) max_ms = durations_ms[i];
+        if (cycles_arr[i] < min_cycles) min_cycles = cycles_arr[i];
+        if (cycles_arr[i] > max_cycles) max_cycles = cycles_arr[i];
+        if (energy_uj_arr[i] < min_uj) min_uj = energy_uj_arr[i];
+        if (energy_uj_arr[i] > max_uj) max_uj = energy_uj_arr[i];
+    }
+    uint32_t mean_ms = sum_ms / 10U;
+    uint32_t mean_cycles = sum_cycles / 10U;
+    uint64_t mean_uj = sum_uj / 10ULL;
     if (xSemaphoreTake(uart_mutex, pdMS_TO_TICKS(10)) == pdTRUE) {
+        char emj_mean[32], emj_min[32], emj_max[32];
+        ns_fmt_energy_mj6(emj_mean, mean_uj);
+        ns_fmt_energy_mj6(emj_min, min_uj);
+        ns_fmt_energy_mj6(emj_max, max_uj);
         printf("\r\n=== SUMMARY SMARM Baseline (10 rounds) ===\r\n");
-        printf("Mean: %lu ms\r\n", mean);
-        printf("Min:  %lu ms\r\n", min_val);
-        printf("Max:  %lu ms\r\n", max_val);
+        printf("V=%u mV, I_avg=%u uA, SYSCLK=%lu Hz (estimated energy)\r\n",
+               (unsigned)SUPPLY_VOLTAGE_MV, (unsigned)AVG_RUN_CURRENT_UA, (unsigned long)SYSCLK_HZ);
+        printf("Runtime  mean=%lu ms, min=%lu ms, max=%lu ms\r\n",
+               (unsigned long)mean_ms, (unsigned long)min_ms, (unsigned long)max_ms);
+        printf("Cycles   mean=%lu, min=%lu, max=%lu\r\n",
+               (unsigned long)mean_cycles, (unsigned long)min_cycles, (unsigned long)max_cycles);
+        printf("Energy   mean=%s mJ, min=%s mJ, max=%s mJ\r\n",
+               emj_mean, emj_min, emj_max);
         printf("==========================================\r\n");
         xSemaphoreGive(uart_mutex);
     }
