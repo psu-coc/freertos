@@ -37,7 +37,7 @@
 /**
  * @brief Total heap size.
  */
-#define secureconfigTOTAL_HEAP_SIZE		( ( ( size_t ) ( 10 * 1024 ) ) )
+#define secureconfigTOTAL_HEAP_SIZE		( ( ( size_t ) ( 16 * 1024 ) ) )
 
 /* No test marker by default. */
 #ifndef mtCOVERAGE_TEST_MARKER

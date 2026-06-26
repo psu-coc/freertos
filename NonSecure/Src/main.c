@@ -54,7 +54,11 @@ int main(void)
   MX_GPIO_Init();
   MX_LPUART1_UART_Init();
   MX_TIM2_Init();
+  // HAL_TIM_Base_Start(&htim2);
   HAL_TIM_Base_Start(&htim2);
+CoreDebug->DEMCR |= CoreDebug_DEMCR_TRCENA_Msk;
+DWT->CYCCNT = 0U;
+DWT->CTRL  |= DWT_CTRL_CYCCNTENA_Msk;
   osKernelInitialize();
   uart_mutex = xSemaphoreCreateMutex();
   if (uart_mutex == NULL) {
@@ -63,7 +67,12 @@ int main(void)
   //  LEDThreadHandleHandle = osThreadNew(NormalTask, NULL, &LEDThreadHandle_attributes);
   //  LEDThreadHandleHandle = osThreadNew(NormalTask, NULL, &LEDThreadHandle_attributes);
   /* NS: per-update TIM2 benchmark (same crypto steps as secure NSC). SMARM → SMARM_Experiment_Task. */
-  myTask02Handle = osThreadNew(NS_HashBenchmark_Task, NULL, &myTask02_attributes);
+  // myTask02Handle = osThreadNew(NS_HashBenchmark_Task, NULL, &myTask02_attributes);
+  
+  LEDThreadHandleHandle = osThreadNew(NormalTask, NULL, &LEDThreadHandle_attributes);
+myTask02Handle = osThreadNew(SMARM_Experiment_Task, NULL, &myTask02_attributes);
+
+
   if (myTask02Handle == NULL) {
     Error_Handler();
   }
@@ -508,16 +517,29 @@ void SMARM_Experiment_Task(void *argument)
         }
         uint32_t start_tim2 = __HAL_TIM_GET_COUNTER(&htim2);
         uint32_t start_count = g_normal_counter;
+        uint32_t start_cycles = DWT->CYCCNT;
+
+        printf("ATTEST_START round=%u\r\n", (unsigned)(round + 1));
+
         SECURE_ShuffledHMAC_secure(digest, sizeof(digest), challenge, sizeof(challenge));
+        uint32_t end_cycles = DWT->CYCCNT;
+
         uint32_t end_tim2 = __HAL_TIM_GET_COUNTER(&htim2);
         uint32_t end_count = g_normal_counter;
+        printf("ATTEST_END round=%u\r\n", (unsigned)(round + 1));
+        uint32_t cpu_cycles = end_cycles - start_cycles;
+
         uint32_t actual_run = end_count - start_count;
         uint32_t tim2_diff = end_tim2 - start_tim2;
         uint32_t actual_duration_ms = ((uint64_t)tim2_diff * 1000) / 137500;
         durations_ms[round] = actual_duration_ms;
         uint32_t expected_run = (actual_duration_ms * TARGET_FREQ_HZ) / 1000;
         if (xSemaphoreTake(uart_mutex, pdMS_TO_TICKS(10)) == pdTRUE) {
-            printf("Round %u: Runtime=%lu ms, NS=%lu/%lu cycles\r\n", round + 1, actual_duration_ms, actual_run, expected_run);
+            // printf("Round %u: Runtime=%lu ms, NS=%lu/%lu cycles\r\n", round + 1, actual_duration_ms, actual_run, expected_run);
+            printf("Round %u: Runtime=%lu ms, Cycles=%lu, NS=%lu/%lu\r\n",
+              (unsigned)(round + 1), (unsigned long)actual_duration_ms,
+              (unsigned long)cpu_cycles,
+              (unsigned long)actual_run, (unsigned long)expected_run);
             xSemaphoreGive(uart_mutex);
         }
         osDelay(2000);
