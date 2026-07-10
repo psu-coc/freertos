@@ -450,13 +450,13 @@ void SMARM_Experiment_Task(void *argument)
         uint32_t start_tim2 = __HAL_TIM_GET_COUNTER(&htim2);
         uint32_t start_systick = osKernelGetTickCount();
         uint32_t start_count = g_normal_counter;
-
+        printf("ATTEST_START round=%u\r\n", (unsigned)(round + 1));
         SECURE_RTSMARM_ShuffledHMAC_secure(digest, sizeof(digest), challenge, sizeof(challenge));
 
         uint32_t end_tim2 = __HAL_TIM_GET_COUNTER(&htim2);
         uint32_t end_systick = osKernelGetTickCount();
         uint32_t end_count = g_normal_counter;
-
+        printf("ATTEST_END round=%u\r\n", (unsigned)(round + 1));
         uint32_t actual_run = end_count - start_count;
         uint32_t duration_os_ms = end_systick - start_systick;
         uint32_t tim2_diff = end_tim2 - start_tim2;

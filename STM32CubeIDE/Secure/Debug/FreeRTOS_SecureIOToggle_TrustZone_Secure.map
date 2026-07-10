@@ -6123,52 +6123,52 @@ LOAD C:/ST/STM32CubeIDE_2.0.0/STM32CubeIDE/plugins/com.st.stm32cube.ide.mcu.exte
                 0x0c03e048                SECURE_RTSMARM_ShuffledHMAC_secure
                 0x0c03e050                        . = ALIGN (0x8)
 
-.bss            0x30000010     0x2a80
+.bss            0x30000010     0x2b60
                 0x30000010                        _sbss = .
                 0x30000010                        __bss_start__ = _sbss
  *(.bss)
  .bss           0x30000010       0x1c C:/ST/STM32CubeIDE_2.0.0/STM32CubeIDE/plugins/com.st.stm32cube.ide.mcu.externaltools.gnu-tools-for-stm32.13.3.rel1.win32_1.0.100.202509120712/tools/bin/../lib/gcc/arm-none-eabi/13.3.1/thumb/v8-m.main+fp/hard/crtbegin.o
  *(.bss*)
  .bss.rtsmarm_used_bits
-                0x3000002c       0x20 ./Application/User/secure_nsc.o
- .bss.hmac      0x3000004c       0xe8 ./Application/User/secure_nsc.o
+                0x3000002c      0x100 ./Application/User/secure_nsc.o
+ .bss.hmac      0x3000012c       0xe8 ./Application/User/secure_nsc.o
  .bss.pSecureErrorCallback
-                0x30000134        0x4 ./Application/User/secure_nsc.o
-                0x30000134                pSecureErrorCallback
+                0x30000214        0x4 ./Application/User/secure_nsc.o
+                0x30000214                pSecureErrorCallback
  .bss.pSecureFaultCallback
-                0x30000138        0x4 ./Application/User/secure_nsc.o
-                0x30000138                pSecureFaultCallback
- .bss.hpb_exti  0x3000013c        0xc ./Drivers/BSP/STM32L5xx_Nucleo/stm32l5xx_nucleo.o
+                0x30000218        0x4 ./Application/User/secure_nsc.o
+                0x30000218                pSecureFaultCallback
+ .bss.hpb_exti  0x3000021c        0xc ./Drivers/BSP/STM32L5xx_Nucleo/stm32l5xx_nucleo.o
  .bss.hcom_uart
-                0x30000148      0x128 ./Drivers/BSP/STM32L5xx_Nucleo/stm32l5xx_nucleo.o
-                0x30000148                hcom_uart
- .bss.uwTick    0x30000270        0x4 ./Drivers/STM32L5xx_HAL_Driver/stm32l5xx_hal.o
-                0x30000270                uwTick
+                0x30000228      0x128 ./Drivers/BSP/STM32L5xx_Nucleo/stm32l5xx_nucleo.o
+                0x30000228                hcom_uart
+ .bss.uwTick    0x30000350        0x4 ./Drivers/STM32L5xx_HAL_Driver/stm32l5xx_hal.o
+                0x30000350                uwTick
  .bss.xBlockAllocatedBit
-                0x30000274        0x4 ./Middlewares/FreeRTOS/secure_heap.o
+                0x30000354        0x4 ./Middlewares/FreeRTOS/secure_heap.o
  .bss.xMinimumEverFreeBytesRemaining
-                0x30000278        0x4 ./Middlewares/FreeRTOS/secure_heap.o
+                0x30000358        0x4 ./Middlewares/FreeRTOS/secure_heap.o
  .bss.xFreeBytesRemaining
-                0x3000027c        0x4 ./Middlewares/FreeRTOS/secure_heap.o
- .bss.pxEnd     0x30000280        0x4 ./Middlewares/FreeRTOS/secure_heap.o
- .bss.xStart    0x30000284        0x8 ./Middlewares/FreeRTOS/secure_heap.o
- .bss.ucHeap    0x3000028c     0x2800 ./Middlewares/FreeRTOS/secure_heap.o
+                0x3000035c        0x4 ./Middlewares/FreeRTOS/secure_heap.o
+ .bss.pxEnd     0x30000360        0x4 ./Middlewares/FreeRTOS/secure_heap.o
+ .bss.xStart    0x30000364        0x8 ./Middlewares/FreeRTOS/secure_heap.o
+ .bss.ucHeap    0x3000036c     0x2800 ./Middlewares/FreeRTOS/secure_heap.o
  *(COMMON)
-                0x30002a90                        . = ALIGN (0x8)
- *fill*         0x30002a8c        0x4 
-                0x30002a90                        _ebss = .
-                0x30002a90                        __bss_end__ = _ebss
+                0x30002b70                        . = ALIGN (0x8)
+ *fill*         0x30002b6c        0x4 
+                0x30002b70                        _ebss = .
+                0x30002b70                        __bss_end__ = _ebss
 
 ._user_heap_stack
-                0x30002a90      0x600
-                0x30002a90                        . = ALIGN (0x8)
+                0x30002b70      0x600
+                0x30002b70                        . = ALIGN (0x8)
                 [!provide]                        PROVIDE (end = .)
-                0x30002a90                        PROVIDE (_end = .)
-                0x30002c90                        . = (. + _Min_Heap_Size)
- *fill*         0x30002a90      0x200 
-                0x30003090                        . = (. + _Min_Stack_Size)
- *fill*         0x30002c90      0x400 
-                0x30003090                        . = ALIGN (0x8)
+                0x30002b70                        PROVIDE (_end = .)
+                0x30002d70                        . = (. + _Min_Heap_Size)
+ *fill*         0x30002b70      0x200 
+                0x30003170                        . = (. + _Min_Stack_Size)
+ *fill*         0x30002d70      0x400 
+                0x30003170                        . = ALIGN (0x8)
 
 /DISCARD/
  libc.a(*)
@@ -6286,32 +6286,32 @@ LOAD C:/ST/STM32CubeIDE_2.0.0/STM32CubeIDE/plugins/com.st.stm32cube.ide.mcu.exte
  .debug_line_str
                 0x00000000       0x7c ./Application/Startup/startup_stm32l552zetxq.o
 
-.debug_info     0x00000000    0x15ae3
+.debug_info     0x00000000    0x15ae4
  .debug_info    0x00000000       0x30 ./Application/Startup/startup_stm32l552zetxq.o
  .debug_info    0x00000030      0xc1d ./Application/User/Aesnew/aes.o
  .debug_info    0x00000c4d      0x8c8 ./Application/User/Crypto/hmac-sha256/hmac-sha256.o
  .debug_info    0x00001515      0xd7b ./Application/User/main.o
- .debug_info    0x00002290      0xa44 ./Application/User/secure_nsc.o
- .debug_info    0x00002cd4      0x6c9 ./Application/User/stm32l5xx_hal_msp.o
- .debug_info    0x0000339d      0x19c ./Application/User/stm32l5xx_it.o
- .debug_info    0x00003539     0x1e3d ./Drivers/BSP/STM32L5xx_Nucleo/stm32l5xx_nucleo.o
- .debug_info    0x00005376      0xa6a ./Drivers/CMSIS/system_stm32l5xx_s.o
- .debug_info    0x00005de0      0xeb8 ./Drivers/STM32L5xx_HAL_Driver/stm32l5xx_hal.o
- .debug_info    0x00006c98     0x154e ./Drivers/STM32L5xx_HAL_Driver/stm32l5xx_hal_cortex.o
- .debug_info    0x000081e6      0xb08 ./Drivers/STM32L5xx_HAL_Driver/stm32l5xx_hal_dma.o
- .debug_info    0x00008cee      0x8a2 ./Drivers/STM32L5xx_HAL_Driver/stm32l5xx_hal_exti.o
- .debug_info    0x00009590      0x6d0 ./Drivers/STM32L5xx_HAL_Driver/stm32l5xx_hal_gpio.o
- .debug_info    0x00009c60      0xd60 ./Drivers/STM32L5xx_HAL_Driver/stm32l5xx_hal_gtzc.o
- .debug_info    0x0000a9c0      0x564 ./Drivers/STM32L5xx_HAL_Driver/stm32l5xx_hal_icache.o
- .debug_info    0x0000af24      0xd32 ./Drivers/STM32L5xx_HAL_Driver/stm32l5xx_hal_pwr.o
- .debug_info    0x0000bc56      0xe55 ./Drivers/STM32L5xx_HAL_Driver/stm32l5xx_hal_pwr_ex.o
- .debug_info    0x0000caab     0x1297 ./Drivers/STM32L5xx_HAL_Driver/stm32l5xx_hal_rcc.o
- .debug_info    0x0000dd42     0x62d1 ./Drivers/STM32L5xx_HAL_Driver/stm32l5xx_hal_uart.o
- .debug_info    0x00014013     0x12f8 ./Drivers/STM32L5xx_HAL_Driver/stm32l5xx_hal_uart_ex.o
- .debug_info    0x0001530b      0x244 ./Middlewares/FreeRTOS/secure_context.o
- .debug_info    0x0001554f       0xd8 ./Middlewares/FreeRTOS/secure_context_port.o
- .debug_info    0x00015627      0x3e5 ./Middlewares/FreeRTOS/secure_heap.o
- .debug_info    0x00015a0c       0xd7 ./Middlewares/FreeRTOS/secure_init.o
+ .debug_info    0x00002290      0xa45 ./Application/User/secure_nsc.o
+ .debug_info    0x00002cd5      0x6c9 ./Application/User/stm32l5xx_hal_msp.o
+ .debug_info    0x0000339e      0x19c ./Application/User/stm32l5xx_it.o
+ .debug_info    0x0000353a     0x1e3d ./Drivers/BSP/STM32L5xx_Nucleo/stm32l5xx_nucleo.o
+ .debug_info    0x00005377      0xa6a ./Drivers/CMSIS/system_stm32l5xx_s.o
+ .debug_info    0x00005de1      0xeb8 ./Drivers/STM32L5xx_HAL_Driver/stm32l5xx_hal.o
+ .debug_info    0x00006c99     0x154e ./Drivers/STM32L5xx_HAL_Driver/stm32l5xx_hal_cortex.o
+ .debug_info    0x000081e7      0xb08 ./Drivers/STM32L5xx_HAL_Driver/stm32l5xx_hal_dma.o
+ .debug_info    0x00008cef      0x8a2 ./Drivers/STM32L5xx_HAL_Driver/stm32l5xx_hal_exti.o
+ .debug_info    0x00009591      0x6d0 ./Drivers/STM32L5xx_HAL_Driver/stm32l5xx_hal_gpio.o
+ .debug_info    0x00009c61      0xd60 ./Drivers/STM32L5xx_HAL_Driver/stm32l5xx_hal_gtzc.o
+ .debug_info    0x0000a9c1      0x564 ./Drivers/STM32L5xx_HAL_Driver/stm32l5xx_hal_icache.o
+ .debug_info    0x0000af25      0xd32 ./Drivers/STM32L5xx_HAL_Driver/stm32l5xx_hal_pwr.o
+ .debug_info    0x0000bc57      0xe55 ./Drivers/STM32L5xx_HAL_Driver/stm32l5xx_hal_pwr_ex.o
+ .debug_info    0x0000caac     0x1297 ./Drivers/STM32L5xx_HAL_Driver/stm32l5xx_hal_rcc.o
+ .debug_info    0x0000dd43     0x62d1 ./Drivers/STM32L5xx_HAL_Driver/stm32l5xx_hal_uart.o
+ .debug_info    0x00014014     0x12f8 ./Drivers/STM32L5xx_HAL_Driver/stm32l5xx_hal_uart_ex.o
+ .debug_info    0x0001530c      0x244 ./Middlewares/FreeRTOS/secure_context.o
+ .debug_info    0x00015550       0xd8 ./Middlewares/FreeRTOS/secure_context_port.o
+ .debug_info    0x00015628      0x3e5 ./Middlewares/FreeRTOS/secure_heap.o
+ .debug_info    0x00015a0d       0xd7 ./Middlewares/FreeRTOS/secure_init.o
 
 .debug_abbrev   0x00000000     0x3b36
  .debug_abbrev  0x00000000       0x24 ./Application/Startup/startup_stm32l552zetxq.o
@@ -6392,56 +6392,56 @@ LOAD C:/ST/STM32CubeIDE_2.0.0/STM32CubeIDE/plugins/com.st.stm32cube.ide.mcu.exte
  .debug_aranges
                 0x00000310       0x20 ./Middlewares/FreeRTOS/secure_init.o
 
-.debug_str      0x00000000   0x110bca
- .debug_str     0x00000000   0x110bca ./Application/Startup/startup_stm32l552zetxq.o
+.debug_str      0x00000000   0x110bc9
+ .debug_str     0x00000000   0x110bc9 ./Application/Startup/startup_stm32l552zetxq.o
                                  0x98 (size before relaxing)
- .debug_str     0x00110bca        0x0 ./Application/User/Aesnew/aes.o
+ .debug_str     0x00110bc9        0x0 ./Application/User/Aesnew/aes.o
                                0x764c (size before relaxing)
- .debug_str     0x00110bca        0x0 ./Application/User/Crypto/hmac-sha256/hmac-sha256.o
+ .debug_str     0x00110bc9        0x0 ./Application/User/Crypto/hmac-sha256/hmac-sha256.o
                                0x837c (size before relaxing)
- .debug_str     0x00110bca        0x0 ./Application/User/main.o
+ .debug_str     0x00110bc9        0x0 ./Application/User/main.o
                              0x1072c2 (size before relaxing)
- .debug_str     0x00110bca        0x0 ./Application/User/secure_nsc.o
-                             0x109d36 (size before relaxing)
- .debug_str     0x00110bca        0x0 ./Application/User/stm32l5xx_hal_msp.o
+ .debug_str     0x00110bc9        0x0 ./Application/User/secure_nsc.o
+                             0x109d35 (size before relaxing)
+ .debug_str     0x00110bc9        0x0 ./Application/User/stm32l5xx_hal_msp.o
                              0x103d8b (size before relaxing)
- .debug_str     0x00110bca        0x0 ./Application/User/stm32l5xx_it.o
+ .debug_str     0x00110bc9        0x0 ./Application/User/stm32l5xx_it.o
                              0x103689 (size before relaxing)
- .debug_str     0x00110bca        0x0 ./Drivers/BSP/STM32L5xx_Nucleo/stm32l5xx_nucleo.o
+ .debug_str     0x00110bc9        0x0 ./Drivers/BSP/STM32L5xx_Nucleo/stm32l5xx_nucleo.o
                              0x104903 (size before relaxing)
- .debug_str     0x00110bca        0x0 ./Drivers/CMSIS/system_stm32l5xx_s.o
+ .debug_str     0x00110bc9        0x0 ./Drivers/CMSIS/system_stm32l5xx_s.o
                              0x103640 (size before relaxing)
- .debug_str     0x00110bca        0x0 ./Drivers/STM32L5xx_HAL_Driver/stm32l5xx_hal.o
+ .debug_str     0x00110bc9        0x0 ./Drivers/STM32L5xx_HAL_Driver/stm32l5xx_hal.o
                              0x103b6a (size before relaxing)
- .debug_str     0x00110bca        0x0 ./Drivers/STM32L5xx_HAL_Driver/stm32l5xx_hal_cortex.o
+ .debug_str     0x00110bc9        0x0 ./Drivers/STM32L5xx_HAL_Driver/stm32l5xx_hal_cortex.o
                              0x1039e7 (size before relaxing)
- .debug_str     0x00110bca        0x0 ./Drivers/STM32L5xx_HAL_Driver/stm32l5xx_hal_dma.o
+ .debug_str     0x00110bc9        0x0 ./Drivers/STM32L5xx_HAL_Driver/stm32l5xx_hal_dma.o
                              0x10331c (size before relaxing)
- .debug_str     0x00110bca        0x0 ./Drivers/STM32L5xx_HAL_Driver/stm32l5xx_hal_exti.o
+ .debug_str     0x00110bc9        0x0 ./Drivers/STM32L5xx_HAL_Driver/stm32l5xx_hal_exti.o
                              0x103021 (size before relaxing)
- .debug_str     0x00110bca        0x0 ./Drivers/STM32L5xx_HAL_Driver/stm32l5xx_hal_gpio.o
+ .debug_str     0x00110bc9        0x0 ./Drivers/STM32L5xx_HAL_Driver/stm32l5xx_hal_gpio.o
                              0x102f84 (size before relaxing)
- .debug_str     0x00110bca        0x0 ./Drivers/STM32L5xx_HAL_Driver/stm32l5xx_hal_gtzc.o
+ .debug_str     0x00110bc9        0x0 ./Drivers/STM32L5xx_HAL_Driver/stm32l5xx_hal_gtzc.o
                              0x103706 (size before relaxing)
- .debug_str     0x00110bca        0x0 ./Drivers/STM32L5xx_HAL_Driver/stm32l5xx_hal_icache.o
+ .debug_str     0x00110bc9        0x0 ./Drivers/STM32L5xx_HAL_Driver/stm32l5xx_hal_icache.o
                              0x10337d (size before relaxing)
- .debug_str     0x00110bca        0x0 ./Drivers/STM32L5xx_HAL_Driver/stm32l5xx_hal_pwr.o
+ .debug_str     0x00110bc9        0x0 ./Drivers/STM32L5xx_HAL_Driver/stm32l5xx_hal_pwr.o
                              0x1033af (size before relaxing)
- .debug_str     0x00110bca        0x0 ./Drivers/STM32L5xx_HAL_Driver/stm32l5xx_hal_pwr_ex.o
+ .debug_str     0x00110bc9        0x0 ./Drivers/STM32L5xx_HAL_Driver/stm32l5xx_hal_pwr_ex.o
                              0x103706 (size before relaxing)
- .debug_str     0x00110bca        0x0 ./Drivers/STM32L5xx_HAL_Driver/stm32l5xx_hal_rcc.o
+ .debug_str     0x00110bc9        0x0 ./Drivers/STM32L5xx_HAL_Driver/stm32l5xx_hal_rcc.o
                              0x1035bb (size before relaxing)
- .debug_str     0x00110bca        0x0 ./Drivers/STM32L5xx_HAL_Driver/stm32l5xx_hal_uart.o
+ .debug_str     0x00110bc9        0x0 ./Drivers/STM32L5xx_HAL_Driver/stm32l5xx_hal_uart.o
                              0x103ef2 (size before relaxing)
- .debug_str     0x00110bca        0x0 ./Drivers/STM32L5xx_HAL_Driver/stm32l5xx_hal_uart_ex.o
+ .debug_str     0x00110bc9        0x0 ./Drivers/STM32L5xx_HAL_Driver/stm32l5xx_hal_uart_ex.o
                              0x10366f (size before relaxing)
- .debug_str     0x00110bca        0x0 ./Middlewares/FreeRTOS/secure_context.o
+ .debug_str     0x00110bc9        0x0 ./Middlewares/FreeRTOS/secure_context.o
                                0x83f5 (size before relaxing)
- .debug_str     0x00110bca        0x0 ./Middlewares/FreeRTOS/secure_context_port.o
+ .debug_str     0x00110bc9        0x0 ./Middlewares/FreeRTOS/secure_context_port.o
                                0x4cf7 (size before relaxing)
- .debug_str     0x00110bca        0x0 ./Middlewares/FreeRTOS/secure_heap.o
+ .debug_str     0x00110bc9        0x0 ./Middlewares/FreeRTOS/secure_heap.o
                                0x7d53 (size before relaxing)
- .debug_str     0x00110bca        0x0 ./Middlewares/FreeRTOS/secure_init.o
+ .debug_str     0x00110bc9        0x0 ./Middlewares/FreeRTOS/secure_init.o
                                0x4803 (size before relaxing)
 
 .debug_rnglists

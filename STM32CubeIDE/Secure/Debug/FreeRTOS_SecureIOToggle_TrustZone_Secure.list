@@ -23,9 +23,9 @@ Idx Name          Size      VMA       LMA       File off  Algn
                   CONTENTS, ALLOC, LOAD, DATA
   9 .gnu.sgstubs  00000060  0c03e000  0c03e000  0000b000  2**5
                   CONTENTS, ALLOC, LOAD, READONLY, CODE
- 10 .bss          00002a80  30000010  30000010  0000c010  2**2
+ 10 .bss          00002b60  30000010  30000010  0000c010  2**2
                   ALLOC
- 11 ._user_heap_stack 00000600  30002a90  30002a90  0000c010  2**0
+ 11 ._user_heap_stack 00000600  30002b70  30002b70  0000c010  2**0
                   ALLOC
  12 .ARM.attributes 00000036  00000000  00000000  0000b060  2**0
                   CONTENTS, READONLY
@@ -33,23 +33,23 @@ Idx Name          Size      VMA       LMA       File off  Algn
                   CONTENTS, READONLY, DEBUGGING, OCTETS
  14 .debug_line_str 0000007c  00000000  00000000  000223f6  2**0
                   CONTENTS, READONLY, DEBUGGING, OCTETS
- 15 .debug_info   00015ae3  00000000  00000000  00022472  2**0
+ 15 .debug_info   00015ae4  00000000  00000000  00022472  2**0
                   CONTENTS, READONLY, DEBUGGING, OCTETS
- 16 .debug_abbrev 00003b36  00000000  00000000  00037f55  2**0
+ 16 .debug_abbrev 00003b36  00000000  00000000  00037f56  2**0
                   CONTENTS, READONLY, DEBUGGING, OCTETS
  17 .debug_aranges 00000330  00000000  00000000  0003ba90  2**3
                   CONTENTS, READONLY, DEBUGGING, OCTETS
- 18 .debug_str    00110bca  00000000  00000000  0003bdc0  2**0
+ 18 .debug_str    00110bc9  00000000  00000000  0003bdc0  2**0
                   CONTENTS, READONLY, DEBUGGING, OCTETS
- 19 .debug_rnglists 00000389  00000000  00000000  0014c98a  2**0
+ 19 .debug_rnglists 00000389  00000000  00000000  0014c989  2**0
                   CONTENTS, READONLY, DEBUGGING, OCTETS
- 20 .debug_loclists 00009063  00000000  00000000  0014cd13  2**0
+ 20 .debug_loclists 00009063  00000000  00000000  0014cd12  2**0
                   CONTENTS, READONLY, DEBUGGING, OCTETS
- 21 .debug_macro  0002aed8  00000000  00000000  00155d76  2**0
+ 21 .debug_macro  0002aed8  00000000  00000000  00155d75  2**0
                   CONTENTS, READONLY, DEBUGGING, OCTETS
- 22 .comment      00000043  00000000  00000000  00180c4e  2**0
+ 22 .comment      00000043  00000000  00000000  00180c4d  2**0
                   CONTENTS, READONLY
- 23 .debug_frame  0000233c  00000000  00000000  00180c94  2**2
+ 23 .debug_frame  0000233c  00000000  00000000  00180c90  2**2
                   CONTENTS, READONLY, DEBUGGING, OCTETS
 
 Disassembly of section .text:
@@ -1701,8 +1701,8 @@ CMSE_NS_ENTRY void SECURE_RegisterCallback(SECURE_CallbackIDTypeDef CallbackId, 
         pSecureErrorCallback = func;
  c000be0:	4b01      	ldr	r3, [pc, #4]	@ (c000be8 <__acle_se_SECURE_RegisterCallback+0x80>)
  c000be2:	e7fb      	b.n	c000bdc <__acle_se_SECURE_RegisterCallback+0x74>
- c000be4:	30000138 	.word	0x30000138
- c000be8:	30000134 	.word	0x30000134
+ c000be4:	30000218 	.word	0x30000218
+ c000be8:	30000214 	.word	0x30000214
 
 0c000bec <__acle_se_SECURE_RTSMARM_ShuffledHMAC_secure>:
 }
@@ -1720,9 +1720,9 @@ void SECURE_RTSMARM_ShuffledHMAC_secure(uint8_t *out_digest, size_t out_len,
  c000bf6:	b0c3      	sub	sp, #268	@ 0x10c
     if (!out_digest || out_len < SHA256_DIGEST_SIZE) return;
  c000bf8:	2800      	cmp	r0, #0
- c000bfa:	f000 80ad 	beq.w	c000d58 <__acle_se_SECURE_RTSMARM_ShuffledHMAC_secure+0x16c>
+ c000bfa:	f000 80ae 	beq.w	c000d5a <__acle_se_SECURE_RTSMARM_ShuffledHMAC_secure+0x16e>
  c000bfe:	291f      	cmp	r1, #31
- c000c00:	f240 80aa 	bls.w	c000d58 <__acle_se_SECURE_RTSMARM_ShuffledHMAC_secure+0x16c>
+ c000c00:	f240 80ab 	bls.w	c000d5a <__acle_se_SECURE_RTSMARM_ShuffledHMAC_secure+0x16e>
     hmac_sha256_initialize(&hmac, (const uint8_t *)key, strlen(key));
  c000c04:	220e      	movs	r2, #14
  c000c06:	4974      	ldr	r1, [pc, #464]	@ (c000dd8 <__acle_se_SECURE_RTSMARM_ShuffledHMAC_secure+0x1ec>)
@@ -1731,9 +1731,9 @@ void SECURE_RTSMARM_ShuffledHMAC_secure(uint8_t *out_digest, size_t out_len,
     if (challenge && clen) {
  c000c0e:	4d73      	ldr	r5, [pc, #460]	@ (c000ddc <__acle_se_SECURE_RTSMARM_ShuffledHMAC_secure+0x1f0>)
  c000c10:	2e00      	cmp	r6, #0
- c000c12:	f000 80d8 	beq.w	c000dc6 <__acle_se_SECURE_RTSMARM_ShuffledHMAC_secure+0x1da>
+ c000c12:	f000 80d9 	beq.w	c000dc8 <__acle_se_SECURE_RTSMARM_ShuffledHMAC_secure+0x1dc>
  c000c16:	2f00      	cmp	r7, #0
- c000c18:	f000 80d5 	beq.w	c000dc6 <__acle_se_SECURE_RTSMARM_ShuffledHMAC_secure+0x1da>
+ c000c18:	f000 80d6 	beq.w	c000dc8 <__acle_se_SECURE_RTSMARM_ShuffledHMAC_secure+0x1dc>
         hmac_sha256_update(&hmac, challenge, clen);
  c000c1c:	463a      	mov	r2, r7
  c000c1e:	4631      	mov	r1, r6
@@ -1775,200 +1775,199 @@ void SECURE_RTSMARM_ShuffledHMAC_secure(uint8_t *out_digest, size_t out_len,
  c000c58:	4630      	mov	r0, r6
  c000c5a:	f007 f90d 	bl	c007e78 <memset>
     memset(rtsmarm_used_bits, 0, (size_t)((n + 7) / 8));
- c000c5e:	2220      	movs	r2, #32
- c000c60:	2100      	movs	r1, #0
- c000c62:	4860      	ldr	r0, [pc, #384]	@ (c000de4 <__acle_se_SECURE_RTSMARM_ShuffledHMAC_secure+0x1f8>)
+ c000c5e:	f44f 7280 	mov.w	r2, #256	@ 0x100
+ c000c62:	2100      	movs	r1, #0
+ c000c64:	485f      	ldr	r0, [pc, #380]	@ (c000de4 <__acle_se_SECURE_RTSMARM_ShuffledHMAC_secure+0x1f8>)
     p->idx = 16;
- c000c64:	9741      	str	r7, [sp, #260]	@ 0x104
+ c000c66:	9741      	str	r7, [sp, #260]	@ 0x104
     memset(rtsmarm_used_bits, 0, (size_t)((n + 7) / 8));
- c000c66:	f007 f907 	bl	c007e78 <memset>
+ c000c68:	f007 f906 	bl	c007e78 <memset>
     ctr_prng_t prng;
     prng_init(&prng, key16, iv16);
 
     rtsmarm_clear_bits(BLOCKS);
 
     hmac_sha256_initialize(&hmac, (const uint8_t *)key, strlen(key));
- c000c6a:	f1a5 0010 	sub.w	r0, r5, #16
- c000c6e:	220e      	movs	r2, #14
- c000c70:	4959      	ldr	r1, [pc, #356]	@ (c000dd8 <__acle_se_SECURE_RTSMARM_ShuffledHMAC_secure+0x1ec>)
- c000c72:	f7ff fedc 	bl	c000a2e <hmac_sha256_initialize>
- c000c76:	f44f 7580 	mov.w	r5, #256	@ 0x100
+ c000c6c:	f1a5 0010 	sub.w	r0, r5, #16
+ c000c70:	220e      	movs	r2, #14
+ c000c72:	4959      	ldr	r1, [pc, #356]	@ (c000dd8 <__acle_se_SECURE_RTSMARM_ShuffledHMAC_secure+0x1ec>)
+ c000c74:	f7ff fedb 	bl	c000a2e <hmac_sha256_initialize>
+ c000c78:	f44f 6500 	mov.w	r5, #2048	@ 0x800
     return (rtsmarm_used_bits[i / 8] >> (i % 8)) & 1;
- c000c7a:	4f5a      	ldr	r7, [pc, #360]	@ (c000de4 <__acle_se_SECURE_RTSMARM_ShuffledHMAC_secure+0x1f8>)
+ c000c7c:	4f59      	ldr	r7, [pc, #356]	@ (c000de4 <__acle_se_SECURE_RTSMARM_ShuffledHMAC_secure+0x1f8>)
         int remaining = BLOCKS - round;
         int k = prng_uniform_u32(&prng, remaining);
         int idx = rtsmarm_find_kth_zero(BLOCKS, k);
         rtsmarm_set_bit(idx);
         __disable_irq();
         hmac_sha256_update(&hmac, &real_memory[(size_t)idx * BLOCK_SIZE], BLOCK_SIZE);
- c000c7c:	f8df 8168 	ldr.w	r8, [pc, #360]	@ c000de8 <__acle_se_SECURE_RTSMARM_ShuffledHMAC_secure+0x1fc>
+ c000c7e:	f8df 8168 	ldr.w	r8, [pc, #360]	@ c000de8 <__acle_se_SECURE_RTSMARM_ShuffledHMAC_secure+0x1fc>
     const uint32_t lim = 0xFFFFFFFFu - (0xFFFFFFFFu % (uint32_t)n);
- c000c80:	f04f 39ff 	mov.w	r9, #4294967295
- c000c84:	fbb9 f9f5 	udiv	r9, r9, r5
+ c000c82:	f04f 39ff 	mov.w	r9, #4294967295
+ c000c86:	fbb9 f9f5 	udiv	r9, r9, r5
     uint8_t zero[16] = {0};
- c000c88:	f04f 0b00 	mov.w	fp, #0
+ c000c8a:	f04f 0b00 	mov.w	fp, #0
     const uint32_t lim = 0xFFFFFFFFu - (0xFFFFFFFFu % (uint32_t)n);
- c000c8c:	fb05 f909 	mul.w	r9, r5, r9
+ c000c8e:	fb05 f909 	mul.w	r9, r5, r9
     uint8_t zero[16] = {0};
- c000c90:	f10d 0a24 	add.w	sl, sp, #36	@ 0x24
+ c000c92:	f10d 0a24 	add.w	sl, sp, #36	@ 0x24
     if (p->idx > 12) {
- c000c94:	9b41      	ldr	r3, [sp, #260]	@ 0x104
- c000c96:	2b0c      	cmp	r3, #12
- c000c98:	dd0f      	ble.n	c000cba <__acle_se_SECURE_RTSMARM_ShuffledHMAC_secure+0xce>
+ c000c96:	9b41      	ldr	r3, [sp, #260]	@ 0x104
+ c000c98:	2b0c      	cmp	r3, #12
+ c000c9a:	dd0f      	ble.n	c000cbc <__acle_se_SECURE_RTSMARM_ShuffledHMAC_secure+0xd0>
     uint8_t zero[16] = {0};
- c000c9a:	2210      	movs	r2, #16
- c000c9c:	2100      	movs	r1, #0
- c000c9e:	4650      	mov	r0, sl
- c000ca0:	f007 f8ea 	bl	c007e78 <memset>
+ c000c9c:	2210      	movs	r2, #16
+ c000c9e:	2100      	movs	r1, #0
+ c000ca0:	4650      	mov	r0, sl
+ c000ca2:	f007 f8e9 	bl	c007e78 <memset>
     memcpy(p->buf, zero, 16);
- c000ca4:	e89a 000f 	ldmia.w	sl, {r0, r1, r2, r3}
- c000ca8:	e886 000f 	stmia.w	r6, {r0, r1, r2, r3}
+ c000ca6:	e89a 000f 	ldmia.w	sl, {r0, r1, r2, r3}
+ c000caa:	e886 000f 	stmia.w	r6, {r0, r1, r2, r3}
     AES_CTR_xcrypt_buffer(&p->ctx, p->buf, 16);
- c000cac:	2210      	movs	r2, #16
- c000cae:	4631      	mov	r1, r6
- c000cb0:	a80d      	add	r0, sp, #52	@ 0x34
- c000cb2:	f7ff fcf9 	bl	c0006a8 <AES_CTR_xcrypt_buffer>
+ c000cae:	2210      	movs	r2, #16
+ c000cb0:	4631      	mov	r1, r6
+ c000cb2:	a80d      	add	r0, sp, #52	@ 0x34
+ c000cb4:	f7ff fcf8 	bl	c0006a8 <AES_CTR_xcrypt_buffer>
     p->idx = 0;
- c000cb6:	f8cd b104 	str.w	fp, [sp, #260]	@ 0x104
+ c000cb8:	f8cd b104 	str.w	fp, [sp, #260]	@ 0x104
     memcpy(&v, &p->buf[p->idx], 4);
- c000cba:	9a41      	ldr	r2, [sp, #260]	@ 0x104
- c000cbc:	f502 7384 	add.w	r3, r2, #264	@ 0x108
- c000cc0:	446b      	add	r3, sp
- c000cc2:	f853 3c14 	ldr.w	r3, [r3, #-20]
+ c000cbc:	9a41      	ldr	r2, [sp, #260]	@ 0x104
+ c000cbe:	f502 7384 	add.w	r3, r2, #264	@ 0x108
+ c000cc2:	446b      	add	r3, sp
+ c000cc4:	f853 3c14 	ldr.w	r3, [r3, #-20]
     p->idx += 4;
- c000cc6:	3204      	adds	r2, #4
+ c000cc8:	3204      	adds	r2, #4
         if (r < lim) return (int)(r % (uint32_t)n);
- c000cc8:	4599      	cmp	r9, r3
+ c000cca:	4599      	cmp	r9, r3
     p->idx += 4;
- c000cca:	9241      	str	r2, [sp, #260]	@ 0x104
+ c000ccc:	9241      	str	r2, [sp, #260]	@ 0x104
         if (r < lim) return (int)(r % (uint32_t)n);
- c000ccc:	d9e2      	bls.n	c000c94 <__acle_se_SECURE_RTSMARM_ShuffledHMAC_secure+0xa8>
- c000cce:	fbb3 f2f5 	udiv	r2, r3, r5
- c000cd2:	fb05 3112 	mls	r1, r5, r2, r3
+ c000cce:	d9e2      	bls.n	c000c96 <__acle_se_SECURE_RTSMARM_ShuffledHMAC_secure+0xaa>
+ c000cd0:	fbb3 f2f5 	udiv	r2, r3, r5
+ c000cd4:	fb05 3112 	mls	r1, r5, r2, r3
     int result = 0;
- c000cd6:	2300      	movs	r3, #0
+ c000cd8:	2300      	movs	r3, #0
     int count = 0;
- c000cd8:	4618      	mov	r0, r3
+ c000cda:	4618      	mov	r0, r3
     for (int i = 0; i < n; i++) {
- c000cda:	461a      	mov	r2, r3
+ c000cdc:	461a      	mov	r2, r3
     return (rtsmarm_used_bits[i / 8] >> (i % 8)) & 1;
- c000cdc:	ea4f 0ce2 	mov.w	ip, r2, asr #3
- c000ce0:	f817 c00c 	ldrb.w	ip, [r7, ip]
- c000ce4:	f002 0e07 	and.w	lr, r2, #7
- c000ce8:	fa4c fc0e 	asr.w	ip, ip, lr
+ c000cde:	ea4f 0ce2 	mov.w	ip, r2, asr #3
+ c000ce2:	f817 c00c 	ldrb.w	ip, [r7, ip]
+ c000ce6:	f002 0e07 	and.w	lr, r2, #7
+ c000cea:	fa4c fc0e 	asr.w	ip, ip, lr
         if (rtsmarm_get_bit(i) == 0) {
- c000cec:	f01c 0f01 	tst.w	ip, #1
- c000cf0:	d103      	bne.n	c000cfa <__acle_se_SECURE_RTSMARM_ShuffledHMAC_secure+0x10e>
+ c000cee:	f01c 0f01 	tst.w	ip, #1
+ c000cf2:	d103      	bne.n	c000cfc <__acle_se_SECURE_RTSMARM_ShuffledHMAC_secure+0x110>
                 result = i;
- c000cf2:	4288      	cmp	r0, r1
- c000cf4:	bf08      	it	eq
- c000cf6:	4613      	moveq	r3, r2
+ c000cf4:	4288      	cmp	r0, r1
+ c000cf6:	bf08      	it	eq
+ c000cf8:	4613      	moveq	r3, r2
             count++;
- c000cf8:	3001      	adds	r0, #1
+ c000cfa:	3001      	adds	r0, #1
     for (int i = 0; i < n; i++) {
- c000cfa:	3201      	adds	r2, #1
- c000cfc:	f5b2 7f80 	cmp.w	r2, #256	@ 0x100
- c000d00:	d1ec      	bne.n	c000cdc <__acle_se_SECURE_RTSMARM_ShuffledHMAC_secure+0xf0>
+ c000cfc:	3201      	adds	r2, #1
+ c000cfe:	f5b2 6f00 	cmp.w	r2, #2048	@ 0x800
+ c000d02:	d1ec      	bne.n	c000cde <__acle_se_SECURE_RTSMARM_ShuffledHMAC_secure+0xf2>
     rtsmarm_used_bits[i / 8] |= (1U << (i % 8));
- c000d02:	461a      	mov	r2, r3
- c000d04:	2101      	movs	r1, #1
- c000d06:	2b00      	cmp	r3, #0
- c000d08:	bfb8      	it	lt
- c000d0a:	1dda      	addlt	r2, r3, #7
- c000d0c:	10d2      	asrs	r2, r2, #3
- c000d0e:	f003 0007 	and.w	r0, r3, #7
- c000d12:	4081      	lsls	r1, r0
- c000d14:	5cb8      	ldrb	r0, [r7, r2]
- c000d16:	4301      	orrs	r1, r0
- c000d18:	54b9      	strb	r1, [r7, r2]
+ c000d04:	461a      	mov	r2, r3
+ c000d06:	2101      	movs	r1, #1
+ c000d08:	2b00      	cmp	r3, #0
+ c000d0a:	bfb8      	it	lt
+ c000d0c:	1dda      	addlt	r2, r3, #7
+ c000d0e:	10d2      	asrs	r2, r2, #3
+ c000d10:	f003 0007 	and.w	r0, r3, #7
+ c000d14:	4081      	lsls	r1, r0
+ c000d16:	5cb8      	ldrb	r0, [r7, r2]
+ c000d18:	4301      	orrs	r1, r0
+ c000d1a:	54b9      	strb	r1, [r7, r2]
   \details Disables IRQ interrupts by setting the I-bit in the CPSR.
            Can only be executed in Privileged modes.
  */
 __STATIC_FORCEINLINE void __disable_irq(void)
 {
   __ASM volatile ("cpsid i" : : : "memory");
- c000d1a:	b672      	cpsid	i
+ c000d1c:	b672      	cpsid	i
         hmac_sha256_update(&hmac, &real_memory[(size_t)idx * BLOCK_SIZE], BLOCK_SIZE);
- c000d1c:	f8d8 1000 	ldr.w	r1, [r8]
- c000d20:	f44f 6200 	mov.w	r2, #2048	@ 0x800
- c000d24:	482d      	ldr	r0, [pc, #180]	@ (c000ddc <__acle_se_SECURE_RTSMARM_ShuffledHMAC_secure+0x1f0>)
- c000d26:	eb01 21c3 	add.w	r1, r1, r3, lsl #11
- c000d2a:	f7ff fec9 	bl	c000ac0 <hmac_sha256_update>
+ c000d1e:	f8d8 1000 	ldr.w	r1, [r8]
+ c000d22:	f44f 7280 	mov.w	r2, #256	@ 0x100
+ c000d26:	482d      	ldr	r0, [pc, #180]	@ (c000ddc <__acle_se_SECURE_RTSMARM_ShuffledHMAC_secure+0x1f0>)
+ c000d28:	eb01 2103 	add.w	r1, r1, r3, lsl #8
+ c000d2c:	f7ff fec8 	bl	c000ac0 <hmac_sha256_update>
   __ASM volatile ("cpsie i" : : : "memory");
- c000d2e:	b662      	cpsie	i
+ c000d30:	b662      	cpsie	i
     for (int round = 0; round < BLOCKS; round++) {
- c000d30:	3d01      	subs	r5, #1
- c000d32:	d1a5      	bne.n	c000c80 <__acle_se_SECURE_RTSMARM_ShuffledHMAC_secure+0x94>
+ c000d32:	3d01      	subs	r5, #1
+ c000d34:	d1a5      	bne.n	c000c82 <__acle_se_SECURE_RTSMARM_ShuffledHMAC_secure+0x96>
         __enable_irq();
     }
 
     hmac_sha256_finalize(&hmac, NULL, 0);
- c000d34:	462a      	mov	r2, r5
- c000d36:	4629      	mov	r1, r5
+ c000d36:	462a      	mov	r2, r5
+ c000d38:	4629      	mov	r1, r5
     memcpy(out_digest, hmac.digest, SHA256_DIGEST_SIZE);
- c000d38:	4d28      	ldr	r5, [pc, #160]	@ (c000ddc <__acle_se_SECURE_RTSMARM_ShuffledHMAC_secure+0x1f0>)
+ c000d3a:	4d28      	ldr	r5, [pc, #160]	@ (c000ddc <__acle_se_SECURE_RTSMARM_ShuffledHMAC_secure+0x1f0>)
     hmac_sha256_finalize(&hmac, NULL, 0);
- c000d3a:	4828      	ldr	r0, [pc, #160]	@ (c000ddc <__acle_se_SECURE_RTSMARM_ShuffledHMAC_secure+0x1f0>)
- c000d3c:	f7ff fec3 	bl	c000ac6 <hmac_sha256_finalize>
+ c000d3c:	4827      	ldr	r0, [pc, #156]	@ (c000ddc <__acle_se_SECURE_RTSMARM_ShuffledHMAC_secure+0x1f0>)
+ c000d3e:	f7ff fec2 	bl	c000ac6 <hmac_sha256_finalize>
     memcpy(out_digest, hmac.digest, SHA256_DIGEST_SIZE);
- c000d40:	4623      	mov	r3, r4
- c000d42:	f105 0420 	add.w	r4, r5, #32
- c000d46:	462a      	mov	r2, r5
- c000d48:	ca03      	ldmia	r2!, {r0, r1}
- c000d4a:	42a2      	cmp	r2, r4
- c000d4c:	6018      	str	r0, [r3, #0]
- c000d4e:	6059      	str	r1, [r3, #4]
- c000d50:	4615      	mov	r5, r2
- c000d52:	f103 0308 	add.w	r3, r3, #8
- c000d56:	d1f6      	bne.n	c000d46 <__acle_se_SECURE_RTSMARM_ShuffledHMAC_secure+0x15a>
+ c000d42:	4623      	mov	r3, r4
+ c000d44:	f105 0420 	add.w	r4, r5, #32
+ c000d48:	462a      	mov	r2, r5
+ c000d4a:	ca03      	ldmia	r2!, {r0, r1}
+ c000d4c:	42a2      	cmp	r2, r4
+ c000d4e:	6018      	str	r0, [r3, #0]
+ c000d50:	6059      	str	r1, [r3, #4]
+ c000d52:	4615      	mov	r5, r2
+ c000d54:	f103 0308 	add.w	r3, r3, #8
+ c000d58:	d1f6      	bne.n	c000d48 <__acle_se_SECURE_RTSMARM_ShuffledHMAC_secure+0x15c>
 }
- c000d58:	b043      	add	sp, #268	@ 0x10c
- c000d5a:	eeb7 0a00 	vmov.f32	s0, #112	@ 0x3f800000  1.0
- c000d5e:	e8bd 4ff0 	ldmia.w	sp!, {r4, r5, r6, r7, r8, r9, sl, fp, lr}
- c000d62:	4670      	mov	r0, lr
- c000d64:	4671      	mov	r1, lr
- c000d66:	4672      	mov	r2, lr
- c000d68:	4673      	mov	r3, lr
- c000d6a:	eef7 0a00 	vmov.f32	s1, #112	@ 0x3f800000  1.0
- c000d6e:	eeb7 1a00 	vmov.f32	s2, #112	@ 0x3f800000  1.0
- c000d72:	eef7 1a00 	vmov.f32	s3, #112	@ 0x3f800000  1.0
- c000d76:	eeb7 2a00 	vmov.f32	s4, #112	@ 0x3f800000  1.0
- c000d7a:	eef7 2a00 	vmov.f32	s5, #112	@ 0x3f800000  1.0
- c000d7e:	eeb7 3a00 	vmov.f32	s6, #112	@ 0x3f800000  1.0
- c000d82:	eef7 3a00 	vmov.f32	s7, #112	@ 0x3f800000  1.0
- c000d86:	eeb7 4a00 	vmov.f32	s8, #112	@ 0x3f800000  1.0
- c000d8a:	eef7 4a00 	vmov.f32	s9, #112	@ 0x3f800000  1.0
- c000d8e:	eeb7 5a00 	vmov.f32	s10, #112	@ 0x3f800000  1.0
- c000d92:	eef7 5a00 	vmov.f32	s11, #112	@ 0x3f800000  1.0
- c000d96:	eeb7 6a00 	vmov.f32	s12, #112	@ 0x3f800000  1.0
- c000d9a:	eef7 6a00 	vmov.f32	s13, #112	@ 0x3f800000  1.0
- c000d9e:	eeb7 7a00 	vmov.f32	s14, #112	@ 0x3f800000  1.0
- c000da2:	eef7 7a00 	vmov.f32	s15, #112	@ 0x3f800000  1.0
- c000da6:	f38e 8c00 	msr	CPSR_fs, lr
- c000daa:	b410      	push	{r4}
- c000dac:	eef1 ca10 	vmrs	ip, fpscr
- c000db0:	f64f 7460 	movw	r4, #65376	@ 0xff60
- c000db4:	f6c0 74ff 	movt	r4, #4095	@ 0xfff
- c000db8:	ea0c 0c04 	and.w	ip, ip, r4
- c000dbc:	eee1 ca10 	vmsr	fpscr, ip
- c000dc0:	bc10      	pop	{r4}
- c000dc2:	46f4      	mov	ip, lr
- c000dc4:	4774      	bxns	lr
+ c000d5a:	b043      	add	sp, #268	@ 0x10c
+ c000d5c:	eeb7 0a00 	vmov.f32	s0, #112	@ 0x3f800000  1.0
+ c000d60:	e8bd 4ff0 	ldmia.w	sp!, {r4, r5, r6, r7, r8, r9, sl, fp, lr}
+ c000d64:	4670      	mov	r0, lr
+ c000d66:	4671      	mov	r1, lr
+ c000d68:	4672      	mov	r2, lr
+ c000d6a:	4673      	mov	r3, lr
+ c000d6c:	eef7 0a00 	vmov.f32	s1, #112	@ 0x3f800000  1.0
+ c000d70:	eeb7 1a00 	vmov.f32	s2, #112	@ 0x3f800000  1.0
+ c000d74:	eef7 1a00 	vmov.f32	s3, #112	@ 0x3f800000  1.0
+ c000d78:	eeb7 2a00 	vmov.f32	s4, #112	@ 0x3f800000  1.0
+ c000d7c:	eef7 2a00 	vmov.f32	s5, #112	@ 0x3f800000  1.0
+ c000d80:	eeb7 3a00 	vmov.f32	s6, #112	@ 0x3f800000  1.0
+ c000d84:	eef7 3a00 	vmov.f32	s7, #112	@ 0x3f800000  1.0
+ c000d88:	eeb7 4a00 	vmov.f32	s8, #112	@ 0x3f800000  1.0
+ c000d8c:	eef7 4a00 	vmov.f32	s9, #112	@ 0x3f800000  1.0
+ c000d90:	eeb7 5a00 	vmov.f32	s10, #112	@ 0x3f800000  1.0
+ c000d94:	eef7 5a00 	vmov.f32	s11, #112	@ 0x3f800000  1.0
+ c000d98:	eeb7 6a00 	vmov.f32	s12, #112	@ 0x3f800000  1.0
+ c000d9c:	eef7 6a00 	vmov.f32	s13, #112	@ 0x3f800000  1.0
+ c000da0:	eeb7 7a00 	vmov.f32	s14, #112	@ 0x3f800000  1.0
+ c000da4:	eef7 7a00 	vmov.f32	s15, #112	@ 0x3f800000  1.0
+ c000da8:	f38e 8c00 	msr	CPSR_fs, lr
+ c000dac:	b410      	push	{r4}
+ c000dae:	eef1 ca10 	vmrs	ip, fpscr
+ c000db2:	f64f 7460 	movw	r4, #65376	@ 0xff60
+ c000db6:	f6c0 74ff 	movt	r4, #4095	@ 0xfff
+ c000dba:	ea0c 0c04 	and.w	ip, ip, r4
+ c000dbe:	eee1 ca10 	vmsr	fpscr, ip
+ c000dc2:	bc10      	pop	{r4}
+ c000dc4:	46f4      	mov	ip, lr
+ c000dc6:	4774      	bxns	lr
         uint32_t tick = (uint32_t)SysTick->VAL;
- c000dc6:	f04f 23e0 	mov.w	r3, #3758153728	@ 0xe000e000
- c000dca:	699b      	ldr	r3, [r3, #24]
+ c000dc8:	f04f 23e0 	mov.w	r3, #3758153728	@ 0xe000e000
+ c000dcc:	699b      	ldr	r3, [r3, #24]
         hmac_sha256_update(&hmac, (uint8_t*)&tick, sizeof(tick));
- c000dcc:	2204      	movs	r2, #4
- c000dce:	4803      	ldr	r0, [pc, #12]	@ (c000ddc <__acle_se_SECURE_RTSMARM_ShuffledHMAC_secure+0x1f0>)
+ c000dce:	2204      	movs	r2, #4
+ c000dd0:	4802      	ldr	r0, [pc, #8]	@ (c000ddc <__acle_se_SECURE_RTSMARM_ShuffledHMAC_secure+0x1f0>)
         uint32_t tick = (uint32_t)SysTick->VAL;
- c000dd0:	930d      	str	r3, [sp, #52]	@ 0x34
+ c000dd2:	930d      	str	r3, [sp, #52]	@ 0x34
         hmac_sha256_update(&hmac, (uint8_t*)&tick, sizeof(tick));
- c000dd2:	a90d      	add	r1, sp, #52	@ 0x34
- c000dd4:	e725      	b.n	c000c22 <__acle_se_SECURE_RTSMARM_ShuffledHMAC_secure+0x36>
- c000dd6:	bf00      	nop
+ c000dd4:	a90d      	add	r1, sp, #52	@ 0x34
+ c000dd6:	e724      	b.n	c000c22 <__acle_se_SECURE_RTSMARM_ShuffledHMAC_secure+0x36>
  c000dd8:	0c008213 	.word	0x0c008213
- c000ddc:	3000004c 	.word	0x3000004c
- c000de0:	3000005c 	.word	0x3000005c
+ c000ddc:	3000012c 	.word	0x3000012c
+ c000de0:	3000013c 	.word	0x3000013c
  c000de4:	3000002c 	.word	0x3000002c
  c000de8:	30000000 	.word	0x30000000
 
@@ -2138,7 +2137,7 @@ void SecureFault_Handler(void)
   while (1)
  c000eac:	e7fe      	b.n	c000eac <SecureFault_Handler+0x5e>
  c000eae:	bf00      	nop
- c000eb0:	30000138 	.word	0x30000138
+ c000eb0:	30000218 	.word	0x30000218
 
 0c000eb4 <SVC_Handler>:
 
@@ -2232,7 +2231,7 @@ void GTZC_IRQHandler(void)
     while(1);
  c000f20:	e7fe      	b.n	c000f20 <GTZC_IRQHandler+0x62>
  c000f22:	bf00      	nop
- c000f24:	30000134 	.word	0x30000134
+ c000f24:	30000214 	.word	0x30000214
 
 0c000f28 <BSP_GetVersion>:
   * @retval version : 0xXYZR (8bits for each decimal, R for RC)
@@ -2596,7 +2595,7 @@ int32_t BSP_PB_Init(Button_TypeDef Button, ButtonMode_TypeDef ButtonMode)
  c0010f6:	bf00      	nop
  c0010f8:	50021000 	.word	0x50021000
  c0010fc:	52020800 	.word	0x52020800
- c001100:	3000013c 	.word	0x3000013c
+ c001100:	3000021c 	.word	0x3000021c
  c001104:	0600000d 	.word	0x0600000d
  c001108:	0c001143 	.word	0x0c001143
 
@@ -2678,7 +2677,7 @@ static void BUTTON_USER_EXTI_Callback(void)
  c00114e:	4b02      	ldr	r3, [pc, #8]	@ (c001158 <BSP_PB_IRQHandler+0xc>)
  c001150:	fb02 3000 	mla	r0, r2, r0, r3
  c001154:	f001 b9f7 	b.w	c002546 <HAL_EXTI_IRQHandler>
- c001158:	3000013c 	.word	0x3000013c
+ c001158:	3000021c 	.word	0x3000021c
 
 0c00115c <BSP_COM_DeInit>:
 {
@@ -2766,7 +2765,7 @@ static void BUTTON_USER_EXTI_Callback(void)
   return status;
  c0011da:	e7fa      	b.n	c0011d2 <BSP_COM_DeInit+0x76>
  c0011dc:	0c00823c 	.word	0x0c00823c
- c0011e0:	30000148 	.word	0x30000148
+ c0011e0:	30000228 	.word	0x30000228
  c0011e4:	50008000 	.word	0x50008000
  c0011e8:	52021800 	.word	0x52021800
  c0011ec:	52020c00 	.word	0x52020c00
@@ -2975,7 +2974,7 @@ __weak HAL_StatusTypeDef MX_USART3_Init(UART_HandleTypeDef* huart, MX_UART_InitT
  c001368:	e7d8      	b.n	c00131c <BSP_COM_Init+0xf6>
  c00136a:	bf00      	nop
  c00136c:	0c00823c 	.word	0x0c00823c
- c001370:	30000148 	.word	0x30000148
+ c001370:	30000228 	.word	0x30000228
  c001374:	52021800 	.word	0x52021800
  c001378:	52020c00 	.word	0x52020c00
  c00137c:	50021000 	.word	0x50021000
@@ -3441,7 +3440,7 @@ __weak void HAL_IncTick(void)
  c001648:	6013      	str	r3, [r2, #0]
 }
  c00164a:	4770      	bx	lr
- c00164c:	30000270 	.word	0x30000270
+ c00164c:	30000350 	.word	0x30000350
  c001650:	30000008 	.word	0x30000008
 
 0c001654 <HAL_GetTick>:
@@ -3456,7 +3455,7 @@ __weak uint32_t HAL_GetTick(void)
 }
  c001658:	4770      	bx	lr
  c00165a:	bf00      	nop
- c00165c:	30000270 	.word	0x30000270
+ c00165c:	30000350 	.word	0x30000350
 
 0c001660 <HAL_GetTickPrio>:
   * @retval tick priority
@@ -19843,8 +19842,8 @@ uint8_t *puc;
  c00757e:	4619      	mov	r1, r3
  c007580:	e7f8      	b.n	c007574 <prvInsertBlockIntoFreeList+0x34>
  c007582:	bf00      	nop
- c007584:	30000284 	.word	0x30000284
- c007588:	30000280 	.word	0x30000280
+ c007584:	30000364 	.word	0x30000364
+ c007588:	30000360 	.word	0x30000360
 
 0c00758c <pvPortMalloc>:
 BlockLink_t *pxBlock, *pxPreviousBlock, *pxNewBlockLink;
@@ -20067,12 +20066,12 @@ void *pvReturn = NULL;
 	return pvReturn;
 }
  c007674:	e8bd 81f0 	ldmia.w	sp!, {r4, r5, r6, r7, r8, pc}
- c007678:	30000280 	.word	0x30000280
- c00767c:	30000274 	.word	0x30000274
- c007680:	3000028c 	.word	0x3000028c
- c007684:	30000284 	.word	0x30000284
- c007688:	30000278 	.word	0x30000278
- c00768c:	3000027c 	.word	0x3000027c
+ c007678:	30000360 	.word	0x30000360
+ c00767c:	30000354 	.word	0x30000354
+ c007680:	3000036c 	.word	0x3000036c
+ c007684:	30000364 	.word	0x30000364
+ c007688:	30000358 	.word	0x30000358
+ c00768c:	3000035c 	.word	0x3000035c
 
 0c007690 <vPortFree>:
 /*-----------------------------------------------------------*/
@@ -20141,8 +20140,8 @@ BlockLink_t *pxLink;
 	}
 }
  c0076de:	bd10      	pop	{r4, pc}
- c0076e0:	30000274 	.word	0x30000274
- c0076e4:	3000027c 	.word	0x3000027c
+ c0076e0:	30000354 	.word	0x30000354
+ c0076e4:	3000035c 	.word	0x3000035c
 
 0c0076e8 <xPortGetFreeHeapSize>:
 /*-----------------------------------------------------------*/
@@ -20155,7 +20154,7 @@ size_t xPortGetFreeHeapSize( void )
  c0076ea:	6818      	ldr	r0, [r3, #0]
  c0076ec:	4770      	bx	lr
  c0076ee:	bf00      	nop
- c0076f0:	3000027c 	.word	0x3000027c
+ c0076f0:	3000035c 	.word	0x3000035c
 
 0c0076f4 <xPortGetMinimumEverFreeHeapSize>:
 /*-----------------------------------------------------------*/
@@ -20168,7 +20167,7 @@ size_t xPortGetMinimumEverFreeHeapSize( void )
  c0076f6:	6818      	ldr	r0, [r3, #0]
  c0076f8:	4770      	bx	lr
  c0076fa:	bf00      	nop
- c0076fc:	30000278 	.word	0x30000278
+ c0076fc:	30000358 	.word	0x30000358
 
 0c007700 <vPortInitialiseBlocks>:
 /*-----------------------------------------------------------*/
@@ -20745,7 +20744,7 @@ LoopForever:
 	ldr	r2, =_sbss
  c007c40:	30000010 	.word	0x30000010
 	ldr	r3, = _ebss
- c007c44:	30002a90 	.word	0x30002a90
+ c007c44:	30002b70 	.word	0x30002b70
 
 0c007c48 <ADC1_2_IRQHandler>:
  * @retval : None

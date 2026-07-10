@@ -32,7 +32,7 @@
 #include "arm_cmse.h"
 
 #define SHA256_DIGEST_SIZE 32
-#define BLOCK_SIZE 2048
+#define BLOCK_SIZE 256
 #define TOTAL_SIZE 0x80000
 #define BLOCKS (TOTAL_SIZE / BLOCK_SIZE)
 
