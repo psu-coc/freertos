@@ -28,8 +28,9 @@ void SECURE_RegisterCallback(SECURE_CallbackIDTypeDef CallbackId, void *func);
 void SECURE_RegisterPrintCallback(void *callback);
 void SECURE_Print(const char *msg);
 void SECURE_LEDToggle(void);
-void SECURE_ShuffledHMAC_secure(uint8_t *out_digest, size_t out_len,
-                                const uint8_t *challenge, size_t challenge_len);
+void SECURE_ShuffledHMAC_secure(uint8_t *out_digest,
+                                const uint8_t *challenge, size_t challenge_len,
+                                uint32_t *out_sau_avg_cycles);
 
 #endif /* SECURE_NSC_H */
 /* USER CODE END Non_Secure_CallLib_h */

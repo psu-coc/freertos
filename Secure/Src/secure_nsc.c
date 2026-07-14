@@ -23,10 +23,36 @@
 //#include "Speck/speck.h"
 //#include "Speck/ff1_speck.h"
 
+#define USE_SAU_APPROACH        1
+
 #define SHA256_DIGEST_SIZE 32
-#define BLOCK_SIZE 64         // // <--- แก้ตัวเลขตรงนี้ครับ (256, 512, 1024, 2048, 4096)
-#define TOTAL_SIZE 0x80000 // 0x40000
+#define BLOCK_SIZE 4096         // // <--- แก้ตัวเลขตรงนี้ครับ (256, 512, 1024, 2048, 4096)
+/*
+ * Keep attestation image inside Secure flash only (0x08000000..0x0803FFFF).
+ * TOTAL_SIZE=0x80000 spills into NS flash (@0x08040000) where NS code lives.
+ * With USE_SAU_APPROACH + IRQ on, marking those pages Secure causes NS SecureFault → reset loop.
+ */
+#define TOTAL_SIZE 0x40000
 #define BLOCKS (TOTAL_SIZE / BLOCK_SIZE)
+
+#define SAU_DYNAMIC_REGION      7U
+
+static void sau_enable_dwt(void)
+{
+    CoreDebug->DEMCR |= CoreDebug_DEMCR_TRCENA_Msk;
+    DWT->CYCCNT = 0U;
+    DWT->CTRL |= DWT_CTRL_CYCCNTENA_Msk;
+}
+
+static uint32_t sau_rbar_aligned(const uint8_t *block_ptr)
+{
+    return ((uint32_t)block_ptr & ~0x1FU);
+}
+
+static uint32_t sau_rlar_secure(const uint8_t *block_ptr, size_t b)
+{
+    return (((uint32_t)block_ptr + (uint32_t)b - 1U) | 0x1FU) | 0x1U;
+}
 
 /* Global variables ----------------------------------------------------------*/
 void *pSecureFaultCallback = NULL;   /* Pointer to secure fault callback in Non-secure */
@@ -161,10 +187,21 @@ static void shuffle_secure_aes_ctr(int *arr, int n,
 
 // ---- Non-secure callable: secure shuffle + HMAC over blocks
 __attribute__((cmse_nonsecure_entry))
-void SECURE_ShuffledHMAC_secure(uint8_t *out_digest, size_t out_len,
-                                const uint8_t *challenge, size_t challenge_len)
+void SECURE_ShuffledHMAC_secure(uint8_t *out_digest,
+                                const uint8_t *challenge, size_t challenge_len,
+                                uint32_t *out_sau_avg_cycles)
 {
-    if (!out_digest || out_len < SHA256_DIGEST_SIZE) return;
+    /* Validate NS pointers before writing across the security boundary. */
+    out_digest = cmse_check_address_range(out_digest, SHA256_DIGEST_SIZE, CMSE_NONSECURE);
+    if (!out_digest) return;
+    if (out_sau_avg_cycles) {
+        out_sau_avg_cycles = cmse_check_pointed_object(out_sau_avg_cycles, CMSE_NONSECURE);
+        if (!out_sau_avg_cycles) return;
+    }
+    if (challenge && challenge_len) {
+        challenge = cmse_check_address_range((void *)challenge, challenge_len, CMSE_NONSECURE);
+        if (!challenge) return;
+    }
 
     // 1) indices = 0..BLOCKS-1
     static int indices[BLOCKS];
@@ -177,16 +214,52 @@ void SECURE_ShuffledHMAC_secure(uint8_t *out_digest, size_t out_len,
     // 3) secure shuffle
     shuffle_secure_aes_ctr(indices, BLOCKS, key16, iv16);
 
+#if defined(USE_SAU_APPROACH)
+    sau_enable_dwt();
+#endif
+
     // 4) HMAC over shuffled blocks
     hmac_sha256_initialize(&hmac, (const uint8_t*)key, strlen((const char *)key));
+#if defined(USE_SAU_APPROACH)
+    uint64_t sau_cycles_total = 0U;
+#endif
     for (int i = 0; i < BLOCKS; i++) {
         const uint8_t *blk = &real_memory[(size_t)indices[i] * BLOCK_SIZE];
+#if defined(USE_SAU_APPROACH)
+        uint32_t t_sau_start = DWT->CYCCNT;
+
+        SAU->RNR  = SAU_DYNAMIC_REGION;
+        SAU->RBAR = sau_rbar_aligned(blk);
+        SAU->RLAR = sau_rlar_secure(blk, BLOCK_SIZE);
+        __DSB();
+        __ISB();
+
+        uint32_t t_sau_end = DWT->CYCCNT;
+        sau_cycles_total += (uint64_t)(t_sau_end - t_sau_start);
+
+        hmac_sha256_update(&hmac, blk, BLOCK_SIZE);
+
+        SAU->RNR  = SAU_DYNAMIC_REGION;
+        SAU->RLAR = 0U;
+        __DSB();
+        __ISB();
+#else
         __disable_irq();
         hmac_sha256_update(&hmac, blk, BLOCK_SIZE);
         __enable_irq();
+#endif
     }
     hmac_sha256_finalize(&hmac, NULL, 0);
     memcpy(out_digest, hmac.digest, SHA256_DIGEST_SIZE);
+#if defined(USE_SAU_APPROACH)
+    if (out_sau_avg_cycles) {
+        *out_sau_avg_cycles = (uint32_t)(sau_cycles_total / (uint64_t)BLOCKS);
+    }
+#else
+    if (out_sau_avg_cycles) {
+        *out_sau_avg_cycles = 0U;
+    }
+#endif
 }
 
 /* USER CODE END Non_Secure_CallLib */

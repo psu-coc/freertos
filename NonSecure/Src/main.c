@@ -53,6 +53,10 @@ int main(void)
   SystemClock_Config();
   MX_GPIO_Init();
   MX_LPUART1_UART_Init();
+  {
+    const char boot[] = "\r\n[NS boot] sau-branch ready. Starting FreeRTOS (SMARM+SAU)...\r\n";
+    HAL_UART_Transmit(&hlpuart1, (uint8_t *)boot, (uint16_t)(sizeof(boot) - 1U), HAL_MAX_DELAY);
+  }
   MX_TIM2_Init();
   HAL_TIM_Base_Start(&htim2);
   osKernelInitialize();
@@ -60,11 +64,10 @@ int main(void)
   if (uart_mutex == NULL) {
       Error_Handler();
   }
-  //  LEDThreadHandleHandle = osThreadNew(NormalTask, NULL, &LEDThreadHandle_attributes);
-  //  LEDThreadHandleHandle = osThreadNew(NormalTask, NULL, &LEDThreadHandle_attributes);
-  /* NS: per-update TIM2 benchmark (same crypto steps as secure NSC). SMARM → SMARM_Experiment_Task. */
-  myTask02Handle = osThreadNew(NS_HashBenchmark_Task, NULL, &myTask02_attributes);
-  if (myTask02Handle == NULL) {
+  /* SAU experiment: NormalTask for NS interference count + SMARM secure attestation */
+  LEDThreadHandleHandle = osThreadNew(NormalTask, NULL, &LEDThreadHandle_attributes);
+  myTask02Handle = osThreadNew(SMARM_Experiment_Task, NULL, &myTask02_attributes);
+  if (myTask02Handle == NULL || LEDThreadHandleHandle == NULL) {
     Error_Handler();
   }
   osKernelStart();
@@ -494,11 +497,23 @@ void NS_HashBenchmark_Task(void *argument)
 void SMARM_Experiment_Task(void *argument)
 {
     (void) argument;
+    {
+        const char banner[] = "\r\nSMARM+SAU benchmark task started (10 rounds).\r\n";
+        HAL_UART_Transmit(&hlpuart1, (uint8_t *)banner, (uint16_t)(sizeof(banner) - 1U), HAL_MAX_DELAY);
+    }
+    {
+        const char msg[] = "Allocating secure context (4 KiB)...\r\n";
+        HAL_UART_Transmit(&hlpuart1, (uint8_t *)msg, (uint16_t)(sizeof(msg) - 1U), HAL_MAX_DELAY);
+    }
     portALLOCATE_SECURE_CONTEXT(4096);
+    {
+        const char msg[] = "Secure context OK. Waiting 1 s then starting rounds...\r\n";
+        HAL_UART_Transmit(&hlpuart1, (uint8_t *)msg, (uint16_t)(sizeof(msg) - 1U), HAL_MAX_DELAY);
+    }
     static uint32_t durations_ms[10];
     uint8_t digest[32];
     uint8_t challenge[16];
-    osDelay(3000);
+    osDelay(1000);
     for(uint8_t round = 0; round < 10; round++)
     {
         uint32_t seed = osKernelGetTickCount();
@@ -506,11 +521,20 @@ void SMARM_Experiment_Task(void *argument)
             uint32_t rnd = seed ^ (seed << 13) ^ (k * 0x5DEECE66D);
             memcpy(&challenge[k*4], &rnd, 4);
         }
+        if (round == 0U) {
+            const char msg[] = "Calling SECURE_ShuffledHMAC_secure (round 1)...\r\n";
+            HAL_UART_Transmit(&hlpuart1, (uint8_t *)msg, (uint16_t)(sizeof(msg) - 1U), HAL_MAX_DELAY);
+        }
         uint32_t start_tim2 = __HAL_TIM_GET_COUNTER(&htim2);
         uint32_t start_count = g_normal_counter;
-        SECURE_ShuffledHMAC_secure(digest, sizeof(digest), challenge, sizeof(challenge));
+        uint32_t sau_avg = 0;
+        SECURE_ShuffledHMAC_secure(digest, challenge, sizeof(challenge), &sau_avg);
         uint32_t end_tim2 = __HAL_TIM_GET_COUNTER(&htim2);
         uint32_t end_count = g_normal_counter;
+        if (round == 0U) {
+            const char msg[] = "Returned from secure attestation (round 1).\r\n";
+            HAL_UART_Transmit(&hlpuart1, (uint8_t *)msg, (uint16_t)(sizeof(msg) - 1U), HAL_MAX_DELAY);
+        }
         uint32_t actual_run = end_count - start_count;
         uint32_t tim2_diff = end_tim2 - start_tim2;
         uint32_t actual_duration_ms = ((uint64_t)tim2_diff * 1000) / 137500;
@@ -518,6 +542,7 @@ void SMARM_Experiment_Task(void *argument)
         uint32_t expected_run = (actual_duration_ms * TARGET_FREQ_HZ) / 1000;
         if (xSemaphoreTake(uart_mutex, pdMS_TO_TICKS(10)) == pdTRUE) {
             printf("Round %u: Runtime=%lu ms, NS=%lu/%lu cycles\r\n", round + 1, actual_duration_ms, actual_run, expected_run);
+            printf("SAU_config_avg_cycles=%lu\r\n", (unsigned long)sau_avg);
             xSemaphoreGive(uart_mutex);
         }
         osDelay(2000);
@@ -526,11 +551,12 @@ void SMARM_Experiment_Task(void *argument)
     for (int i = 0; i < 10; i++) { sum += durations_ms[i]; if (durations_ms[i] < min_val) min_val = durations_ms[i]; if (durations_ms[i] > max_val) max_val = durations_ms[i]; }
     uint32_t mean = sum / 10;
     if (xSemaphoreTake(uart_mutex, pdMS_TO_TICKS(10)) == pdTRUE) {
-        printf("\r\n=== SUMMARY SMARM Baseline (10 rounds) ===\r\n");
+        printf("\r\n=== SUMMARY SMARM+SAU (10 rounds) ===\r\n");
         printf("Mean: %lu ms\r\n", mean);
         printf("Min:  %lu ms\r\n", min_val);
         printf("Max:  %lu ms\r\n", max_val);
         printf("==========================================\r\n");
+        printf("Done. Press RESET to run again.\r\n");
         xSemaphoreGive(uart_mutex);
     }
     for(;;) { osDelay(10000); }
