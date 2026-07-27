@@ -91,6 +91,16 @@ int main(void)
   /* GTZC initialisation */
   MX_GTZC_S_Init();
 
+  /* NS experiment prints on LPUART1 + USART3 (ST-Link VCP). */
+  if (HAL_GTZC_TZSC_ConfigPeriphAttributes(GTZC_PERIPH_USART3,
+                                           GTZC_TZSC_PERIPH_NSEC | GTZC_TZSC_PERIPH_NPRIV) != HAL_OK) {
+    Error_Handler();
+  }
+  if (HAL_GTZC_TZSC_ConfigPeriphAttributes(GTZC_PERIPH_LPUART1,
+                                           GTZC_TZSC_PERIPH_NSEC | GTZC_TZSC_PERIPH_NPRIV) != HAL_OK) {
+    Error_Handler();
+  }
+
   /* USER CODE BEGIN SysInit */
 
   /* USER CODE END SysInit */
@@ -158,14 +168,25 @@ int main(void)
 static void NonSecure_Init(void)
 {
   funcptr_NS NonSecure_ResetHandler;
+  const uint32_t ns_vtor = VTOR_TABLE_NS_START_ADDR;
+  const uint32_t ns_msp = *(__IO uint32_t *)ns_vtor;
+  const uint32_t ns_reset_raw = *(__IO uint32_t *)(ns_vtor + 4U);
 
-  SCB_NS->VTOR = VTOR_TABLE_NS_START_ADDR;
+  /* NS image must be programmed at 0x08040000 (debug: flash both Secure + NonSecure). */
+  if ((ns_reset_raw == 0xFFFFFFFFU) || (ns_reset_raw == 0U) || ((ns_reset_raw & 1U) == 0U)) {
+    Error_Handler();
+  }
+  if ((ns_reset_raw < ns_vtor) || (ns_reset_raw > 0x0807FFFFU)) {
+    Error_Handler();
+  }
+
+  SCB_NS->VTOR = ns_vtor;
 
   /* Set non-secure main stack (MSP_NS) */
-  __TZ_set_MSP_NS((*(uint32_t *)VTOR_TABLE_NS_START_ADDR));
+  __TZ_set_MSP_NS(ns_msp);
 
-  /* Get non-secure reset handler */
-  NonSecure_ResetHandler = (funcptr_NS)(*((uint32_t *)((VTOR_TABLE_NS_START_ADDR) + 4U)));
+  /* Get non-secure reset handler (Thumb, NS entry) */
+  NonSecure_ResetHandler = (funcptr_NS)ns_reset_raw;
 
   /* Start non-secure state software application */
   NonSecure_ResetHandler();

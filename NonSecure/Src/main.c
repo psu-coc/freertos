@@ -18,16 +18,30 @@
 #include <stddef.h>
 #include "hmac-sha256.h"
 #include "aes.h"
+#include "secure_nsc.h"
 
 SemaphoreHandle_t uart_mutex;
 TIM_HandleTypeDef htim2;
 UART_HandleTypeDef hlpuart1;
+UART_HandleTypeDef huart3; /* NUCLEO ST-Link VCP (USART3 on PD8/PD9) */
+
+#define NS_UART_VCP_TIMEOUT_MS  500U
+
+static void ns_uart_transmit(const uint8_t *data, uint16_t len)
+{
+  if (!data || !len) {
+    return;
+  }
+  /* LPUART1 (PG7): original project log port. USART3 (PD8): Nucleo ST-Link VCP. */
+  (void)HAL_UART_Transmit(&hlpuart1, (uint8_t *)data, len, HAL_MAX_DELAY);
+  (void)HAL_UART_Transmit(&huart3, (uint8_t *)data, len, NS_UART_VCP_TIMEOUT_MS);
+}
 
 osThreadId_t LEDThreadHandleHandle;
 const osThreadAttr_t LEDThreadHandle_attributes = {
   .name = "LEDThreadHandle",
   .priority = (osPriority_t) osPriorityHigh,
-  .stack_size = 512 * 4
+  .stack_size = 1024 * 4
 };
 osThreadId_t myTask02Handle;
 const osThreadAttr_t myTask02_attributes = {
@@ -40,6 +54,7 @@ const osThreadAttr_t myTask02_attributes = {
 void SystemClock_Config(void);
 static void MX_GPIO_Init(void);
 static void MX_LPUART1_UART_Init(void);
+static void MX_USART3_UART_Init(void);
 static void MX_TIM2_Init(void);
 void SecureFault_Callback(void);
 void SecureError_Callback(void);
@@ -47,15 +62,23 @@ void NormalTask(void *argument);
 void SMARM_Experiment_Task(void *argument);
 void NS_HashBenchmark_Task(void *argument);
 
+volatile uint32_t g_normal_counter = 0;
+volatile uint32_t g_secure_busy = 0U;
+volatile uint32_t g_attest_phase = 0U;
+
 int main(void)
 {
   HAL_Init();
   SystemClock_Config();
   MX_GPIO_Init();
   MX_LPUART1_UART_Init();
+  MX_USART3_UART_Init();
   {
-    const char boot[] = "\r\n[NS boot] sau-branch ready. Starting FreeRTOS (SMARM+SAU)...\r\n";
-    HAL_UART_Transmit(&hlpuart1, (uint8_t *)boot, (uint16_t)(sizeof(boot) - 1U), HAL_MAX_DELAY);
+    const char boot[] =
+        "\r\n[NS boot] SMARM+SAU data window 128KiB @0x08060000 (gap below NS code).\r\n"
+        "UART log: ST-Link VCP=USART3 (COMx) + LPUART1 PG7 — 115200. Open terminal BEFORE reset.\r\n"
+        "Starting FreeRTOS (E1: SMARM+SAU FAR)...\r\n";
+    ns_uart_transmit((const uint8_t *)boot, (uint16_t)(sizeof(boot) - 1U));
   }
   MX_TIM2_Init();
   HAL_TIM_Base_Start(&htim2);
@@ -69,6 +92,10 @@ int main(void)
   myTask02Handle = osThreadNew(SMARM_Experiment_Task, NULL, &myTask02_attributes);
   if (myTask02Handle == NULL || LEDThreadHandleHandle == NULL) {
     Error_Handler();
+  }
+  {
+    const char ok[] = "FreeRTOS tasks created (NormalTask + SMARM). Starting scheduler...\r\n";
+    ns_uart_transmit((const uint8_t *)ok, (uint16_t)(sizeof(ok) - 1U));
   }
   osKernelStart();
   while (1) {}
@@ -136,6 +163,25 @@ static void MX_LPUART1_UART_Init(void)
   if (HAL_UARTEx_DisableFifoMode(&hlpuart1) != HAL_OK) { Error_Handler(); }
 }
 
+static void MX_USART3_UART_Init(void)
+{
+  huart3.Instance = USART3;
+  huart3.Init.BaudRate = 115200;
+  huart3.Init.WordLength = UART_WORDLENGTH_8B;
+  huart3.Init.StopBits = UART_STOPBITS_1;
+  huart3.Init.Parity = UART_PARITY_NONE;
+  huart3.Init.Mode = UART_MODE_TX_RX;
+  huart3.Init.HwFlowCtl = UART_HWCONTROL_NONE;
+  huart3.Init.OverSampling = UART_OVERSAMPLING_16;
+  huart3.Init.OneBitSampling = UART_ONE_BIT_SAMPLE_DISABLE;
+  huart3.Init.ClockPrescaler = UART_PRESCALER_DIV1;
+  huart3.AdvancedInit.AdvFeatureInit = UART_ADVFEATURE_NO_INIT;
+  if (HAL_UART_Init(&huart3) != HAL_OK) { Error_Handler(); }
+  if (HAL_UARTEx_SetTxFifoThreshold(&huart3, UART_TXFIFO_THRESHOLD_1_8) != HAL_OK) { Error_Handler(); }
+  if (HAL_UARTEx_SetRxFifoThreshold(&huart3, UART_RXFIFO_THRESHOLD_1_8) != HAL_OK) { Error_Handler(); }
+  if (HAL_UARTEx_DisableFifoMode(&huart3) != HAL_OK) { Error_Handler(); }
+}
+
 static void MX_GPIO_Init(void)
 {
   __HAL_RCC_GPIOG_CLK_ENABLE();
@@ -144,13 +190,48 @@ static void MX_GPIO_Init(void)
 
 #include <sys/time.h>
 int _gettimeofday(struct timeval *tv, void *tzvp) { (void)tv; (void)tzvp; return 0; }
-void SecureFault_Callback(void) { Error_Handler(); }
-int __io_putchar(int ch) { HAL_UART_Transmit(&hlpuart1, (uint8_t *)&ch, 1, HAL_MAX_DELAY); return ch; }
+void SecureFault_Callback(void)
+{
+  const char msg[] = "\r\n[NS] SecureFault — flash Secure+NonSecure, rebuild both.\r\n";
+  (void)HAL_UART_Transmit(&hlpuart1, (uint8_t *)msg, (uint16_t)(sizeof(msg) - 1U), HAL_MAX_DELAY);
+  Error_Handler();
+}
+int __io_putchar(int ch)
+{
+  uint8_t c = (uint8_t)ch;
+  ns_uart_transmit(&c, 1U);
+  return ch;
+}
 void SecureError_Callback(void) { Error_Handler(); }
 
-#define TARGET_FREQ_HZ   1000
+#define TARGET_FREQ_HZ   10   /* FAR sweeps: 1000, 100, or 10 */
 #define TIM2_TICKS_PER_SEC  137500
-volatile uint32_t g_normal_counter = 0; // ตัวนับรอบของ NormalTask
+
+static void ns_print_attest_phase(uint32_t phase)
+{
+  char buf[72];
+  int n;
+  if (phase == 0U) {
+    return;
+  }
+  if (phase == 9000U) {
+//    n = snprintf(buf, sizeof(buf), "[NS] attest done (phase 9000)\r\n");
+  } else if (phase >= 100U && phase < 200U) {
+//    n = snprintf(buf, sizeof(buf), "[NS] attest block %lu\r\n",
+//                 (unsigned long)(phase - 100U));
+  } else if (phase == 1U) {
+//    n = snprintf(buf, sizeof(buf), "[NS] attest enter 128KiB\r\n");
+  } else if (phase == 2U) {
+//    n = snprintf(buf, sizeof(buf), "[NS] attest shuffle done\r\n");
+  } else if (phase == 3U) {
+//    n = snprintf(buf, sizeof(buf), "[NS] attest SAU+HMAC...\r\n");
+  } else {
+//    n = snprintf(buf, sizeof(buf), "[NS] attest phase=%lu\r\n", (unsigned long)phase);
+  }
+  if (n > 0) {
+    ns_uart_transmit((const uint8_t *)buf, (uint16_t)n);
+  }
+}
 
 void NormalTask(void *argument)
 {
@@ -159,12 +240,26 @@ void NormalTask(void *argument)
     uint32_t next_wake_time = osKernelGetTickCount();
     uint32_t loop_counter = 0;
     uint32_t start_tim2 = __HAL_TIM_GET_COUNTER(&htim2);
+    uint32_t last_attest_phase = 0U;
     for (;;)
     {
         next_wake_time += period_os_ticks;
         osDelayUntil(next_wake_time);
         g_normal_counter++;
         loop_counter++;
+        if (g_secure_busy != 0U) {
+            uint32_t ph = g_attest_phase;
+            if (ph != last_attest_phase) {
+                last_attest_phase = ph;
+                ns_print_attest_phase(ph);
+            }
+            static uint32_t hb;
+            hb++;
+            if ((hb % (TARGET_FREQ_HZ / 2U)) == 0U) {
+                const char dot[] = ".";
+                ns_uart_transmit((const uint8_t *)dot, 1U);
+            }
+        }
         uint32_t current_tim2 = __HAL_TIM_GET_COUNTER(&htim2);
         uint32_t elapsed_tim2 = current_tim2 - start_tim2;
         if (elapsed_tim2 >= TIM2_TICKS_PER_SEC)
@@ -183,24 +278,29 @@ void NormalTask(void *argument)
     }
 }
 
-/* NonSecure FLASH: STM32CubeIDE/NonSecure/STM32L552ZETXQ_FLASH.ld → ROM ORIGIN 0x08040000, LENGTH 256K.
- * Do NOT use 0x08000000 here — that window is Secure flash; NS loads cause SecureFault (you saw this on blk[0]). */
-#define NS_HMAC_NS_FLASH_BASE      0x08040000U
-#define NS_HMAC_NS_FLASH_BYTES     (256U * 1024U)
+/*
+ * Memory map (must match secure_nsc.c):
+ *   0x08050000..0x0805FFFF  guard gap (not attested)
+ *   0x08060000..0x0807FFFF  data window 128 KiB (SAU R6/R7)
+ */
+#define NS_APP_FLASH_BASE          0x08040000U
+#define NS_APP_FLASH_BYTES         (64U * 1024U)
+#define NS_ATTEST_DATA_BASE       0x08060000U
+#define NS_ATTEST_DATA_BYTES       0x20000U   /* 128 KiB */
 
-/* Match secure_nsc TOTAL/BLOCK only if it fits NS flash; 0x80000 span exceeds 256K — cap for NS. */
+/* Optional NS-side HMAC mirror timing; must match Secure data window. */
 #define NS_HMAC_SHA256_DIGEST_SIZE 32
 #define NS_HMAC_BLOCK_SIZE         64
-#define NS_HMAC_TOTAL_SIZE         0x40000
+#define NS_HMAC_TOTAL_SIZE         NS_ATTEST_DATA_BYTES
 #define NS_HMAC_BLOCKS             (NS_HMAC_TOTAL_SIZE / NS_HMAC_BLOCK_SIZE)
 /** How many hmac_sha256_update calls to time per benchmark run (digest differs from full scan). */
 #define NS_HMAC_TIMING_ITERATIONS  5
 
-#if NS_HMAC_TOTAL_SIZE > NS_HMAC_NS_FLASH_BYTES
-#error NS_HMAC_TOTAL_SIZE larger than NonSecure FLASH LENGTH — reduce or split regions.
+#if NS_HMAC_TOTAL_SIZE > NS_ATTEST_DATA_BYTES
+#error NS_HMAC_TOTAL_SIZE larger than attestation data window
 #endif
 
-static uint8_t *const ns_hmac_real_memory = (uint8_t *)NS_HMAC_NS_FLASH_BASE;
+static uint8_t *const ns_hmac_real_memory = (uint8_t *)NS_ATTEST_DATA_BASE;
 static const uint8_t ns_hmac_key[] = "MySecureKey123";
 static hmac_sha256 ns_hmac_state;
 static int ns_hmac_indices[NS_HMAC_BLOCKS];
@@ -309,7 +409,7 @@ static void ns_uart_hmac_timing_summary(unsigned round, unsigned timed_updates, 
                    (unsigned long)max_ticks, ms_max, (unsigned long)mean_ticks, ms_mean,
                    (unsigned long)sum_ticks, (unsigned long)hash_loop_ticks, ms_span);
   if (n > 0 && n < (int)sizeof(buf)) {
-    HAL_UART_Transmit(&hlpuart1, (uint8_t *)buf, (uint16_t)n, HAL_MAX_DELAY);
+    ns_uart_transmit((const uint8_t *)buf, (uint16_t)n);
   }
 }
 
@@ -335,7 +435,7 @@ static void NS_ShuffledHMAC_benchmark(uint8_t *out_digest, size_t out_len,
   ns_derive_aes_key_iv_from_challenge(key16, iv16, challenge, challenge_len);
   {
     const char msg[] = "derive OK, shuffling indices...\r\n";
-    HAL_UART_Transmit(&hlpuart1, (uint8_t *)msg, (uint16_t)(sizeof(msg) - 1U), HAL_MAX_DELAY);
+    ns_uart_transmit((const uint8_t *)msg, (uint16_t)(sizeof(msg) - 1U));
   }
   ns_shuffle_aes_ctr(ns_hmac_indices, NS_HMAC_BLOCKS, key16, iv16);
   {
@@ -344,18 +444,18 @@ static void NS_ShuffledHMAC_benchmark(uint8_t *out_digest, size_t out_len,
                       "shuffle OK, IRQ-masked memcpy + HMAC from RAM (%u timed iters)...\r\n",
                       (unsigned)NS_HMAC_TIMING_ITERATIONS);
     if (nn > 0 && nn < (int)sizeof(msg)) {
-      HAL_UART_Transmit(&hlpuart1, (uint8_t *)msg, (uint16_t)nn, HAL_MAX_DELAY);
+      ns_uart_transmit((const uint8_t *)msg, (uint16_t)nn);
     }
   }
 
   {
     const char m[] = "calling hmac_sha256_initialize...\r\n";
-    HAL_UART_Transmit(&hlpuart1, (uint8_t *)m, (uint16_t)(sizeof(m) - 1U), HAL_MAX_DELAY);
+    ns_uart_transmit((const uint8_t *)m, (uint16_t)(sizeof(m) - 1U));
   }
   hmac_sha256_initialize(&ns_hmac_state, ns_hmac_key, strlen((const char *)ns_hmac_key));
   {
     const char m[] = "hmac_sha256_initialize OK.\r\n";
-    HAL_UART_Transmit(&hlpuart1, (uint8_t *)m, (uint16_t)(sizeof(m) - 1U), HAL_MAX_DELAY);
+    ns_uart_transmit((const uint8_t *)m, (uint16_t)(sizeof(m) - 1U));
   }
 
   uint32_t min_ticks = 0xFFFFFFFFu;
@@ -373,7 +473,7 @@ static void NS_ShuffledHMAC_benchmark(uint8_t *out_digest, size_t out_len,
                         ns_hmac_indices[i], (void *)blk, (void *)ns_hmac_copy_buf,
                         (unsigned)NS_HMAC_BLOCK_SIZE);
       if (ni > 0 && ni < (int)sizeof(ibuf)) {
-        HAL_UART_Transmit(&hlpuart1, (uint8_t *)ibuf, (uint16_t)ni, HAL_MAX_DELAY);
+        ns_uart_transmit((const uint8_t *)ibuf, (uint16_t)ni);
       }
     }
     uint32_t t0;
@@ -399,7 +499,7 @@ static void NS_ShuffledHMAC_benchmark(uint8_t *out_digest, size_t out_len,
                         "  [%d] memcpy TIM2 t0=%lu t1=%lu dt=%lu ticks (%s ms); then HMAC_Update(RAM)\r\n",
                         i, (unsigned long)t0, (unsigned long)t1, (unsigned long)dt, msbuf);
       if (nn > 0 && nn < (int)sizeof(line)) {
-        HAL_UART_Transmit(&hlpuart1, (uint8_t *)line, (uint16_t)nn, HAL_MAX_DELAY);
+        ns_uart_transmit((const uint8_t *)line, (uint16_t)nn);
       }
     }
     hmac_sha256_update(&ns_hmac_state, ns_hmac_copy_buf, (int)NS_HMAC_BLOCK_SIZE);
@@ -434,7 +534,7 @@ void NS_HashBenchmark_Task(void *argument)
   /* Immediate UART smoke test (no heap mutex); confirms wiring before long HMAC run */
   {
     const char banner[] = "\r\nNS_HashBenchmark_Task started.\r\n";
-    HAL_UART_Transmit(&hlpuart1, (uint8_t *)banner, (uint16_t)(sizeof(banner) - 1U), HAL_MAX_DELAY);
+    ns_uart_transmit((const uint8_t *)banner, (uint16_t)(sizeof(banner) - 1U));
   }
 
   osDelay(3000);
@@ -453,7 +553,7 @@ void NS_HashBenchmark_Task(void *argument)
     {
       const char runmsg[] =
           "Running NS benchmark (TIM2 = IRQ-masked memcpy only; HMAC from RAM, IRQ on).\r\n";
-      HAL_UART_Transmit(&hlpuart1, (uint8_t *)runmsg, (uint16_t)(sizeof(runmsg) - 1U), HAL_MAX_DELAY);
+      ns_uart_transmit((const uint8_t *)runmsg, (uint16_t)(sizeof(runmsg) - 1U));
     }
 
     NS_ShuffledHMAC_benchmark(digest, sizeof(digest), challenge, sizeof(challenge),
@@ -498,19 +598,27 @@ void SMARM_Experiment_Task(void *argument)
 {
     (void) argument;
     {
-        const char banner[] = "\r\nSMARM+SAU benchmark task started (10 rounds).\r\n";
-        HAL_UART_Transmit(&hlpuart1, (uint8_t *)banner, (uint16_t)(sizeof(banner) - 1U), HAL_MAX_DELAY);
+        const char alive[] = "SMARM_Experiment_Task running (FAR + SAU lock/unlock).\r\n";
+        ns_uart_transmit((const uint8_t *)alive, (uint16_t)(sizeof(alive) - 1U));
     }
     {
-        const char msg[] = "Allocating secure context (4 KiB)...\r\n";
-        HAL_UART_Transmit(&hlpuart1, (uint8_t *)msg, (uint16_t)(sizeof(msg) - 1U), HAL_MAX_DELAY);
+        const char banner[] = "\r\nSMARM+SAU |M|=128KiB data @0x08060000 (10 rounds).\r\n";
+        ns_uart_transmit((const uint8_t *)banner, (uint16_t)(sizeof(banner) - 1U));
     }
-    portALLOCATE_SECURE_CONTEXT(4096);
+    {
+        const char msg[] = "Allocating secure context (8 KiB)...\r\n";
+        ns_uart_transmit((const uint8_t *)msg, (uint16_t)(sizeof(msg) - 1U));
+    }
+    portALLOCATE_SECURE_CONTEXT(8192);
     {
         const char msg[] = "Secure context OK. Waiting 1 s then starting rounds...\r\n";
-        HAL_UART_Transmit(&hlpuart1, (uint8_t *)msg, (uint16_t)(sizeof(msg) - 1U), HAL_MAX_DELAY);
+        ns_uart_transmit((const uint8_t *)msg, (uint16_t)(sizeof(msg) - 1U));
     }
     static uint32_t durations_ms[10];
+    uint64_t far_sum_x10000 = 0U;
+    uint32_t far_min_x10000 = UINT32_MAX;
+    uint32_t far_max_x10000 = 0U;
+    uint32_t far_valid_rounds = 0U;
     uint8_t digest[32];
     uint8_t challenge[16];
     osDelay(1000);
@@ -522,27 +630,65 @@ void SMARM_Experiment_Task(void *argument)
             memcpy(&challenge[k*4], &rnd, 4);
         }
         if (round == 0U) {
-            const char msg[] = "Calling SECURE_ShuffledHMAC_secure (round 1)...\r\n";
-            HAL_UART_Transmit(&hlpuart1, (uint8_t *)msg, (uint16_t)(sizeof(msg) - 1U), HAL_MAX_DELAY);
+            SECURE_LEDToggle();
+            const char ping[] = "  NS: SECURE_LEDToggle OK (SG path alive)\r\n";
+            ns_uart_transmit((const uint8_t *)ping, (uint16_t)(sizeof(ping) - 1U));
+            const char msg[] =
+                "Calling SECURE_ShuffledHMAC_secure (round 1)... (progress via NormalTask)\r\n";
+            ns_uart_transmit((const uint8_t *)msg, (uint16_t)(sizeof(msg) - 1U));
         }
+        g_attest_phase = 0U;
+        g_secure_busy = 1U;
         uint32_t start_tim2 = __HAL_TIM_GET_COUNTER(&htim2);
         uint32_t start_count = g_normal_counter;
-        uint32_t sau_avg = 0;
-        SECURE_ShuffledHMAC_secure(digest, challenge, sizeof(challenge), &sau_avg);
+        SECURE_AttestReport_t attest_report = {
+            .sau_config_avg_cycles = 0U,
+            .attest_phase_ptr = &g_attest_phase,
+        };
+        SECURE_ShuffledHMAC_secure(digest, challenge, sizeof(challenge), &attest_report);
+        uint32_t sau_avg = attest_report.sau_config_avg_cycles;
+        g_secure_busy = 0U;
+        if (round == 0U) {
+            const char back[] = "  NS: returned from SECURE_ShuffledHMAC_secure\r\n";
+            ns_uart_transmit((const uint8_t *)back, (uint16_t)(sizeof(back) - 1U));
+        }
         uint32_t end_tim2 = __HAL_TIM_GET_COUNTER(&htim2);
         uint32_t end_count = g_normal_counter;
         if (round == 0U) {
             const char msg[] = "Returned from secure attestation (round 1).\r\n";
-            HAL_UART_Transmit(&hlpuart1, (uint8_t *)msg, (uint16_t)(sizeof(msg) - 1U), HAL_MAX_DELAY);
+            ns_uart_transmit((const uint8_t *)msg, (uint16_t)(sizeof(msg) - 1U));
         }
         uint32_t actual_run = end_count - start_count;
         uint32_t tim2_diff = end_tim2 - start_tim2;
         uint32_t actual_duration_ms = ((uint64_t)tim2_diff * 1000) / 137500;
         durations_ms[round] = actual_duration_ms;
-        uint32_t expected_run = (actual_duration_ms * TARGET_FREQ_HZ) / 1000;
+        uint32_t expected_run = (uint32_t)(((uint64_t)actual_duration_ms * TARGET_FREQ_HZ) / 1000U);
+        uint32_t far_x10000 = 0U;
+        if (expected_run > 0U) {
+            far_x10000 = (uint32_t)((((uint64_t)actual_run * 10000U)
+                                  + (expected_run / 2U)) / expected_run);
+            far_sum_x10000 += far_x10000;
+            if (far_x10000 < far_min_x10000) far_min_x10000 = far_x10000;
+            if (far_x10000 > far_max_x10000) far_max_x10000 = far_x10000;
+            far_valid_rounds++;
+        }
         if (xSemaphoreTake(uart_mutex, pdMS_TO_TICKS(10)) == pdTRUE) {
-            printf("Round %u: Runtime=%lu ms, NS=%lu/%lu cycles\r\n", round + 1, actual_duration_ms, actual_run, expected_run);
-            printf("SAU_config_avg_cycles=%lu\r\n", (unsigned long)sau_avg);
+            printf("Round %u: Runtime=%lu ms, NS=%lu/%lu activations",
+                   round + 1, actual_duration_ms, actual_run, expected_run);
+            if (expected_run > 0U) {
+            printf(", FAR=%lu.%04lu\r\n",
+                   (unsigned long)(far_x10000 / 10000U),
+                   (unsigned long)(far_x10000 % 10000U));
+            } else {
+                printf(", FAR=N/A\r\n");
+            }
+            if (sau_avg == 0xBAD00002U) {
+                printf("SAU_config_avg_cycles=CMSE_FAIL(challenge ptr)\r\n");
+            } else if (sau_avg == 0xBAD00001U) {
+                printf("SAU_config_avg_cycles=CMSE_FAIL(digest ptr)\r\n");
+            } else {
+                printf("SAU_config_avg_cycles=%lu\r\n", (unsigned long)sau_avg);
+            }
             xSemaphoreGive(uart_mutex);
         }
         osDelay(2000);
@@ -555,6 +701,17 @@ void SMARM_Experiment_Task(void *argument)
         printf("Mean: %lu ms\r\n", mean);
         printf("Min:  %lu ms\r\n", min_val);
         printf("Max:  %lu ms\r\n", max_val);
+        if (far_valid_rounds > 0U) {
+            uint32_t far_mean_x10000 =
+                (uint32_t)(far_sum_x10000 / far_valid_rounds);
+            printf("FAR mean=%lu.%04lu, min=%lu.%04lu, max=%lu.%04lu\r\n",
+                   (unsigned long)(far_mean_x10000 / 10000U),
+                   (unsigned long)(far_mean_x10000 % 10000U),
+                   (unsigned long)(far_min_x10000 / 10000U),
+                   (unsigned long)(far_min_x10000 % 10000U),
+                   (unsigned long)(far_max_x10000 / 10000U),
+                   (unsigned long)(far_max_x10000 % 10000U));
+        }
         printf("==========================================\r\n");
         printf("Done. Press RESET to run again.\r\n");
         xSemaphoreGive(uart_mutex);

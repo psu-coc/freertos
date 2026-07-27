@@ -30,8 +30,8 @@ extern "C" {
 #  define CMSE_NS_CALL  __cmse_nonsecure_call
 #  define CMSE_NS_ENTRY __cmse_nonsecure_entry
 #else
-#  define CMSE_NS_CALL  __attribute((cmse_nonsecure_call))
-#  define CMSE_NS_ENTRY __attribute((cmse_nonsecure_entry))
+#  define CMSE_NS_CALL  __attribute__((cmse_nonsecure_call))
+#  define CMSE_NS_ENTRY __attribute__((cmse_nonsecure_entry))
 #endif
 
 /* Includes ------------------------------------------------------------------*/

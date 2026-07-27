@@ -104,7 +104,9 @@
 /*
 //     <o>End Address <0x1F-0xFFFFFFFF>
 */
-#define SAU_INIT_END1       0x0807FFFF      /* end address of SAU region 1 */
+/* NonSecure application code (64 KiB). Data attestation window 192 KiB at
+ * 0x08060000..0x0807FFFF — programmed at runtime by secure_nsc.c (SAU R6/R7). */
+#define SAU_INIT_END1       0x0804FFFF      /* end address of SAU region 1 */
 /*
 //     <o>Region is
 //         <0=>Non-Secure
@@ -223,17 +225,20 @@
 //   <e>Initialize SAU Region 6
 //   <i> Setup SAU Region 6 memory attributes
 */
-#define SAU_INIT_REGION6    0
+/* At-rest Non-Secure coverage of the 128 KiB data window
+ * (0x08060000..0x0807FFFF). Runtime hole remapping reprograms regions 6/7. */
+/* Data window only at boot (does not overlap NS app SAU region 1). */
+#define SAU_INIT_REGION6    1
 
 /*
 //     <o>Start Address <0-0xFFFFFFE0>
 */
-#define SAU_INIT_START6     0x00000000      /* start address of SAU region 6 */
+#define SAU_INIT_START6     0x08060000      /* start address of SAU region 6 */
 
 /*
 //     <o>End Address <0x1F-0xFFFFFFFF>
 */
-#define SAU_INIT_END6       0x00000000      /* end address of SAU region 6 */
+#define SAU_INIT_END6       0x0807FFFF      /* end address of SAU region 6 */
 
 /*
 //     <o>Region is
@@ -249,17 +254,19 @@
 //   <e>Initialize SAU Region 7
 //   <i> Setup SAU Region 7 memory attributes
 */
+/* Second fragment region for per-block SAU hole (left/right NS coverage).
+ * Disabled at boot; secure_nsc.c enables it only while a hole is open. */
 #define SAU_INIT_REGION7    0
 
 /*
 //     <o>Start Address <0-0xFFFFFFE0>
 */
-#define SAU_INIT_START7     0x00000000      /* start address of SAU region 7 */
+#define SAU_INIT_START7     0x08050000      /* start address of SAU region 7 */
 
 /*
 //     <o>End Address <0x1F-0xFFFFFFFF>
 */
-#define SAU_INIT_END7       0x00000000      /* end address of SAU region 7 */
+#define SAU_INIT_END7       0x0807FFFF      /* end address of SAU region 7 */
 
 /*
 //     <o>Region is
