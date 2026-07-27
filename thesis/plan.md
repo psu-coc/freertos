@@ -89,7 +89,7 @@ UART รอบทดลอง: `SECURE_LEDToggle OK` → `Calling...` → `[NS] 
 - **Firmware:** `NS_APP_MODE_E4_ATOMIC=1` ใน `NonSecure/Src/main.c` → `NS_HashBenchmark_Task`
 - **รันบอร์ด:** เปลี่ยน `NS_HMAC_BLOCK_SIZE` → rebuild **NonSecure** → flash **Secure + NonSecure** → 7 ครั้ง (64…4096)
 - **Raw:** `thesis/e4_atomic_raw_data.md`
-- **สถานะ:** `[ ]` rerun 7 B → archive raw ก่อนแก้ `main.tex`
+- **สถานะ:** `[x]` Atomic **7/7 B** → `e4_atomic_raw_data.md` (2026-07-27); baseline column TBD / legacy tex
 
 ---
 
@@ -214,7 +214,7 @@ Notes:
 | **E1** | ไม่ | raw 21/21 ใน `sau_far_raw_data.md` |
 | **E2** | ไม่ | DWT 7×B @ 1000 Hz ใน raw §E2 |
 | **E3** | **ไม่** | Baseline FAR 2048/4096 ตกแล้ว ตรง `gen_far_fig8.py` / กรaph เดิม — ไม่ rerun sweep |
-| **E4** | **ใช่** | บน **`SAU-ATOMICCOPY`**: NS mirror + benchmark task; baseline TIM2 ถ้าต้องคู่กับ atomic |
+| **E4** | **Atomic done** | **`SAU-ATOMICCOPY`**: NS mirror 7×B archived; baseline optional |
 | **E5** | ไม่ (กรaph) | อัป `gen_far_fig8.py` หลังตกลงตัวเลข baseline (เก่า) + E1 SAU + atomic |
 | **Zephyr** | — | **ไม่ใส่** paper ฉบับนี้ |
 
