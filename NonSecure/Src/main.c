@@ -20,6 +20,30 @@
 #include "aes.h"
 #include "secure_nsc.h"
 
+/*
+ * SAU-ATOMICCOPY / E4: set NS_APP_MODE_E4_ATOMIC to 1 for Atomic Copy t_disabled (TIM2).
+ * Rebuild NonSecure (and flash both TZ images), change NS_HMAC_BLOCK_SIZE per sweep.
+ */
+#define NS_APP_MODE_E4_ATOMIC  1
+
+#if NS_APP_MODE_E4_ATOMIC
+#define NS_HMAC_BLOCK_SIZE         64     /* E4 sweep: 64,128,256,512,1024,2048,4096 */
+#define NS_E4_ROUNDS               10
+#define NS_E4_SAMPLES_PER_RUN      32     /* timed IRQ-masked memcpy ops per round */
+#define NS_E4_QUIET_UART           1
+#else
+#define TARGET_FREQ_HZ             1000   /* SMARM+SAU FAR sweeps */
+#define NS_E4_QUIET_UART           0
+#endif
+
+#ifndef TARGET_FREQ_HZ
+#define TARGET_FREQ_HZ             1000   /* NormalTask when E4 mode (FAR not measured) */
+#endif
+
+#if NS_APP_MODE_E4_ATOMIC && (NS_HMAC_BLOCK_SIZE > 4096U)
+#error NS_HMAC_BLOCK_SIZE must be <= 4096 for E4 (static copy buffer)
+#endif
+
 SemaphoreHandle_t uart_mutex;
 TIM_HandleTypeDef htim2;
 UART_HandleTypeDef hlpuart1;
@@ -75,9 +99,18 @@ int main(void)
   MX_USART3_UART_Init();
   {
     const char boot[] =
+#if NS_APP_MODE_E4_ATOMIC
+        "\r\n[NS boot] E4 Atomic Copy — NS mirror, TIM2 on IRQ-masked memcpy.\r\n"
+        "|M|=128KiB @0x08060000. Change NS_HMAC_BLOCK_SIZE then rebuild NonSecure.\r\n"
+#else
         "\r\n[NS boot] SMARM+SAU data window 128KiB @0x08060000 (gap below NS code).\r\n"
+#endif
         "UART log: ST-Link VCP=USART3 (COMx) + LPUART1 PG7 — 115200. Open terminal BEFORE reset.\r\n"
+#if NS_APP_MODE_E4_ATOMIC
+        "Starting FreeRTOS (E4: NS_HashBenchmark_Task)...\r\n";
+#else
         "Starting FreeRTOS (E1: SMARM+SAU FAR)...\r\n";
+#endif
     ns_uart_transmit((const uint8_t *)boot, (uint16_t)(sizeof(boot) - 1U));
   }
   MX_TIM2_Init();
@@ -87,14 +120,22 @@ int main(void)
   if (uart_mutex == NULL) {
       Error_Handler();
   }
-  /* SAU experiment: NormalTask for NS interference count + SMARM secure attestation */
+  /* NormalTask optional load; E4 uses NS benchmark task instead of SMARM */
   LEDThreadHandleHandle = osThreadNew(NormalTask, NULL, &LEDThreadHandle_attributes);
+#if NS_APP_MODE_E4_ATOMIC
+  myTask02Handle = osThreadNew(NS_HashBenchmark_Task, NULL, &myTask02_attributes);
+#else
   myTask02Handle = osThreadNew(SMARM_Experiment_Task, NULL, &myTask02_attributes);
+#endif
   if (myTask02Handle == NULL || LEDThreadHandleHandle == NULL) {
     Error_Handler();
   }
   {
+#if NS_APP_MODE_E4_ATOMIC
+    const char ok[] = "FreeRTOS tasks created (NormalTask + NS_HashBenchmark). Starting scheduler...\r\n";
+#else
     const char ok[] = "FreeRTOS tasks created (NormalTask + SMARM). Starting scheduler...\r\n";
+#endif
     ns_uart_transmit((const uint8_t *)ok, (uint16_t)(sizeof(ok) - 1U));
   }
   osKernelStart();
@@ -204,7 +245,6 @@ int __io_putchar(int ch)
 }
 void SecureError_Callback(void) { Error_Handler(); }
 
-#define TARGET_FREQ_HZ   10   /* FAR sweeps: 1000, 100, or 10 */
 #define TIM2_TICKS_PER_SEC  137500
 
 static void ns_print_attest_phase(uint32_t phase)
@@ -288,13 +328,22 @@ void NormalTask(void *argument)
 #define NS_ATTEST_DATA_BASE       0x08060000U
 #define NS_ATTEST_DATA_BYTES       0x20000U   /* 128 KiB */
 
-/* Optional NS-side HMAC mirror timing; must match Secure data window. */
+/* Optional NS-side HMAC mirror timing; must match attested data window (128 KiB). */
 #define NS_HMAC_SHA256_DIGEST_SIZE 32
+#ifndef NS_HMAC_BLOCK_SIZE
 #define NS_HMAC_BLOCK_SIZE         64
+#endif
 #define NS_HMAC_TOTAL_SIZE         NS_ATTEST_DATA_BYTES
 #define NS_HMAC_BLOCKS             (NS_HMAC_TOTAL_SIZE / NS_HMAC_BLOCK_SIZE)
+#if (NS_HMAC_TOTAL_SIZE % NS_HMAC_BLOCK_SIZE) != 0
+#error NS_HMAC_TOTAL_SIZE must be divisible by NS_HMAC_BLOCK_SIZE
+#endif
+#if NS_APP_MODE_E4_ATOMIC
+#define NS_HMAC_TIMING_ITERATIONS  NS_E4_SAMPLES_PER_RUN
+#else
 /** How many hmac_sha256_update calls to time per benchmark run (digest differs from full scan). */
 #define NS_HMAC_TIMING_ITERATIONS  5
+#endif
 
 #if NS_HMAC_TOTAL_SIZE > NS_ATTEST_DATA_BYTES
 #error NS_HMAC_TOTAL_SIZE larger than attestation data window
@@ -433,11 +482,14 @@ static void NS_ShuffledHMAC_benchmark(uint8_t *out_digest, size_t out_len,
 
   uint8_t key16[16], iv16[16];
   ns_derive_aes_key_iv_from_challenge(key16, iv16, challenge, challenge_len);
+#if !NS_E4_QUIET_UART || !NS_APP_MODE_E4_ATOMIC
   {
     const char msg[] = "derive OK, shuffling indices...\r\n";
     ns_uart_transmit((const uint8_t *)msg, (uint16_t)(sizeof(msg) - 1U));
   }
+#endif
   ns_shuffle_aes_ctr(ns_hmac_indices, NS_HMAC_BLOCKS, key16, iv16);
+#if !NS_E4_QUIET_UART || !NS_APP_MODE_E4_ATOMIC
   {
     char msg[72];
     int nn = snprintf(msg, sizeof(msg),
@@ -452,20 +504,29 @@ static void NS_ShuffledHMAC_benchmark(uint8_t *out_digest, size_t out_len,
     const char m[] = "calling hmac_sha256_initialize...\r\n";
     ns_uart_transmit((const uint8_t *)m, (uint16_t)(sizeof(m) - 1U));
   }
+#endif
   hmac_sha256_initialize(&ns_hmac_state, ns_hmac_key, strlen((const char *)ns_hmac_key));
+#if !NS_E4_QUIET_UART || !NS_APP_MODE_E4_ATOMIC
   {
     const char m[] = "hmac_sha256_initialize OK.\r\n";
     ns_uart_transmit((const uint8_t *)m, (uint16_t)(sizeof(m) - 1U));
   }
+#endif
 
   uint32_t min_ticks = 0xFFFFFFFFu;
   uint32_t max_ticks = 0;
   uint64_t sum_ticks = 0;
 
+  unsigned n_timed = (unsigned)NS_HMAC_BLOCKS;
+  if (n_timed > (unsigned)NS_HMAC_TIMING_ITERATIONS) {
+    n_timed = (unsigned)NS_HMAC_TIMING_ITERATIONS;
+  }
+
   uint32_t t_hash_start = __HAL_TIM_GET_COUNTER(&htim2);
 
-  for (int i = 0; i < NS_HMAC_TIMING_ITERATIONS; i++) {
+  for (unsigned i = 0; i < n_timed; i++) {
     const uint8_t *blk = &ns_hmac_real_memory[(size_t)ns_hmac_indices[i] * NS_HMAC_BLOCK_SIZE];
+#if !NS_E4_QUIET_UART || !NS_APP_MODE_E4_ATOMIC
     if (i == 0) {
       char ibuf[100];
       int ni = snprintf(ibuf, sizeof(ibuf),
@@ -476,6 +537,7 @@ static void NS_ShuffledHMAC_benchmark(uint8_t *out_digest, size_t out_len,
         ns_uart_transmit((const uint8_t *)ibuf, (uint16_t)ni);
       }
     }
+#endif
     uint32_t t0;
     uint32_t t1;
     __disable_irq();
@@ -491,17 +553,19 @@ static void NS_ShuffledHMAC_benchmark(uint8_t *out_digest, size_t out_len,
       max_ticks = dt;
     }
     sum_ticks += dt;
+#if (!NS_APP_MODE_E4_ATOMIC) || !NS_E4_QUIET_UART
     {
       char msbuf[32];
       ns_fmt_ticks_ms6(msbuf, dt);
       char line[160];
       int nn = snprintf(line, sizeof(line),
-                        "  [%d] memcpy TIM2 t0=%lu t1=%lu dt=%lu ticks (%s ms); then HMAC_Update(RAM)\r\n",
-                        i, (unsigned long)t0, (unsigned long)t1, (unsigned long)dt, msbuf);
+                        "  [%u] memcpy TIM2 dt=%lu ticks (%s ms)\r\n",
+                        (unsigned)i, (unsigned long)dt, msbuf);
       if (nn > 0 && nn < (int)sizeof(line)) {
         ns_uart_transmit((const uint8_t *)line, (uint16_t)nn);
       }
     }
+#endif
     hmac_sha256_update(&ns_hmac_state, ns_hmac_copy_buf, (int)NS_HMAC_BLOCK_SIZE);
   }
 
@@ -531,62 +595,131 @@ void NS_HashBenchmark_Task(void *argument)
   uint8_t digest[NS_HMAC_SHA256_DIGEST_SIZE];
   uint8_t challenge[16];
 
-  /* Immediate UART smoke test (no heap mutex); confirms wiring before long HMAC run */
   {
-    const char banner[] = "\r\nNS_HashBenchmark_Task started.\r\n";
-    ns_uart_transmit((const uint8_t *)banner, (uint16_t)(sizeof(banner) - 1U));
+    char banner[160];
+    int bn = snprintf(banner, sizeof(banner),
+                      "\r\nNS_HashBenchmark_Task started (E4 Atomic Copy, B=%u, %u rounds, %u samples/run).\r\n",
+                      (unsigned)NS_HMAC_BLOCK_SIZE,
+#if NS_APP_MODE_E4_ATOMIC
+                      (unsigned)NS_E4_ROUNDS,
+                      (unsigned)NS_E4_SAMPLES_PER_RUN
+#else
+                      5U, (unsigned)NS_HMAC_TIMING_ITERATIONS
+#endif
+                      );
+    if (bn > 0 && bn < (int)sizeof(banner)) {
+      ns_uart_transmit((const uint8_t *)banner, (uint16_t)bn);
+    }
   }
 
-  osDelay(3000);
+  osDelay(1000);
 
-  for (uint8_t round = 0; round < 5; round++) {
+#if NS_APP_MODE_E4_ATOMIC
+  const uint8_t n_rounds = NS_E4_ROUNDS;
+  uint32_t round_mean_ticks[NS_E4_ROUNDS];
+#else
+  const uint8_t n_rounds = 5;
+  uint32_t round_mean_ticks[5];
+#endif
+
+  for (uint8_t round = 0; round < n_rounds; round++) {
     uint32_t seed = osKernelGetTickCount();
     for (int k = 0; k < 4; k++) {
       uint32_t rnd = seed ^ (seed << 13) ^ (uint32_t)(k * 0x5DEECE66Du);
       memcpy(&challenge[(size_t)k * 4], &rnd, 4);
     }
 
-    uint32_t min_ticks = 0, max_ticks = 0;
+    uint32_t min_ticks = 0xFFFFFFFFu, max_ticks = 0;
     uint64_t sum_ticks = 0;
     uint32_t hash_loop_ticks = 0;
 
+    unsigned n_timed = (unsigned)NS_HMAC_BLOCKS;
+    if (n_timed > (unsigned)NS_HMAC_TIMING_ITERATIONS) {
+      n_timed = (unsigned)NS_HMAC_TIMING_ITERATIONS;
+    }
+
+#if !NS_APP_MODE_E4_ATOMIC
     {
       const char runmsg[] =
           "Running NS benchmark (TIM2 = IRQ-masked memcpy only; HMAC from RAM, IRQ on).\r\n";
       ns_uart_transmit((const uint8_t *)runmsg, (uint16_t)(sizeof(runmsg) - 1U));
     }
+#endif
 
     NS_ShuffledHMAC_benchmark(digest, sizeof(digest), challenge, sizeof(challenge),
                               &min_ticks, &max_ticks, &sum_ticks, &hash_loop_ticks);
 
-    /* Always emit timing on UART (printf optional / mutex may fail). */
-    ns_uart_hmac_timing_summary((unsigned)(round + 1), NS_HMAC_TIMING_ITERATIONS,
+    uint32_t mean_ticks = (n_timed > 0U) ? (uint32_t)(sum_ticks / (uint64_t)n_timed) : 0U;
+    round_mean_ticks[round] = mean_ticks;
+
+    ns_uart_hmac_timing_summary((unsigned)(round + 1), n_timed,
                                 min_ticks, max_ticks, sum_ticks, hash_loop_ticks);
 
-    uint32_t mean_ticks = (uint32_t)(sum_ticks / (uint64_t)NS_HMAC_TIMING_ITERATIONS);
-
-    if (xSemaphoreTake(uart_mutex, pdMS_TO_TICKS(50)) == pdTRUE) {
-      char ms_min[32], ms_max[32], ms_mean[32], ms_span[32];
-      ns_fmt_ticks_ms6(ms_min, min_ticks);
-      ns_fmt_ticks_ms6(ms_max, max_ticks);
+    {
+      char ms_mean[32];
       ns_fmt_ticks_ms6(ms_mean, mean_ticks);
-      ns_fmt_ticks_ms6(ms_span, hash_loop_ticks);
-      printf("\r\n=== NS HMAC benchmark round %u ===\r\n", (unsigned)(round + 1));
-      printf("BLOCK_SIZE=%u timed_updates=%u\r\n",
-             (unsigned)NS_HMAC_BLOCK_SIZE, (unsigned)NS_HMAC_TIMING_ITERATIONS);
-      printf("Per IRQ-masked memcpy: min=%lu ticks (%s ms), max=%lu ticks (%s ms), mean=%lu ticks (%s ms)\r\n",
-             (unsigned long)min_ticks, ms_min, (unsigned long)max_ticks, ms_max,
-             (unsigned long)mean_ticks, ms_mean);
-      printf("Sum of per-update deltas=%lu ticks; hash-loop TIM2 span=%lu ticks (%s ms)\r\n",
-             (unsigned long)sum_ticks, (unsigned long)hash_loop_ticks, ms_span);
-      xSemaphoreGive(uart_mutex);
+      char line[128];
+      int nn = snprintf(line, sizeof(line),
+                        "Round %u: memcpy mean=%lu ticks (%s ms) over %u samples\r\n",
+                        (unsigned)(round + 1), (unsigned long)mean_ticks, ms_mean,
+                        n_timed);
+      if (nn > 0 && nn < (int)sizeof(line)) {
+        ns_uart_transmit((const uint8_t *)line, (uint16_t)nn);
+      }
     }
-    osDelay(1000);
+    osDelay(500);
   }
 
-  if (xSemaphoreTake(uart_mutex, pdMS_TO_TICKS(50)) == pdTRUE) {
-    printf("\r\nNS HMAC benchmark done. Idle.\r\n");
-    xSemaphoreGive(uart_mutex);
+#if NS_APP_MODE_E4_ATOMIC
+  {
+    uint64_t sum_mean = 0;
+    uint32_t gmin = round_mean_ticks[0], gmax = round_mean_ticks[0];
+    for (uint8_t r = 0; r < n_rounds; r++) {
+      sum_mean += round_mean_ticks[r];
+      if (round_mean_ticks[r] < gmin) {
+        gmin = round_mean_ticks[r];
+      }
+      if (round_mean_ticks[r] > gmax) {
+        gmax = round_mean_ticks[r];
+      }
+    }
+    uint32_t overall_mean = (uint32_t)(sum_mean / (uint64_t)n_rounds);
+    uint64_t var = 0;
+    for (uint8_t r = 0; r < n_rounds; r++) {
+      int64_t d = (int64_t)round_mean_ticks[r] - (int64_t)overall_mean;
+      var += (uint64_t)(d * d);
+    }
+    uint64_t var_mean = var / (uint64_t)n_rounds;
+    uint32_t std_ticks = 0;
+    for (uint32_t s = 0xFFFFFFFFU / 2U; s > 0; s /= 2U) {
+      uint32_t next = std_ticks + s;
+      if ((uint64_t)next * (uint64_t)next <= var_mean) {
+        std_ticks = next;
+      }
+    }
+    char ms_mean[32], ms_std[32];
+    ns_fmt_ticks_ms6(ms_mean, overall_mean);
+    ns_fmt_ticks_ms6(ms_std, std_ticks);
+    char sumbuf[288];
+    int sn = snprintf(sumbuf, sizeof(sumbuf),
+                      "\r\n=== E4 Atomic Copy SUMMARY (B=%u, %u rounds) ===\r\n"
+                      "Per-update memcpy (IRQ-off): mean=%lu ticks (%s ms), "
+                      "std~=%lu ticks (%s ms), min=%lu max=%lu ticks\r\n"
+                      "Archive in thesis/e4_atomic_raw_data.md\r\n"
+                      "===============================================\r\n",
+                      (unsigned)NS_HMAC_BLOCK_SIZE, (unsigned)n_rounds,
+                      (unsigned long)overall_mean, ms_mean,
+                      (unsigned long)std_ticks, ms_std,
+                      (unsigned long)gmin, (unsigned long)gmax);
+    if (sn > 0 && sn < (int)sizeof(sumbuf)) {
+      ns_uart_transmit((const uint8_t *)sumbuf, (uint16_t)sn);
+    }
+  }
+#endif
+
+  {
+    const char done[] = "\r\nNS HMAC benchmark done. Press RESET for next B (after rebuild).\r\n";
+    ns_uart_transmit((const uint8_t *)done, (uint16_t)(sizeof(done) - 1U));
   }
 
   for (;;) {

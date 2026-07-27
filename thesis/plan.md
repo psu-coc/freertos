@@ -85,9 +85,10 @@ UART รอบทดลอง: `SECURE_LEDToggle OK` → `Calling...` → `[NS] 
 ### E4 — Table `tab:tdisdisabled` — Baseline vs Atomic Copy (TIM2)
 
 - **เป้า:** Mean/std **ms** ต่อ block update, 7 ค่า B
-- **Branch:** **`SAU-ATOMICCOPY`** จาก `sau-far` — ยก Secure-style loop ไป **ฟังก์ชัน NS** (UART/ TIM2 วัดช่วง `t_disabled` / memcpy ได้)
-- **Atomic:** `NS_HashBenchmark_Task` + `NS_HMAC_BLOCK_SIZE` (เปิดสร้าง task ใน `main()` ชั่วคราว)
-- **Baseline (ถ้าคู่ในตาราง):** `USE_SAU=0` บน **`SAU-SMARM`** หรือ TIM2 ใน Secure `#else`
+- **Branch:** **`SAU-ATOMICCOPY`** จาก `sau-far` — ยก logic แบบเดิมไป **ฟังก์ชัน NS** (UART/ TIM2 วัดช่วง `t_disabled` / memcpy ได้)
+- **Firmware:** `NS_APP_MODE_E4_ATOMIC=1` ใน `NonSecure/Src/main.c` → `NS_HashBenchmark_Task`
+- **รันบอร์ด:** เปลี่ยน `NS_HMAC_BLOCK_SIZE` → rebuild **NonSecure** → flash **Secure + NonSecure** → 7 ครั้ง (64…4096)
+- **Raw:** `thesis/e4_atomic_raw_data.md`
 - **สถานะ:** `[ ]` rerun 7 B → archive raw ก่อนแก้ `main.tex`
 
 ---
