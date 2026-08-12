@@ -24,10 +24,10 @@
  * SAU-ATOMICCOPY / E4: set NS_APP_MODE_E4_ATOMIC to 1 for Atomic Copy t_disabled (TIM2).
  * Rebuild NonSecure (and flash both TZ images), change NS_HMAC_BLOCK_SIZE per sweep.
  */
-#define NS_APP_MODE_E4_ATOMIC  1
+#define NS_APP_MODE_E4_ATOMIC  0
 
 #if NS_APP_MODE_E4_ATOMIC
-#define NS_HMAC_BLOCK_SIZE         64     /* E4 sweep: 64,128,256,512,1024,2048,4096 */
+#define NS_HMAC_BLOCK_SIZE         4096     /* E4 sweep: 64,128,256,512,1024,2048,4096 */
 #define NS_E4_ROUNDS               10
 #define NS_E4_SAMPLES_PER_RUN      32     /* timed IRQ-masked memcpy ops per round */
 #define NS_E4_QUIET_UART           1
@@ -331,7 +331,7 @@ void NormalTask(void *argument)
 /* Optional NS-side HMAC mirror timing; must match attested data window (128 KiB). */
 #define NS_HMAC_SHA256_DIGEST_SIZE 32
 #ifndef NS_HMAC_BLOCK_SIZE
-#define NS_HMAC_BLOCK_SIZE         64
+#define NS_HMAC_BLOCK_SIZE         1024
 #endif
 #define NS_HMAC_TOTAL_SIZE         NS_ATTEST_DATA_BYTES
 #define NS_HMAC_BLOCKS             (NS_HMAC_TOTAL_SIZE / NS_HMAC_BLOCK_SIZE)
