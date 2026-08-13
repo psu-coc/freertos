@@ -103,7 +103,7 @@ int main(void)
         "\r\n[NS boot] E4 Atomic Copy — NS mirror, TIM2 on IRQ-masked memcpy.\r\n"
         "|M|=128KiB @0x08060000. Change NS_HMAC_BLOCK_SIZE then rebuild NonSecure.\r\n"
 #else
-        "\r\n[NS boot] SMARM+SAU data window 128KiB @0x08060000 (gap below NS code).\r\n"
+        "\r\n[NS boot] SMARM+SAU pure Guard |M|=128KiB @0x08060000 x4 passes (=512KiB work).\r\n"
 #endif
         "UART log: ST-Link VCP=USART3 (COMx) + LPUART1 PG7 — 115200. Open terminal BEFORE reset.\r\n"
 #if NS_APP_MODE_E4_ATOMIC
@@ -735,7 +735,9 @@ void SMARM_Experiment_Task(void *argument)
         ns_uart_transmit((const uint8_t *)alive, (uint16_t)(sizeof(alive) - 1U));
     }
     {
-        const char banner[] = "\r\nSMARM+SAU |M|=128KiB data @0x08060000 (10 rounds).\r\n";
+        const char banner[] =
+            "\r\nSMARM+SAU pure Guard |M|=128KiB @0x08060000, "
+            "4 passes/round (=512KiB hashed; SAU every block) (10 rounds).\r\n";
         ns_uart_transmit((const uint8_t *)banner, (uint16_t)(sizeof(banner) - 1U));
     }
     {

@@ -21,6 +21,386 @@ section for each block-size and workload-frequency configuration.
 
 ---
 
+## Pure Guard — workload equalization 4×128 KiB (=512 KiB hashed)
+
+- **Date:** 2026-08-12 (board run ~2026-08-13 00:00 ICT)
+- **Firmware:** `USE_SAU_APPROACH=1`, pure Guard window only
+  - `ATTEST_DATA_BASE=0x08060000`, `TOTAL_SIZE=0x20000` (128 KiB)
+  - `ATTEST_PASSES=4` → one NS round hashes **4 × 128 KiB = 512 KiB**
+  - SAU lock → HMAC → unlock on **every** block (no hash-only hybrid on other flash)
+- **Block size:** `B = 64` bytes
+- **Blocks per pass:** `0x20000 / 64 = 2048`; **per NS round:** `2048 × 4 = 8192`
+- **Workload:** `TARGET_FREQ_HZ = 1000`
+- **Rounds:** 10
+- **Branch / intent:** equalize measured **bytes hashed** vs baseline/Snap `|M|=512` KiB
+  while keeping unique SAU-lockable coverage at 128 KiB
+
+### Summary
+
+| Metric | Value |
+|---|---|
+| Runtime mean | **645 ms** |
+| Runtime min / max | **645 / 653 ms** |
+| FAR mean | **1.0001** |
+| FAR min / max | **1.0000 / 1.0015** |
+| SAU_config_avg_cycles | **87** (all rounds) |
+
+| Round | Runtime (ms) | Observed | Expected | FAR | SAU avg. cycles/block |
+|---:|---:|---:|---:|---:|---:|
+| 1 | 653 | 654 | 653 | 1.0015 | 87 |
+| 2 | 645 | 645 | 645 | 1.0000 | 87 |
+| 3 | 645 | 645 | 645 | 1.0000 | 87 |
+| 4 | 645 | 645 | 645 | 1.0000 | 87 |
+| 5 | 645 | 645 | 645 | 1.0000 | 87 |
+| 6 | 645 | 645 | 645 | 1.0000 | 87 |
+| 7 | 645 | 645 | 645 | 1.0000 | 87 |
+| 8 | 645 | 645 | 645 | 1.0000 | 87 |
+| 9 | 645 | 645 | 645 | 1.0000 | 87 |
+| 10 | 645 | 645 | 645 | 1.0000 | 87 |
+
+### Raw UART output
+
+```text
+[NS boot] SMARM+SAU pure Guard |M|=128KiB @0x08060000 x4 passes (=512KiB work).
+UART log: ST-Link VCP=USART3 (COMx) + LPUART1 PG7 — 115200. Open terminal BEFORE reset.
+Starting FreeRTOS (E1: SMARM+SAU FAR)...
+FreeRTOS tasks created (NormalTask + SMARM). Starting scheduler...
+SMARM_Experiment_Task running (FAR + SAU lock/unlock).
+
+SMARM+SAU pure Guard |M|=128KiB @0x08060000, 4 passes/round (=512KiB hashed; SAU every block) (10 rounds).
+Allocating secure context (8 KiB)...
+Secure context OK. Waiting 1 s then starting rounds...
+  NS: SECURE_LEDToggle OK (SG path alive)
+Calling SECURE_ShuffledHMAC_secure (round 1)... (progress via NormalTask)
+.  NS: returned from SECURE_ShuffledHMAC_secure
+Returned from secure attestation (round 1).
+Round 1: Runtime=653 ms, NS=654/653 activations, FAR=1.0015
+SAU_config_avg_cycles=87
+.Round 2: Runtime=645 ms, NS=645/645 activations, FAR=1.0000
+SAU_config_avg_cycles=87
+.Round 3: Runtime=645 ms, NS=645/645 activations, FAR=1.0000
+SAU_config_avg_cycles=87
+..Round 4: Runtime=645 ms, NS=645/645 activations, FAR=1.0000
+SAU_config_avg_cycles=87
+.Round 5: Runtime=645 ms, NS=645/645 activations, FAR=1.0000
+SAU_config_avg_cycles=87
+.Round 6: Runtime=645 ms, NS=645/645 activations, FAR=1.0000
+SAU_config_avg_cycles=87
+..Round 7: Runtime=645 ms, NS=645/645 activations, FAR=1.0000
+SAU_config_avg_cycles=87
+.Round 8: Runtime=645 ms, NS=645/645 activations, FAR=1.0000
+SAU_config_avg_cycles=87
+.Round 9: Runtime=645 ms, NS=645/645 activations, FAR=1.0000
+SAU_config_avg_cycles=87
+.Round 10: Runtime=645 ms, NS=645/645 activations, FAR=1.0000
+SAU_config_avg_cycles=87
+
+=== SUMMARY SMARM+SAU (10 rounds) ===
+Mean: 645 ms
+Min:  645 ms
+Max:  653 ms
+FAR mean=1.0001, min=1.0000, max=1.0015
+==========================================
+Done. Press RESET to run again.
+```
+
+**Note for paper:** Report as **hashed workload 512 KiB** (4 passes) on a **128 KiB** SAU-lockable window; do not claim unique flash coverage of 512 KiB.
+
+---
+
+## Pure Guard — 4×128 KiB (=512 KiB hashed), B = 128 @ 1000 Hz
+
+- **Date:** 2026-08-13
+- **Firmware:** same as §B=64 pure Guard (`ATTEST_PASSES=4`, window `0x08060000`, 128 KiB)
+- **Block size:** `B = 128` bytes
+- **Blocks per pass:** `0x20000 / 128 = 1024`; **per NS round:** `1024 × 4 = 4096`
+- **Workload:** 1000 Hz · **Rounds:** 10
+
+### Summary
+
+| Metric | Value |
+|---|---|
+| Runtime mean | **565 ms** |
+| Runtime min / max | **565 / 573 ms** |
+| FAR mean | **1.0001** |
+| FAR min / max | **1.0000 / 1.0017** |
+| SAU_config_avg_cycles | **88** (all rounds) |
+
+| Round | Runtime (ms) | Observed | Expected | FAR | SAU avg. cycles/block |
+|---:|---:|---:|---:|---:|---:|
+| 1 | 573 | 574 | 573 | 1.0017 | 88 |
+| 2–10 | 565 | 565 | 565 | 1.0000 | 88 |
+
+### Raw UART output
+
+```text
+Round 1: Runtime=573 ms, NS=574/573 activations, FAR=1.0017
+SAU_config_avg_cycles=88
+Round 2–10: Runtime=565 ms, FAR=1.0000, SAU=88
+=== SUMMARY === Mean: 565 ms | FAR mean=1.0001, min=1.0000, max=1.0017
+```
+
+---
+
+## Pure Guard — 4×128 KiB (=512 KiB hashed), B = 256 @ 1000 Hz
+
+- **Date:** 2026-08-13
+- **Firmware:** same pure Guard (`ATTEST_PASSES=4`, `0x08060000`, 128 KiB)
+- **Block size:** `B = 256` bytes
+- **Blocks per pass:** `0x20000 / 256 = 512`; **per NS round:** `512 × 4 = 2048`
+- **Workload:** 1000 Hz · **Rounds:** 10
+- **Note:** UART paste included a prior B=128 run (565 ms / SAU=88); archive below is the **B=256** run only (525 ms / SAU=90).
+
+### Summary
+
+| Metric | Value |
+|---|---|
+| Runtime mean | **525 ms** |
+| Runtime min / max | **525 / 533 ms** |
+| FAR mean | **1.0001** |
+| FAR min / max | **1.0000 / 1.0019** |
+| SAU_config_avg_cycles | **90** (all rounds) |
+
+| Round | Runtime (ms) | Observed | Expected | FAR | SAU avg. cycles/block |
+|---:|---:|---:|---:|---:|---:|
+| 1 | 533 | 534 | 533 | 1.0019 | 90 |
+| 2 | 525 | 525 | 525 | 1.0000 | 90 |
+| 3 | 525 | 525 | 525 | 1.0000 | 90 |
+| 4 | 525 | 525 | 525 | 1.0000 | 90 |
+| 5 | 525 | 525 | 525 | 1.0000 | 90 |
+| 6 | 525 | 525 | 525 | 1.0000 | 90 |
+| 7 | 525 | 525 | 525 | 1.0000 | 90 |
+| 8 | 525 | 525 | 525 | 1.0000 | 90 |
+| 9 | 525 | 525 | 525 | 1.0000 | 90 |
+| 10 | 525 | 525 | 525 | 1.0000 | 90 |
+
+### Raw UART output
+
+```text
+[NS boot] SMARM+SAU pure Guard |M|=128KiB @0x08060000 x4 passes (=512KiB work).
+SMARM+SAU pure Guard |M|=128KiB @0x08060000, 4 passes/round (=512KiB hashed; SAU every block) (10 rounds).
+  NS: SECURE_LEDToggle OK (SG path alive)
+Calling SECURE_ShuffledHMAC_secure (round 1)...
+Round 1: Runtime=533 ms, NS=534/533 activations, FAR=1.0019
+SAU_config_avg_cycles=90
+.Round 2: Runtime=525 ms, NS=525/525 activations, FAR=1.0000
+SAU_config_avg_cycles=90
+… (rounds 3–10 identical: 525 ms, FAR=1.0000, SAU=90) …
+
+=== SUMMARY SMARM+SAU (10 rounds) ===
+Mean: 525 ms
+Min:  525 ms
+Max:  533 ms
+FAR mean=1.0001, min=1.0000, max=1.0019
+==========================================
+```
+
+---
+
+## Pure Guard — 4×128 KiB (=512 KiB hashed), B = 512 @ 1000 Hz
+
+- **Date:** 2026-08-13
+- **Firmware:** same pure Guard (`ATTEST_PASSES=4`, `0x08060000`, 128 KiB)
+- **Block size:** `B = 512` bytes
+- **Blocks per pass:** `0x20000 / 512 = 256`; **per NS round:** `256 × 4 = 1024`
+- **Workload:** 1000 Hz · **Rounds:** 10
+
+### Summary
+
+| Metric | Value |
+|---|---|
+| Runtime mean | **505 ms** |
+| Runtime min / max | **505 / 513 ms** |
+| FAR mean | **1.0000** |
+| FAR min / max | **1.0000 / 1.0000** |
+| SAU_config_avg_cycles | **93–94** (typical **94**) |
+
+| Round | Runtime (ms) | Observed | Expected | FAR | SAU avg. cycles/block |
+|---:|---:|---:|---:|---:|---:|
+| 1 | 513 | 513 | 513 | 1.0000 | 94 |
+| 2 | 505 | 505 | 505 | 1.0000 | 93 |
+| 3 | 505 | 505 | 505 | 1.0000 | 94 |
+| 4 | 505 | 505 | 505 | 1.0000 | 94 |
+| 5 | 505 | 505 | 505 | 1.0000 | 94 |
+| 6 | 505 | 505 | 505 | 1.0000 | 94 |
+| 7 | 505 | 505 | 505 | 1.0000 | 93 |
+| 8 | 505 | 505 | 505 | 1.0000 | 94 |
+| 9 | 505 | 505 | 505 | 1.0000 | 94 |
+| 10 | 505 | 505 | 505 | 1.0000 | 94 |
+
+### Raw UART output
+
+```text
+Round 1: Runtime=513 ms, NS=513/513 activations, FAR=1.0000
+SAU_config_avg_cycles=94
+Round 2–10: Runtime=505 ms, FAR=1.0000, SAU=93–94
+=== SUMMARY SMARM+SAU (10 rounds) ===
+Mean: 505 ms
+Min:  505 ms
+Max:  513 ms
+FAR mean=1.0000, min=1.0000, max=1.0000
+==========================================
+```
+
+---
+
+## Pure Guard — 4×128 KiB (=512 KiB hashed), B = 1024 @ 1000 Hz
+
+- **Date:** 2026-08-13
+- **Firmware:** same pure Guard (`ATTEST_PASSES=4`, `0x08060000`, 128 KiB)
+- **Block size:** `B = 1024` bytes
+- **Blocks per pass:** `0x20000 / 1024 = 128`; **per NS round:** `128 × 4 = 512`
+- **Workload:** 1000 Hz · **Rounds:** 10
+
+### Summary
+
+| Metric | Value |
+|---|---|
+| Runtime mean | **495 ms** |
+| Runtime min / max | **495 / 503 ms** |
+| FAR mean | **1.0000** |
+| FAR min / max | **1.0000 / 1.0000** |
+| SAU_config_avg_cycles | **100–101** (typical **101**) |
+
+| Round | Runtime (ms) | Observed | Expected | FAR | SAU avg. cycles/block |
+|---:|---:|---:|---:|---:|---:|
+| 1 | 503 | 503 | 503 | 1.0000 | 101 |
+| 2 | 495 | 495 | 495 | 1.0000 | 100 |
+| 3 | 495 | 495 | 495 | 1.0000 | 101 |
+| 4 | 495 | 495 | 495 | 1.0000 | 101 |
+| 5 | 495 | 495 | 495 | 1.0000 | 101 |
+| 6 | 495 | 495 | 495 | 1.0000 | 101 |
+| 7 | 495 | 495 | 495 | 1.0000 | 101 |
+| 8 | 495 | 495 | 495 | 1.0000 | 100 |
+| 9 | 495 | 495 | 495 | 1.0000 | 101 |
+| 10 | 495 | 495 | 495 | 1.0000 | 101 |
+
+### Raw UART output
+
+```text
+Round 1: Runtime=503 ms, NS=503/503 activations, FAR=1.0000
+SAU_config_avg_cycles=101
+Round 2–10: Runtime=495 ms, FAR=1.0000, SAU=100–101
+=== SUMMARY SMARM+SAU (10 rounds) ===
+Mean: 495 ms
+Min:  495 ms
+Max:  503 ms
+FAR mean=1.0000, min=1.0000, max=1.0000
+==========================================
+```
+
+---
+
+## Pure Guard — 4×128 KiB (=512 KiB hashed), B = 2048 @ 1000 Hz
+
+- **Date:** 2026-08-13
+- **Firmware:** same pure Guard (`ATTEST_PASSES=4`, `0x08060000`, 128 KiB)
+- **Block size:** `B = 2048` bytes
+- **Blocks per pass:** `0x20000 / 2048 = 64`; **per NS round:** `64 × 4 = 256`
+- **Workload:** 1000 Hz · **Rounds:** 10
+
+### Summary
+
+| Metric | Value |
+|---|---|
+| Runtime mean | **489 ms** |
+| Runtime min / max | **489 / 498 ms** |
+| FAR mean | **1.0000** |
+| FAR min / max | **1.0000 / 1.0000** |
+| SAU_config_avg_cycles | **114–115** (typical **115**) |
+
+| Round | Runtime (ms) | Observed | Expected | FAR | SAU avg. cycles/block |
+|---:|---:|---:|---:|---:|---:|
+| 1 | 498 | 498 | 498 | 1.0000 | 115 |
+| 2 | 489 | 489 | 489 | 1.0000 | 115 |
+| 3 | 489 | 489 | 489 | 1.0000 | 115 |
+| 4 | 489 | 489 | 489 | 1.0000 | 115 |
+| 5 | 489 | 489 | 489 | 1.0000 | 115 |
+| 6 | 489 | 489 | 489 | 1.0000 | 115 |
+| 7 | 489 | 489 | 489 | 1.0000 | 115 |
+| 8 | 489 | 489 | 489 | 1.0000 | 115 |
+| 9 | 489 | 489 | 489 | 1.0000 | 114 |
+| 10 | 489 | 489 | 489 | 1.0000 | 115 |
+
+### Raw UART output
+
+```text
+Round 1: Runtime=498 ms, NS=498/498 activations, FAR=1.0000
+SAU_config_avg_cycles=115
+Round 2–10: Runtime=489 ms, FAR=1.0000, SAU=114–115
+=== SUMMARY SMARM+SAU (10 rounds) ===
+Mean: 489 ms
+Min:  489 ms
+Max:  498 ms
+FAR mean=1.0000, min=1.0000, max=1.0000
+==========================================
+```
+
+---
+
+## Pure Guard — 4×128 KiB (=512 KiB hashed), B = 4096 @ 1000 Hz
+
+- **Date:** 2026-08-13
+- **Firmware:** same pure Guard (`ATTEST_PASSES=4`, `0x08060000`, 128 KiB)
+- **Block size:** `B = 4096` bytes
+- **Blocks per pass:** `0x20000 / 4096 = 32`; **per NS round:** `32 × 4 = 128`
+- **Workload:** 1000 Hz · **Rounds:** 10
+
+### Summary
+
+| Metric | Value |
+|---|---|
+| Runtime mean | **487 ms** |
+| Runtime min / max | **487 / 495 ms** |
+| FAR mean | **1.0002** |
+| FAR min / max | **1.0000 / 1.0020** |
+| SAU_config_avg_cycles | **142–143** (typical **143**) |
+
+| Round | Runtime (ms) | Observed | Expected | FAR | SAU avg. cycles/block |
+|---:|---:|---:|---:|---:|---:|
+| 1 | 495 | 496 | 495 | 1.0020 | 143 |
+| 2 | 487 | 487 | 487 | 1.0000 | 143 |
+| 3 | 487 | 487 | 487 | 1.0000 | 143 |
+| 4 | 487 | 487 | 487 | 1.0000 | 143 |
+| 5 | 487 | 487 | 487 | 1.0000 | 143 |
+| 6 | 487 | 487 | 487 | 1.0000 | 142 |
+| 7 | 487 | 487 | 487 | 1.0000 | 143 |
+| 8 | 487 | 487 | 487 | 1.0000 | 143 |
+| 9 | 487 | 487 | 487 | 1.0000 | 143 |
+| 10 | 487 | 487 | 487 | 1.0000 | 143 |
+
+### Raw UART output
+
+```text
+Round 1: Runtime=495 ms, NS=496/495 activations, FAR=1.0020
+SAU_config_avg_cycles=143
+Round 2–10: Runtime=487 ms, FAR=1.0000, SAU=142–143
+=== SUMMARY SMARM+SAU (10 rounds) ===
+Mean: 487 ms
+Min:  487 ms
+Max:  495 ms
+FAR mean=1.0002, min=1.0000, max=1.0020
+==========================================
+```
+
+---
+
+## Pure Guard equalization sweep @ 1000 Hz — aggregate (2026-08-13)
+
+Config: `|M_window|=128 KiB` @ `0x08060000`, `ATTEST_PASSES=4` → **512 KiB hashed / round**, SAU every block.
+
+| $B$ | Blocks/round | Runtime mean (ms) | FAR mean | SAU avg cycles |
+|---:|---:|---:|---:|---:|
+| 64 | 8192 | 645 | 1.0001 | 87 |
+| 128 | 4096 | 565 | 1.0001 | 88 |
+| 256 | 2048 | 525 | 1.0001 | 90 |
+| 512 | 1024 | 505 | 1.0000 | 93–94 |
+| 1024 | 512 | 495 | 1.0000 | 100–101 |
+| 2048 | 256 | 489 | 1.0000 | 114–115 |
+| 4096 | 128 | 487 | 1.0002 | 142–143 |
+
+---
+
 ## B = 4096 bytes, workload = 1000 Hz — **128 KiB @ 0x08060000 (VALID)**
 
 - Date: 2026-07-26

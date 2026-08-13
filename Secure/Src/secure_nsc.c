@@ -26,24 +26,29 @@
 #define USE_SAU_APPROACH        1
 
 #define SHA256_DIGEST_SIZE 32
-#define BLOCK_SIZE 64        /* change for sweeps: 64,128,256,512,1024,2048,4096 */
+#define BLOCK_SIZE 4096        /* change for sweeps: 64,128,256,512,1024,2048,4096 */
 /*
- * Dedicated NS **data** window (must not overlap NS app code at 0x08040000..0x0804FFFF):
- *   code/rodata : 0x08040000..0x0804FFFF  (64 KiB; SAU region 1 — not attested here)
- *   data window : 0x08060000..0x0807FFFF  (128 KiB; SAU regions 6/7 at runtime)
- *   gap         : 0x08050000..0x0805FFFF  (64 KiB — not attested; keeps |M| off NS ROM tail)
- * SAU hole-remap over the running NS image (256 KiB from 0x08040000) hangs the MCU.
- * |M| for memory locking on this board is 128 KiB in bank-2 tail (not full 256 KiB NS flash).
+ * Pure Guard on the lockable NS data window only:
+ *   |M| = 128 KiB @ 0x08060000..0x0807FFFF (no live NS XIP code here).
+ *   Every block: SAU lock → HMAC update (IRQ on) → SAU unlock.
  *
- * Armv8-M SAU regions are only Non-Secure or Secure+NSC when ENABLE=1.
- * Ordinary Secure attribution is the default for addresses not covered by any
- * enabled SAU region. Per-block memory locking (professor sequence):
+ * Workload equalization vs baseline/Snap |M|=512 KiB:
+ *   one NS attestation round runs ATTEST_PASSES (=4) shuffles over the
+ *   same 128 KiB window → 4 * 128 KiB = 512 KiB hashed bytes total.
+ *   (Unique flash covered remains 128 KiB; 4× is experimental load.)
+ *
+ * Professor lock sequence:
  *   disable IRQ; DSB; SAU->CTRL disable; configure regions 6/7;
  *   SAU->CTRL enable; DSB; ISB; enable IRQ — then HMAC with IRQ on.
  */
 #define ATTEST_DATA_BASE   0x08060000U
-#define TOTAL_SIZE         0x20000U      /* 128 KiB */
+#define TOTAL_SIZE         0x20000U      /* 128 KiB pure Guard window */
+#define ATTEST_PASSES      4U            /* 4 * 128 KiB ≈ 512 KiB measured */
 #define BLOCKS             (TOTAL_SIZE / BLOCK_SIZE)
+
+#define SAU_LOCK_BASE      ATTEST_DATA_BASE
+#define SAU_LOCK_SIZE      TOTAL_SIZE
+#define SAU_LOCK_END       (SAU_LOCK_BASE + SAU_LOCK_SIZE)
 
 #define SAU_DATA_REGION_A  6U
 #define SAU_DATA_REGION_B  7U
@@ -56,6 +61,9 @@
 #endif
 #if (TOTAL_SIZE % BLOCK_SIZE) != 0U
 #error TOTAL_SIZE must be divisible by BLOCK_SIZE
+#endif
+#if (ATTEST_PASSES < 1U)
+#error ATTEST_PASSES must be >= 1
 #endif
 
 static void sau_enable_dwt(void)
@@ -80,24 +88,33 @@ static void sau_disable_region(uint32_t rnr)
     SAU->RLAR = 0U;
 }
 
-/* Program R6/R7 only (SAU may be disabled — registers still writable). */
+/* True if the whole block lies in the SAU-lockable NS data window. */
+static int block_in_sau_lock_window(const uint8_t *blk)
+{
+    const uint32_t start = (uint32_t)blk;
+    const uint32_t end   = start + (uint32_t)BLOCK_SIZE;
+    return (start >= SAU_LOCK_BASE) && (end <= SAU_LOCK_END);
+}
+
+/* Program R6/R7 only over the lockable NS data window (not full |M|). */
 static void sau_program_cover_window_ns(void)
 {
     sau_program_ns_region(SAU_DATA_REGION_A,
-                          ATTEST_DATA_BASE,
-                          ATTEST_DATA_BASE + TOTAL_SIZE - 1U);
+                          SAU_LOCK_BASE,
+                          SAU_LOCK_END - 1U);
     sau_disable_region(SAU_DATA_REGION_B);
 }
 
 /*
- * Leave [blk, blk+BLOCK_SIZE) uncovered → Secure by default; rest of window NS via R6/R7.
+ * Leave [blk, blk+BLOCK_SIZE) uncovered → Secure by default;
+ * rest of the *lock* window stays NS via R6/R7.
  */
 static void sau_program_hole_for_block(const uint8_t *blk)
 {
     const uint32_t hole_start = (uint32_t)blk;
     const uint32_t hole_end   = hole_start + (uint32_t)BLOCK_SIZE;
-    const uint32_t win_start  = ATTEST_DATA_BASE;
-    const uint32_t win_end    = ATTEST_DATA_BASE + TOTAL_SIZE;
+    const uint32_t win_start  = SAU_LOCK_BASE;
+    const uint32_t win_end    = SAU_LOCK_END;
 
     const uint32_t left_start  = win_start;
     const uint32_t left_end_ex = hole_start;
@@ -331,70 +348,75 @@ void SECURE_ShuffledHMAC_secure(uint8_t *out_digest,
     BSP_LED_Toggle(LED1);
     attest_phase_set(ATTEST_PHASE_ENTER);
 
-    // 1) indices = 0..BLOCKS-1
     static int indices[BLOCKS];
-    for (int i = 0; i < BLOCKS; i++) indices[i] = i;
-
-    // 2) derive AES key/IV from challenge
-    uint8_t key16[16], iv16[16];
+    uint8_t key16[16], iv16[16], iv_pass[16];
     derive_aes_key_iv_from_challenge(key16, iv16, challenge, challenge_len);
-
-    // 3) secure shuffle
-    shuffle_secure_aes_ctr(indices, BLOCKS, key16, iv16);
-    attest_phase_set(ATTEST_PHASE_SHUFFLE);
 
 #if defined(USE_SAU_APPROACH)
     sau_enable_dwt();
-    /* Ensure data window is Non-Secure before punching holes. */
     sau_cover_data_window_ns();
     attest_phase_set(ATTEST_PHASE_SAU);
 #endif
 
-    // 4) HMAC over shuffled blocks
+    /* One NS round: ATTEST_PASSES × |M| bytes (Guard on every block). */
     hmac_sha256_initialize(&hmac, (const uint8_t*)key, strlen((const char *)key));
 #if defined(USE_SAU_APPROACH)
     uint64_t sau_cycles_total = 0U;
+    uint32_t sau_lock_blocks = 0U;
 #endif
-    for (int i = 0; i < BLOCKS; i++) {
-        const uint8_t *blk = &real_memory[(size_t)indices[i] * BLOCK_SIZE];
+
+    for (uint32_t pass = 0U; pass < ATTEST_PASSES; pass++) {
+        for (int i = 0; i < BLOCKS; i++) {
+            indices[i] = i;
+        }
+        memcpy(iv_pass, iv16, sizeof(iv_pass));
+        iv_pass[0] ^= (uint8_t)pass; /* distinct shuffle per pass */
+        shuffle_secure_aes_ctr(indices, BLOCKS, key16, iv_pass);
+        attest_phase_set(ATTEST_PHASE_SHUFFLE);
+
+        for (int i = 0; i < BLOCKS; i++) {
+            const uint8_t *blk = &real_memory[(size_t)indices[i] * BLOCK_SIZE];
 #if defined(USE_SAU_APPROACH)
-        /* Guard: block must lie wholly inside the dedicated data window. */
-        if (((uint32_t)blk < ATTEST_DATA_BASE) ||
-            (((uint32_t)blk + (uint32_t)BLOCK_SIZE) > (ATTEST_DATA_BASE + TOTAL_SIZE)) ||
-            (((uint32_t)blk & 31U) != 0U)) {
-            sau_cover_data_window_ns();
-            if (report != NULL) {
-                report->sau_config_avg_cycles = 0U;
+            if (((uint32_t)blk < ATTEST_DATA_BASE) ||
+                (((uint32_t)blk + (uint32_t)BLOCK_SIZE) > (ATTEST_DATA_BASE + TOTAL_SIZE)) ||
+                (((uint32_t)blk & 31U) != 0U) ||
+                !block_in_sau_lock_window(blk)) {
+                sau_cover_data_window_ns();
+                if (report != NULL) {
+                    report->sau_config_avg_cycles = 0U;
+                }
+                return;
             }
-            return;
-        }
 
-        if (i == 0U || ((i & 3U) == 0U) || (i + 1) == BLOCKS) {
-            attest_phase_set(ATTEST_PHASE_BLOCK_BASE + (uint32_t)i);
-            if ((i & 7U) == 7U) {
-                BSP_LED_Toggle(LED1);
+            if (i == 0 || ((i & 3) == 0) || (i + 1) == BLOCKS) {
+                attest_phase_set(ATTEST_PHASE_BLOCK_BASE +
+                                 (pass * (uint32_t)BLOCKS) + (uint32_t)i);
+                if ((i & 7) == 7) {
+                    BSP_LED_Toggle(LED1);
+                }
             }
-        }
 
-        sau_cycles_total += (uint64_t)sau_memory_lock_block(blk);
-
-        /* Hash in place with interrupts enabled (block is Secure by default). */
-        hmac_sha256_update(&hmac, blk, BLOCK_SIZE);
-
-        sau_cycles_total += (uint64_t)sau_memory_unlock_window();
+            sau_cycles_total += (uint64_t)sau_memory_lock_block(blk);
+            hmac_sha256_update(&hmac, blk, BLOCK_SIZE);
+            sau_cycles_total += (uint64_t)sau_memory_unlock_window();
+            sau_lock_blocks++;
 #else
-        __disable_irq();
-        hmac_sha256_update(&hmac, blk, BLOCK_SIZE);
-        __enable_irq();
+            __disable_irq();
+            hmac_sha256_update(&hmac, blk, BLOCK_SIZE);
+            __enable_irq();
 #endif
+        }
     }
+
     hmac_sha256_finalize(&hmac, NULL, 0);
     memcpy(out_digest, hmac.digest, SHA256_DIGEST_SIZE);
 #if defined(USE_SAU_APPROACH)
-    /* Leave the data window Non-Secure after attestation. */
     sau_cover_data_window_ns();
     if (report != NULL) {
-        report->sau_config_avg_cycles = (uint32_t)(sau_cycles_total / (uint64_t)BLOCKS);
+        report->sau_config_avg_cycles =
+            (sau_lock_blocks > 0U)
+                ? (uint32_t)(sau_cycles_total / (uint64_t)sau_lock_blocks)
+                : 0U;
     }
     attest_phase_set(ATTEST_PHASE_DONE);
 #else
