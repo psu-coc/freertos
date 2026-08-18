@@ -120,21 +120,21 @@ int main(void)
   if (uart_mutex == NULL) {
       Error_Handler();
   }
-  /* NormalTask optional load; E4 uses NS benchmark task instead of SMARM */
-  LEDThreadHandleHandle = osThreadNew(NormalTask, NULL, &LEDThreadHandle_attributes);
+  /* Overhead run: no Real-time NormalTask so TIM2 measures attestation only. */
+  /* LEDThreadHandleHandle = osThreadNew(NormalTask, NULL, &LEDThreadHandle_attributes); */
 #if NS_APP_MODE_E4_ATOMIC
   myTask02Handle = osThreadNew(NS_HashBenchmark_Task, NULL, &myTask02_attributes);
 #else
   myTask02Handle = osThreadNew(SMARM_Experiment_Task, NULL, &myTask02_attributes);
 #endif
-  if (myTask02Handle == NULL || LEDThreadHandleHandle == NULL) {
+  if (myTask02Handle == NULL) {
     Error_Handler();
   }
   {
 #if NS_APP_MODE_E4_ATOMIC
-    const char ok[] = "FreeRTOS tasks created (NormalTask + NS_HashBenchmark). Starting scheduler...\r\n";
+    const char ok[] = "FreeRTOS tasks created (NS_HashBenchmark, no NormalTask). Starting scheduler...\r\n";
 #else
-    const char ok[] = "FreeRTOS tasks created (NormalTask + SMARM). Starting scheduler...\r\n";
+    const char ok[] = "FreeRTOS tasks created (SMARM, no NormalTask). Starting scheduler...\r\n";
 #endif
     ns_uart_transmit((const uint8_t *)ok, (uint16_t)(sizeof(ok) - 1U));
   }
@@ -731,7 +731,7 @@ void SMARM_Experiment_Task(void *argument)
 {
     (void) argument;
     {
-        const char alive[] = "SMARM_Experiment_Task running (FAR + SAU lock/unlock).\r\n";
+        const char alive[] = "SMARM_Experiment_Task running (overhead, no NormalTask).\r\n";
         ns_uart_transmit((const uint8_t *)alive, (uint16_t)(sizeof(alive) - 1U));
     }
     {
@@ -769,7 +769,7 @@ void SMARM_Experiment_Task(void *argument)
             const char ping[] = "  NS: SECURE_LEDToggle OK (SG path alive)\r\n";
             ns_uart_transmit((const uint8_t *)ping, (uint16_t)(sizeof(ping) - 1U));
             const char msg[] =
-                "Calling SECURE_ShuffledHMAC_secure (round 1)... (progress via NormalTask)\r\n";
+                "Calling SECURE_ShuffledHMAC_secure (round 1)...\r\n";
             ns_uart_transmit((const uint8_t *)msg, (uint16_t)(sizeof(msg) - 1U));
         }
         g_attest_phase = 0U;
@@ -781,14 +781,14 @@ void SMARM_Experiment_Task(void *argument)
             .attest_phase_ptr = &g_attest_phase,
         };
         SECURE_ShuffledHMAC_secure(digest, challenge, sizeof(challenge), &attest_report);
+        uint32_t end_tim2 = __HAL_TIM_GET_COUNTER(&htim2);
+        uint32_t end_count = g_normal_counter;
         uint32_t sau_avg = attest_report.sau_config_avg_cycles;
         g_secure_busy = 0U;
         if (round == 0U) {
             const char back[] = "  NS: returned from SECURE_ShuffledHMAC_secure\r\n";
             ns_uart_transmit((const uint8_t *)back, (uint16_t)(sizeof(back) - 1U));
         }
-        uint32_t end_tim2 = __HAL_TIM_GET_COUNTER(&htim2);
-        uint32_t end_count = g_normal_counter;
         if (round == 0U) {
             const char msg[] = "Returned from secure attestation (round 1).\r\n";
             ns_uart_transmit((const uint8_t *)msg, (uint16_t)(sizeof(msg) - 1U));

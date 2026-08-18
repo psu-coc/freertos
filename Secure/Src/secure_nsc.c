@@ -26,7 +26,7 @@
 #define USE_SAU_APPROACH        1
 
 #define SHA256_DIGEST_SIZE 32
-#define BLOCK_SIZE 4096        /* change for sweeps: 64,128,256,512,1024,2048,4096 */
+#define BLOCK_SIZE 64        /* change for sweeps: 64,128,256,512,1024,2048,4096 */
 /*
  * Pure Guard on the lockable NS data window only:
  *   |M| = 128 KiB @ 0x08060000..0x0807FFFF (no live NS XIP code here).
