@@ -26,13 +26,6 @@
  */
 #define NS_APP_MODE_E4_ATOMIC  0
 
-/* Keep in sync with USE_SAU_APPROACH / USE_SNAP in Secure/Src/secure_nsc.c */
-#define NS_USE_SAU_APPROACH  0
-#define NS_USE_SNAP          0
-#if NS_USE_SAU_APPROACH && NS_USE_SNAP
-#error NS_USE_SAU_APPROACH and NS_USE_SNAP are mutually exclusive
-#endif
-
 #if NS_APP_MODE_E4_ATOMIC
 #define NS_HMAC_BLOCK_SIZE         4096     /* E4 sweep: 64,128,256,512,1024,2048,4096 */
 #define NS_E4_ROUNDS               10
@@ -110,9 +103,9 @@ int main(void)
         "\r\n[NS boot] E4 Atomic Copy — NS mirror, TIM2 on IRQ-masked memcpy.\r\n"
         "|M|=128KiB @0x08060000. Change NS_HMAC_BLOCK_SIZE then rebuild NonSecure.\r\n"
 #else
-#if NS_USE_SAU_APPROACH
+#if USE_SAU_APPROACH
         "\r\n[NS boot] SMARM-Guard |M|=128KiB @0x08060000 x4 passes (=512KiB work).\r\n"
-#elif NS_USE_SNAP
+#elif USE_SNAP
         "\r\n[NS boot] SMARM-Snap |M|=128KiB @0x08060000 x4 passes (=512KiB work).\r\n"
 #else
         "\r\n[NS boot] SMARM Baseline |M|=128KiB @0x08060000 x4 passes (=512KiB work).\r\n"
@@ -122,9 +115,9 @@ int main(void)
 #if NS_APP_MODE_E4_ATOMIC
         "Starting FreeRTOS (E4: NS_HashBenchmark_Task)...\r\n";
 #else
-#if NS_USE_SAU_APPROACH
+#if USE_SAU_APPROACH
         "Starting FreeRTOS (overhead: Guard, no NormalTask)...\r\n";
-#elif NS_USE_SNAP
+#elif USE_SNAP
         "Starting FreeRTOS (overhead: Snap, no NormalTask)...\r\n";
 #else
         "Starting FreeRTOS (overhead: Baseline, no NormalTask)...\r\n";
@@ -153,9 +146,9 @@ int main(void)
 #if NS_APP_MODE_E4_ATOMIC
     const char ok[] = "FreeRTOS tasks created (NS_HashBenchmark, no NormalTask). Starting scheduler...\r\n";
 #else
-#if NS_USE_SAU_APPROACH
+#if USE_SAU_APPROACH
     const char ok[] = "FreeRTOS tasks created (Guard, no NormalTask). Starting scheduler...\r\n";
-#elif NS_USE_SNAP
+#elif USE_SNAP
     const char ok[] = "FreeRTOS tasks created (Snap, no NormalTask). Starting scheduler...\r\n";
 #else
     const char ok[] = "FreeRTOS tasks created (SMARM Baseline, no NormalTask). Starting scheduler...\r\n";
@@ -760,20 +753,22 @@ void SMARM_Experiment_Task(void *argument)
         ns_uart_transmit((const uint8_t *)alive, (uint16_t)(sizeof(alive) - 1U));
     }
     {
-#if NS_USE_SAU_APPROACH
-        const char banner[] =
-            "\r\nSMARM-Guard |M|=128KiB @0x08060000, "
-            "4 passes/round (=512KiB hashed; SAU every block) (10 rounds).\r\n";
-#elif NS_USE_SNAP
-        const char banner[] =
-            "\r\nSMARM-Snap |M|=128KiB @0x08060000, "
-            "4 passes/round (=512KiB hashed; memcpy IRQ-off) (10 rounds).\r\n";
+        char banner[192];
+        int bn = snprintf(banner, sizeof(banner),
+#if USE_SAU_APPROACH
+            "\r\nSMARM-Guard B=%u |M|=128KiB @0x08060000, "
+            "4 passes/round (=512KiB hashed; SAU every block) (10 rounds).\r\n",
+#elif USE_SNAP
+            "\r\nSMARM-Snap B=%u |M|=128KiB @0x08060000, "
+            "4 passes/round (=512KiB hashed; memcpy IRQ-off) (10 rounds).\r\n",
 #else
-        const char banner[] =
-            "\r\nSMARM Baseline |M|=128KiB @0x08060000, "
-            "4 passes/round (=512KiB hashed; HMAC IRQ-off) (10 rounds).\r\n";
+            "\r\nSMARM Baseline B=%u |M|=128KiB @0x08060000, "
+            "4 passes/round (=512KiB hashed; HMAC IRQ-off) (10 rounds).\r\n",
 #endif
-        ns_uart_transmit((const uint8_t *)banner, (uint16_t)(sizeof(banner) - 1U));
+            (unsigned)ATTEST_BLOCK_SIZE);
+        if (bn > 0 && bn < (int)sizeof(banner)) {
+            ns_uart_transmit((const uint8_t *)banner, (uint16_t)bn);
+        }
     }
     {
         const char msg[] = "Allocating secure context (8 KiB)...\r\n";
@@ -856,8 +851,10 @@ void SMARM_Experiment_Task(void *argument)
                 printf("SAU_config_avg_cycles=CMSE_FAIL(challenge ptr)\r\n");
             } else if (sau_avg == 0xBAD00001U) {
                 printf("SAU_config_avg_cycles=CMSE_FAIL(digest ptr)\r\n");
+#if USE_SAU_APPROACH
             } else {
                 printf("SAU_config_avg_cycles=%lu\r\n", (unsigned long)sau_avg);
+#endif
             }
             xSemaphoreGive(uart_mutex);
         }
@@ -867,9 +864,9 @@ void SMARM_Experiment_Task(void *argument)
     for (int i = 0; i < 10; i++) { sum += durations_ms[i]; if (durations_ms[i] < min_val) min_val = durations_ms[i]; if (durations_ms[i] > max_val) max_val = durations_ms[i]; }
     uint32_t mean = sum / 10;
     if (xSemaphoreTake(uart_mutex, pdMS_TO_TICKS(10)) == pdTRUE) {
-#if NS_USE_SAU_APPROACH
+#if USE_SAU_APPROACH
         printf("\r\n=== SUMMARY SMARM-Guard, no NormalTask (10 rounds) ===\r\n");
-#elif NS_USE_SNAP
+#elif USE_SNAP
         printf("\r\n=== SUMMARY SMARM-Snap, no NormalTask (10 rounds) ===\r\n");
 #else
         printf("\r\n=== SUMMARY SMARM Baseline, no NormalTask (10 rounds) ===\r\n");

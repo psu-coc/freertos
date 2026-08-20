@@ -23,20 +23,8 @@
 //#include "Speck/speck.h"
 //#include "Speck/ff1_speck.h"
 
-/* Unified runtime harness (same window/passes/DWT/NSC as Guard).
- *   Baseline: USE_SAU_APPROACH 0, USE_SNAP 0  — HMAC, IRQ off
- *   Snap:     USE_SAU_APPROACH 0, USE_SNAP 1  — memcpy IRQ off, HMAC IRQ on
- *   Guard:    USE_SAU_APPROACH 1, USE_SNAP 0  — SAU lock, HMAC IRQ on, unlock
- * Keep NS banners in NonSecure/Src/main.c in sync (NS_USE_*).
- */
-#define USE_SAU_APPROACH        0
-#define USE_SNAP                0
-#if USE_SAU_APPROACH && USE_SNAP
-#error USE_SAU_APPROACH and USE_SNAP are mutually exclusive
-#endif
-
 #define SHA256_DIGEST_SIZE 32
-#define BLOCK_SIZE 128      /* change for sweeps: 64,128,256,512,1024,2048,4096 */
+#define BLOCK_SIZE ATTEST_BLOCK_SIZE
 /*
  * Attested window (all three modes):
  *   |M| = 128 KiB @ 0x08060000..0x0807FFFF (no live NS XIP code here).
