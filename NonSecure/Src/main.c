@@ -104,11 +104,16 @@ int main(void)
         "|M|=128KiB @0x08060000. Change NS_HMAC_BLOCK_SIZE then rebuild NonSecure.\r\n"
 #else
 #if USE_SAU_APPROACH
-        "\r\n[NS boot] SMARM-Guard |M|=128KiB @0x08060000 x4 passes (=512KiB work).\r\n"
-#elif USE_SNAP
-        "\r\n[NS boot] SMARM-Snap |M|=128KiB @0x08060000 x4 passes (=512KiB work).\r\n"
+#if ATTEST_FAULT_DEMO
+        "\r\n[NS boot] SMARM-Guard FAULT DEMO |M|=256KiB @0x08040000 (full NS flash).\r\n"
+        "Expect SecureFault when SAU locks live FreeRTOS XIP. Not a production path.\r\n"
 #else
-        "\r\n[NS boot] SMARM Baseline |M|=128KiB @0x08060000 x4 passes (=512KiB work).\r\n"
+        "\r\n[NS boot] SMARM-Guard |M|=128KiB @0x08060000, 1 pass.\r\n"
+#endif
+#elif USE_SNAP
+        "\r\n[NS boot] SMARM-Snap |M|=128KiB @0x08060000, 1 pass.\r\n"
+#else
+        "\r\n[NS boot] SMARM Baseline |M|=128KiB @0x08060000, 1 pass.\r\n"
 #endif
 #endif
         "UART log: ST-Link VCP=USART3 (COMx) + LPUART1 PG7 — 115200. Open terminal BEFORE reset.\r\n"
@@ -116,11 +121,11 @@ int main(void)
         "Starting FreeRTOS (E4: NS_HashBenchmark_Task)...\r\n";
 #else
 #if USE_SAU_APPROACH
-        "Starting FreeRTOS (overhead: Guard, no NormalTask)...\r\n";
+        "Starting FreeRTOS (FAR: Guard + NormalTask 1000 Hz)...\r\n";
 #elif USE_SNAP
-        "Starting FreeRTOS (overhead: Snap, no NormalTask)...\r\n";
+        "Starting FreeRTOS (FAR: Snap + NormalTask 1000 Hz)...\r\n";
 #else
-        "Starting FreeRTOS (overhead: Baseline, no NormalTask)...\r\n";
+        "Starting FreeRTOS (FAR: Baseline + NormalTask 1000 Hz)...\r\n";
 #endif
 #endif
     ns_uart_transmit((const uint8_t *)boot, (uint16_t)(sizeof(boot) - 1U));
@@ -132,8 +137,13 @@ int main(void)
   if (uart_mutex == NULL) {
       Error_Handler();
   }
-  /* Overhead run: no Real-time NormalTask so TIM2 measures attestation only. */
-  /* LEDThreadHandleHandle = osThreadNew(NormalTask, NULL, &LEDThreadHandle_attributes); */
+  /* FAR run: Real-time NormalTask at TARGET_FREQ_HZ counts activations during attestation. */
+#if !NS_APP_MODE_E4_ATOMIC
+  LEDThreadHandleHandle = osThreadNew(NormalTask, NULL, &LEDThreadHandle_attributes);
+  if (LEDThreadHandleHandle == NULL) {
+    Error_Handler();
+  }
+#endif
 #if NS_APP_MODE_E4_ATOMIC
   myTask02Handle = osThreadNew(NS_HashBenchmark_Task, NULL, &myTask02_attributes);
 #else
@@ -147,11 +157,11 @@ int main(void)
     const char ok[] = "FreeRTOS tasks created (NS_HashBenchmark, no NormalTask). Starting scheduler...\r\n";
 #else
 #if USE_SAU_APPROACH
-    const char ok[] = "FreeRTOS tasks created (Guard, no NormalTask). Starting scheduler...\r\n";
+    const char ok[] = "FreeRTOS tasks created (Guard + NormalTask 1000 Hz). Starting scheduler...\r\n";
 #elif USE_SNAP
-    const char ok[] = "FreeRTOS tasks created (Snap, no NormalTask). Starting scheduler...\r\n";
+    const char ok[] = "FreeRTOS tasks created (Snap + NormalTask 1000 Hz). Starting scheduler...\r\n";
 #else
-    const char ok[] = "FreeRTOS tasks created (SMARM Baseline, no NormalTask). Starting scheduler...\r\n";
+    const char ok[] = "FreeRTOS tasks created (Baseline + NormalTask 1000 Hz). Starting scheduler...\r\n";
 #endif
 #endif
     ns_uart_transmit((const uint8_t *)ok, (uint16_t)(sizeof(ok) - 1U));
@@ -384,10 +394,10 @@ static void ns_derive_aes_key_iv_from_challenge(uint8_t key16[16], uint8_t iv16[
                                                 const uint8_t *challenge, size_t clen)
 {
   hmac_sha256_initialize(&ns_hmac_state, ns_hmac_key, strlen((const char *)ns_hmac_key));
-  if (challenge && clen) {
+      if (challenge && clen) {
     hmac_sha256_update(&ns_hmac_state, challenge, clen);
-  } else {
-    uint32_t tick = (uint32_t)SysTick->VAL;
+      } else {
+          uint32_t tick = (uint32_t)SysTick->VAL;
     hmac_sha256_update(&ns_hmac_state, (uint8_t *)&tick, sizeof(tick));
   }
   hmac_sha256_finalize(&ns_hmac_state, NULL, 0);
@@ -396,35 +406,35 @@ static void ns_derive_aes_key_iv_from_challenge(uint8_t key16[16], uint8_t iv16[
 }
 
 static void ns_prng_init(ns_ctr_prng_t *p, const uint8_t key16[16], const uint8_t iv16[16])
-{
-  AES_init_ctx_iv(&p->ctx, key16, iv16);
-  memset(p->buf, 0, sizeof(p->buf));
+  {
+      AES_init_ctx_iv(&p->ctx, key16, iv16);
+      memset(p->buf, 0, sizeof(p->buf));
   p->idx = 16;
-}
-
+  }
+  
 static void ns_prng_refill_block(ns_ctr_prng_t *p)
-{
-  uint8_t zero[16] = {0};
-  memcpy(p->buf, zero, 16);
+  {
+      uint8_t zero[16] = {0};
+      memcpy(p->buf, zero, 16);
   AES_CTR_xcrypt_buffer(&p->ctx, p->buf, 16);
-  p->idx = 0;
-}
-
+      p->idx = 0;
+  }
+  
 static uint32_t ns_prng_next_u32(ns_ctr_prng_t *p)
-{
+  {
   if (p->idx > 12) {
     ns_prng_refill_block(p);
+      }
+      uint32_t v;
+      memcpy(&v, &p->buf[p->idx], 4);
+      p->idx += 4;
+      return v;
   }
-  uint32_t v;
-  memcpy(&v, &p->buf[p->idx], 4);
-  p->idx += 4;
-  return v;
-}
-
+  
 static int ns_prng_uniform_u32(ns_ctr_prng_t *p, int n)
-{
-  const uint32_t lim = 0xFFFFFFFFu - (0xFFFFFFFFu % (uint32_t)n);
-  for (;;) {
+  {
+      const uint32_t lim = 0xFFFFFFFFu - (0xFFFFFFFFu % (uint32_t)n);
+      for (;;) {
     uint32_t r = ns_prng_next_u32(p);
     if (r < lim) {
       return (int)(r % (uint32_t)n);
@@ -749,21 +759,26 @@ void SMARM_Experiment_Task(void *argument)
 {
     (void) argument;
     {
-        const char alive[] = "SMARM_Experiment_Task running (overhead, no NormalTask).\r\n";
+        const char alive[] = "SMARM_Experiment_Task running (FAR + NormalTask 1000 Hz).\r\n";
         ns_uart_transmit((const uint8_t *)alive, (uint16_t)(sizeof(alive) - 1U));
     }
     {
-        char banner[192];
+        char banner[220];
         int bn = snprintf(banner, sizeof(banner),
 #if USE_SAU_APPROACH
+#if ATTEST_FAULT_DEMO
+            "\r\nSMARM-Guard FAULT DEMO B=%u |M|=256KiB @0x08040000 "
+            "(SAU over live NS XIP; expect fault).\r\n",
+#else
             "\r\nSMARM-Guard B=%u |M|=128KiB @0x08060000, "
-            "4 passes/round (=512KiB hashed; SAU every block) (10 rounds).\r\n",
+            "1 pass/round, FAR @1000 Hz (SAU every block) (10 rounds).\r\n",
+#endif
 #elif USE_SNAP
             "\r\nSMARM-Snap B=%u |M|=128KiB @0x08060000, "
-            "4 passes/round (=512KiB hashed; memcpy IRQ-off) (10 rounds).\r\n",
+            "1 pass/round, FAR @1000 Hz (memcpy IRQ-off) (10 rounds).\r\n",
 #else
             "\r\nSMARM Baseline B=%u |M|=128KiB @0x08060000, "
-            "4 passes/round (=512KiB hashed; HMAC IRQ-off) (10 rounds).\r\n",
+            "1 pass/round, FAR @1000 Hz (HMAC IRQ-off) (10 rounds).\r\n",
 #endif
             (unsigned)ATTEST_BLOCK_SIZE);
         if (bn > 0 && bn < (int)sizeof(banner)) {
@@ -808,12 +823,16 @@ void SMARM_Experiment_Task(void *argument)
         uint32_t start_count = g_normal_counter;
         SECURE_AttestReport_t attest_report = {
             .sau_config_avg_cycles = 0U,
+            .t_disabled_avg_cycles = 0U,
+            .t_disabled_max_cycles = 0U,
             .attest_phase_ptr = &g_attest_phase,
         };
         SECURE_ShuffledHMAC_secure(digest, challenge, sizeof(challenge), &attest_report);
         uint32_t end_tim2 = __HAL_TIM_GET_COUNTER(&htim2);
         uint32_t end_count = g_normal_counter;
         uint32_t sau_avg = attest_report.sau_config_avg_cycles;
+        uint32_t tdis_avg = attest_report.t_disabled_avg_cycles;
+        uint32_t tdis_max = attest_report.t_disabled_max_cycles;
         g_secure_busy = 0U;
         if (round == 0U) {
             const char back[] = "  NS: returned from SECURE_ShuffledHMAC_secure\r\n";
@@ -851,10 +870,34 @@ void SMARM_Experiment_Task(void *argument)
                 printf("SAU_config_avg_cycles=CMSE_FAIL(challenge ptr)\r\n");
             } else if (sau_avg == 0xBAD00001U) {
                 printf("SAU_config_avg_cycles=CMSE_FAIL(digest ptr)\r\n");
-#if USE_SAU_APPROACH
             } else {
+#if USE_SAU_APPROACH
                 printf("SAU_config_avg_cycles=%lu\r\n", (unsigned long)sau_avg);
 #endif
+                /* CPU = 110 MHz → time_us = cycles/110. Print µs (3 dp) or ms if ≥1 ms. */
+                {
+                    uint32_t avg_us_x1000 =
+                        (uint32_t)(((uint64_t)tdis_avg * 1000U) / 110U);
+                    uint32_t max_us_x1000 =
+                        (uint32_t)(((uint64_t)tdis_max * 1000U) / 110U);
+                    if (avg_us_x1000 >= 1000000U || max_us_x1000 >= 1000000U) {
+                        printf("t_disabled avg=%lu cy (%lu.%03lu ms), max=%lu cy (%lu.%03lu ms)\r\n",
+                               (unsigned long)tdis_avg,
+                               (unsigned long)(avg_us_x1000 / 1000000U),
+                               (unsigned long)((avg_us_x1000 / 1000U) % 1000U),
+                               (unsigned long)tdis_max,
+                               (unsigned long)(max_us_x1000 / 1000000U),
+                               (unsigned long)((max_us_x1000 / 1000U) % 1000U));
+                    } else {
+                        printf("t_disabled avg=%lu cy (%lu.%03lu us), max=%lu cy (%lu.%03lu us)\r\n",
+                               (unsigned long)tdis_avg,
+                               (unsigned long)(avg_us_x1000 / 1000U),
+                               (unsigned long)(avg_us_x1000 % 1000U),
+                               (unsigned long)tdis_max,
+                               (unsigned long)(max_us_x1000 / 1000U),
+                               (unsigned long)(max_us_x1000 % 1000U));
+                    }
+                }
             }
             xSemaphoreGive(uart_mutex);
         }
@@ -865,11 +908,11 @@ void SMARM_Experiment_Task(void *argument)
     uint32_t mean = sum / 10;
     if (xSemaphoreTake(uart_mutex, pdMS_TO_TICKS(10)) == pdTRUE) {
 #if USE_SAU_APPROACH
-        printf("\r\n=== SUMMARY SMARM-Guard, no NormalTask (10 rounds) ===\r\n");
+        printf("\r\n=== SUMMARY SMARM-Guard FAR @1000 Hz (10 rounds) ===\r\n");
 #elif USE_SNAP
-        printf("\r\n=== SUMMARY SMARM-Snap, no NormalTask (10 rounds) ===\r\n");
+        printf("\r\n=== SUMMARY SMARM-Snap FAR @1000 Hz (10 rounds) ===\r\n");
 #else
-        printf("\r\n=== SUMMARY SMARM Baseline, no NormalTask (10 rounds) ===\r\n");
+        printf("\r\n=== SUMMARY SMARM Baseline FAR @1000 Hz (10 rounds) ===\r\n");
 #endif
         printf("Mean: %lu ms\r\n", mean);
         printf("Min:  %lu ms\r\n", min_val);
@@ -885,6 +928,7 @@ void SMARM_Experiment_Task(void *argument)
                    (unsigned long)(far_max_x10000 / 10000U),
                    (unsigned long)(far_max_x10000 % 10000U));
         }
+        printf("t_disabled: DWT over each IRQ-off window (110 MHz).\r\n");
         printf("==========================================\r\n");
         printf("Done. Press RESET to run again.\r\n");
         xSemaphoreGive(uart_mutex);

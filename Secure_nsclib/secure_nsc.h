@@ -25,9 +25,18 @@ typedef enum
   GTZC_ERROR_CB_ID       = 0x01U
 } SECURE_CallbackIDTypeDef;
 
-/** Written by Secure (NS RAM). attest_phase_ptr may point at g_attest_phase for live progress. */
+/**
+ * Written by Secure into NS RAM.
+ * t_disabled_*: DWT CYCCNT span of each IRQ-off window (PRIMASK) in this round.
+ *   Baseline = HMAC-update per block; Snap = memcpy per block;
+ *   Guard = each SAU lock and each SAU unlock (hash runs with IRQs on).
+ * sau_config_avg_cycles: Guard only — mean of (lock+unlock) cycles per block
+ *   (legacy FAR log field; 0 for Baseline/Snap).
+ */
 typedef struct {
   uint32_t sau_config_avg_cycles;
+  uint32_t t_disabled_avg_cycles;
+  uint32_t t_disabled_max_cycles;
   volatile uint32_t *attest_phase_ptr;
 } SECURE_AttestReport_t;
 

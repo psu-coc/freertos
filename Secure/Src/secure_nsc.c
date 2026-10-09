@@ -26,21 +26,26 @@
 #define SHA256_DIGEST_SIZE 32
 #define BLOCK_SIZE ATTEST_BLOCK_SIZE
 /*
- * Attested window (all three modes):
- *   |M| = 128 KiB @ 0x08060000..0x0807FFFF (no live NS XIP code here).
+ * Attested window (all three modes), selected by ATTEST_FAULT_DEMO:
+ *   0: |M| = 128 KiB @ 0x08060000..0x0807FFFF (no live NS XIP; paper numbers)
+ *   1: |M| = 256 KiB @ 0x08040000..0x0807FFFF (full NS flash incl. FreeRTOS XIP)
+ *      Guard will SecureFault when NS fetches from a locked block — Q3 demo only.
  * Guard: every block SAU lock → HMAC (IRQ on) → SAU unlock.
  *
- * Workload equalization: ATTEST_PASSES (=4) shuffles over the
- *   same 128 KiB window → 4 * 128 KiB = 512 KiB hashed bytes total.
- *   (Unique flash covered remains 128 KiB; 4× is experimental load.)
+ * Single shuffled traversal (ATTEST_PASSES = 1).
  *
  * Professor lock sequence:
  *   disable IRQ; DSB; SAU->CTRL disable; configure regions 6/7;
  *   SAU->CTRL enable; DSB; ISB; enable IRQ — then HMAC with IRQ on.
  */
+#if ATTEST_FAULT_DEMO
+#define ATTEST_DATA_BASE   0x08040000U
+#define TOTAL_SIZE         0x40000U      /* 256 KiB = entire NS flash bank */
+#else
 #define ATTEST_DATA_BASE   0x08060000U
 #define TOTAL_SIZE         0x20000U      /* 128 KiB pure Guard window */
-#define ATTEST_PASSES      4U            /* 4 * 128 KiB ≈ 512 KiB measured */
+#endif
+#define ATTEST_PASSES      1U
 #define BLOCKS             (TOTAL_SIZE / BLOCK_SIZE)
 
 #define SAU_LOCK_BASE      ATTEST_DATA_BASE
@@ -63,13 +68,15 @@
 #error ATTEST_PASSES must be >= 1
 #endif
 
-#if USE_SAU_APPROACH
-static void sau_enable_dwt(void)
+/* DWT CYCCNT keeps counting while PRIMASK masks IRQs — used for t_disabled. */
+static void attest_enable_dwt(void)
 {
     CoreDebug->DEMCR |= CoreDebug_DEMCR_TRCENA_Msk;
     DWT->CYCCNT = 0U;
     DWT->CTRL |= DWT_CTRL_CYCCNTENA_Msk;
 }
+
+#if USE_SAU_APPROACH
 
 /* Program one enabled Non-Secure SAU region [start, end_inclusive]. */
 static void sau_program_ns_region(uint32_t rnr, uint32_t start, uint32_t end_inclusive)
@@ -334,6 +341,8 @@ void SECURE_ShuffledHMAC_secure(uint8_t *out_digest,
     if (!out_digest) {
         if (report != NULL) {
             report->sau_config_avg_cycles = 0xBAD00001U;
+            report->t_disabled_avg_cycles = 0U;
+            report->t_disabled_max_cycles = 0U;
         }
         return;
     }
@@ -342,6 +351,8 @@ void SECURE_ShuffledHMAC_secure(uint8_t *out_digest,
         if (!challenge) {
             if (report != NULL) {
                 report->sau_config_avg_cycles = 0xBAD00002U;
+                report->t_disabled_avg_cycles = 0U;
+                report->t_disabled_max_cycles = 0U;
             }
             return;
         }
@@ -354,14 +365,17 @@ void SECURE_ShuffledHMAC_secure(uint8_t *out_digest,
     uint8_t key16[16], iv16[16], iv_pass[16];
     derive_aes_key_iv_from_challenge(key16, iv16, challenge, challenge_len);
 
+    attest_enable_dwt();
 #if USE_SAU_APPROACH
-    sau_enable_dwt();
     sau_cover_data_window_ns();
     attest_phase_set(ATTEST_PHASE_SAU);
 #endif
 
-    /* One NS round: ATTEST_PASSES × |M| bytes (Guard on every block). */
+    /* One NS round: ATTEST_PASSES × |M| bytes (default: 1 × 128 KiB). */
     hmac_sha256_initialize(&hmac, (const uint8_t*)key, strlen((const char *)key));
+    uint64_t tdis_cycles_total = 0U;
+    uint32_t tdis_windows = 0U;
+    uint32_t tdis_max = 0U;
 #if USE_SAU_APPROACH
     uint64_t sau_cycles_total = 0U;
     uint32_t sau_lock_blocks = 0U;
@@ -386,6 +400,8 @@ void SECURE_ShuffledHMAC_secure(uint8_t *out_digest,
                 sau_cover_data_window_ns();
                 if (report != NULL) {
                     report->sau_config_avg_cycles = 0U;
+                    report->t_disabled_avg_cycles = 0U;
+                    report->t_disabled_max_cycles = 0U;
                 }
                 return;
             }
@@ -398,20 +414,61 @@ void SECURE_ShuffledHMAC_secure(uint8_t *out_digest,
                 }
             }
 
-            sau_cycles_total += (uint64_t)sau_memory_lock_block(blk);
-            hmac_sha256_update(&hmac, blk, BLOCK_SIZE);
-            sau_cycles_total += (uint64_t)sau_memory_unlock_window();
-            sau_lock_blocks++;
+            {
+                uint32_t lock_c = sau_memory_lock_block(blk);
+                uint32_t unlock_c;
+                sau_cycles_total += (uint64_t)lock_c;
+                tdis_cycles_total += (uint64_t)lock_c;
+                tdis_windows++;
+                if (lock_c > tdis_max) {
+                    tdis_max = lock_c;
+                }
+                hmac_sha256_update(&hmac, blk, BLOCK_SIZE);
+                unlock_c = sau_memory_unlock_window();
+                sau_cycles_total += (uint64_t)unlock_c;
+                tdis_cycles_total += (uint64_t)unlock_c;
+                tdis_windows++;
+                if (unlock_c > tdis_max) {
+                    tdis_max = unlock_c;
+                }
+                sau_lock_blocks++;
+            }
 #elif USE_SNAP
-            __disable_irq();
-            memcpy(hmac_blk_scratch, blk, (size_t)BLOCK_SIZE);
-            __enable_irq();
+            {
+                uint32_t t0;
+                uint32_t t1;
+                uint32_t dt;
+                __disable_irq();
+                t0 = DWT->CYCCNT;
+                memcpy(hmac_blk_scratch, blk, (size_t)BLOCK_SIZE);
+                t1 = DWT->CYCCNT;
+                __enable_irq();
+                dt = t1 - t0;
+                tdis_cycles_total += (uint64_t)dt;
+                tdis_windows++;
+                if (dt > tdis_max) {
+                    tdis_max = dt;
+                }
+            }
             hmac_sha256_update(&hmac, hmac_blk_scratch, BLOCK_SIZE);
 #else
             /* Baseline SMARM: hash the live block with interrupts disabled. */
-            __disable_irq();
-            hmac_sha256_update(&hmac, blk, BLOCK_SIZE);
-            __enable_irq();
+            {
+                uint32_t t0;
+                uint32_t t1;
+                uint32_t dt;
+                __disable_irq();
+                t0 = DWT->CYCCNT;
+                hmac_sha256_update(&hmac, blk, BLOCK_SIZE);
+                t1 = DWT->CYCCNT;
+                __enable_irq();
+                dt = t1 - t0;
+                tdis_cycles_total += (uint64_t)dt;
+                tdis_windows++;
+                if (dt > tdis_max) {
+                    tdis_max = dt;
+                }
+            }
 #endif
         }
     }
@@ -420,18 +477,23 @@ void SECURE_ShuffledHMAC_secure(uint8_t *out_digest,
     memcpy(out_digest, hmac.digest, SHA256_DIGEST_SIZE);
 #if USE_SAU_APPROACH
     sau_cover_data_window_ns();
+    attest_phase_set(ATTEST_PHASE_DONE);
+#endif
     if (report != NULL) {
+#if USE_SAU_APPROACH
         report->sau_config_avg_cycles =
             (sau_lock_blocks > 0U)
                 ? (uint32_t)(sau_cycles_total / (uint64_t)sau_lock_blocks)
                 : 0U;
-    }
-    attest_phase_set(ATTEST_PHASE_DONE);
 #else
-    if (report != NULL) {
         report->sau_config_avg_cycles = 0U;
-    }
 #endif
+        report->t_disabled_avg_cycles =
+            (tdis_windows > 0U)
+                ? (uint32_t)(tdis_cycles_total / (uint64_t)tdis_windows)
+                : 0U;
+        report->t_disabled_max_cycles = tdis_max;
+    }
 }
 
 /* USER CODE END Non_Secure_CallLib */
