@@ -51,6 +51,8 @@ void MemManage_Handler(void);
 void UsageFault_Handler(void);
 void TIM6_IRQHandler(void);
 void LPUART1_IRQHandler(void);
+void EXTI6_IRQHandler(void);
+void EXTI7_IRQHandler(void);
 /* USER CODE BEGIN EFP */
 
 /* USER CODE END EFP */

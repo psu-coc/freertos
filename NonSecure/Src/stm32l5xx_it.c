@@ -131,6 +131,22 @@ void LPUART1_IRQHandler(void)
   /* USER CODE END LPUART1_IRQn 1 */
 }
 
+/**
+  * @brief EXTI Line6 — PA6 (D12) optical wheel encoder edges.
+  */
+void EXTI6_IRQHandler(void)
+{
+  HAL_GPIO_EXTI_IRQHandler(GPIO_PIN_6);
+}
+
+/**
+  * @brief EXTI Line7 — PA7 (D11) rising edges for pulse smoke test (STM32L5).
+  */
+void EXTI7_IRQHandler(void)
+{
+  HAL_GPIO_EXTI_IRQHandler(GPIO_PIN_7);
+}
+
 /* USER CODE BEGIN 1 */
 
 /* USER CODE END 1 */

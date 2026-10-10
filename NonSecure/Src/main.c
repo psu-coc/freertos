@@ -21,6 +21,35 @@
 #include "secure_nsc.h"
 
 /*
+ * Board smoke test (branch smarmplus-rt-smoke), NonSecure-only path:
+ *   No Secure attestation / NSC calls — Secure image only boots TrustZone.
+ *   MODE 0: jumper D12<->D11, TIM3 1 kHz PWM + EXTI7.
+ *   MODE 1: HW speed OUT->D11 + EXTI7.
+ *   MODE 2: ultrasonic SIG->D11 only.
+ *   MODE 3: ultrasonic D11 + optical wheel OUT->D12 (two FreeRTOS tasks).
+ *   EXTI6/7 must be Non-Secure in partition ITNS0 (rebuild Secure for MODE 3).
+ * Set PULSE_SMOKE_TEST 0 to restore FAR / Snap-Guard harness tasks.
+ */
+#define PULSE_SMOKE_TEST  1
+#define PULSE_SMOKE_MODE  3   /* 0=PWM, 1=HW speed, 2=sonar, 3=sonar+wheel */
+
+#define PULSE_SMOKE_USE_HW_SENSOR   (PULSE_SMOKE_MODE == 1)
+#define PULSE_SMOKE_USE_ULTRASONIC  ((PULSE_SMOKE_MODE == 2) || (PULSE_SMOKE_MODE == 3))
+#define PULSE_SMOKE_USE_WHEEL       (PULSE_SMOKE_MODE == 3)
+#define PULSE_SMOKE_USE_PWM_LOOP    (PULSE_SMOKE_MODE == 0)
+
+/* Optical disk has 20 slots — UART "speed" display */
+#define PULSE_TEETH_PER_REV  20U
+#define WHEEL_CIRCUM_MM      1900U
+
+/* Ultrasonic SIG -> D11 = PA7 | Wheel OUT -> D12 = PA6 (separate holes on CN7) */
+#define US_SIG_GPIO_Port  GPIOA
+#define US_SIG_Pin        GPIO_PIN_7
+#define US_ECHO_TIMEOUT_US  30000U
+#define WHEEL_GPIO_Port   GPIOA
+#define WHEEL_Pin         GPIO_PIN_6
+
+/*
  * SAU-ATOMICCOPY / E4: set NS_APP_MODE_E4_ATOMIC to 1 for Atomic Copy t_disabled (TIM2).
  * Rebuild NonSecure (and flash both TZ images), change NS_HMAC_BLOCK_SIZE per sweep.
  */
@@ -46,19 +75,37 @@
 
 SemaphoreHandle_t uart_mutex;
 TIM_HandleTypeDef htim2;
+#if PULSE_SMOKE_TEST
+#if PULSE_SMOKE_USE_PWM_LOOP
+TIM_HandleTypeDef htim3;
+#endif
+#if PULSE_SMOKE_USE_PWM_LOOP || PULSE_SMOKE_USE_HW_SENSOR
+volatile uint32_t g_pulse_edges = 0U;
+#endif
+#if PULSE_SMOKE_USE_WHEEL
+volatile uint32_t g_wheel_edges = 0U;
+#endif
+#endif
 UART_HandleTypeDef hlpuart1;
-UART_HandleTypeDef huart3; /* NUCLEO ST-Link VCP (USART3 on PD8/PD9) */
+UART_HandleTypeDef huart3; /* NUCLEO ST-LINK VCP (USART3 on PD8/PD9) */
 
 #define NS_UART_VCP_TIMEOUT_MS  500U
 
 static void ns_uart_transmit(const uint8_t *data, uint16_t len)
 {
+  BaseType_t took = pdFALSE;
   if (!data || !len) {
     return;
+  }
+  if (uart_mutex != NULL) {
+    took = xSemaphoreTake(uart_mutex, pdMS_TO_TICKS(200));
   }
   /* LPUART1 (PG7): original project log port. USART3 (PD8): Nucleo ST-Link VCP. */
   (void)HAL_UART_Transmit(&hlpuart1, (uint8_t *)data, len, HAL_MAX_DELAY);
   (void)HAL_UART_Transmit(&huart3, (uint8_t *)data, len, NS_UART_VCP_TIMEOUT_MS);
+  if (took == pdTRUE) {
+    (void)xSemaphoreGive(uart_mutex);
+  }
 }
 
 osThreadId_t LEDThreadHandleHandle;
@@ -74,6 +121,14 @@ const osThreadAttr_t myTask02_attributes = {
   /* sha256_update uses ~300B locals; shuffle/AES adds more — keep generous margin */
   .stack_size = 16 * 1024
 };
+#if PULSE_SMOKE_TEST && PULSE_SMOKE_USE_WHEEL
+osThreadId_t wheelTaskHandle;
+const osThreadAttr_t wheelTask_attributes = {
+  .name = "WheelTask",
+  .priority = (osPriority_t) osPriorityAboveNormal,
+  .stack_size = 2048
+};
+#endif
 
 void SystemClock_Config(void);
 static void MX_GPIO_Init(void);
@@ -85,6 +140,19 @@ void SecureError_Callback(void);
 void NormalTask(void *argument);
 void SMARM_Experiment_Task(void *argument);
 void NS_HashBenchmark_Task(void *argument);
+#if PULSE_SMOKE_TEST
+static void PulseSmoke_Init(void);
+void PulseSmoke_Task(void *argument);
+#if PULSE_SMOKE_USE_WHEEL
+void WheelSmoke_Task(void *argument);
+#endif
+#if PULSE_SMOKE_USE_PWM_LOOP
+void HAL_TIM_PWM_MspInit(TIM_HandleTypeDef *htim);
+#endif
+#if PULSE_SMOKE_USE_PWM_LOOP || PULSE_SMOKE_USE_HW_SENSOR || PULSE_SMOKE_USE_WHEEL
+void HAL_GPIO_EXTI_Rising_Callback(uint16_t GPIO_Pin);
+#endif
+#endif
 
 volatile uint32_t g_normal_counter = 0;
 volatile uint32_t g_secure_busy = 0U;
@@ -98,6 +166,29 @@ int main(void)
   MX_LPUART1_UART_Init();
   MX_USART3_UART_Init();
   {
+#if PULSE_SMOKE_TEST
+#if PULSE_SMOKE_USE_ULTRASONIC && PULSE_SMOKE_USE_WHEEL
+    const char boot[] =
+        "\r\n[NS boot] TWO TASKS (NS-only): sonar D11 + wheel D12.\r\n"
+        "Ultrasonic SIG->D11; optical OUT->D12; both VCC=3V3 GND. VCP 115200.\r\n"
+        "Starting FreeRTOS (SonarTask + WheelTask)...\r\n";
+#elif PULSE_SMOKE_USE_ULTRASONIC
+    const char boot[] =
+        "\r\n[NS boot] ULTRASONIC (NS-only) — SIG->D11(PA7), VCC=3V3, GND.\r\n"
+        "White NC = leave unplugged. No Secure attest. VCP 115200.\r\n"
+        "Starting FreeRTOS (PulseSmoke_Task)...\r\n";
+#elif PULSE_SMOKE_USE_HW_SENSOR
+    const char boot[] =
+        "\r\n[NS boot] HW SPEED SENSOR (NS-only) — OUT->D11(PA7), Vcc/GND.\r\n"
+        "Remove D12 jumper. Spin wheel; edges/s should track speed. VCP 115200.\r\n"
+        "Starting FreeRTOS (PulseSmoke_Task)...\r\n";
+#else
+    const char boot[] =
+        "\r\n[NS boot] PULSE SMOKE (NS-only) — wire D12(PA6) <-> D11(PA7).\r\n"
+        "No Secure attest. 10 ms parse + ~1000 edges/s. VCP 115200.\r\n"
+        "Starting FreeRTOS (PulseSmoke_Task)...\r\n";
+#endif
+#else
     const char boot[] =
 #if NS_APP_MODE_E4_ATOMIC
         "\r\n[NS boot] E4 Atomic Copy — NS mirror, TIM2 on IRQ-masked memcpy.\r\n"
@@ -128,15 +219,41 @@ int main(void)
         "Starting FreeRTOS (FAR: Baseline + NormalTask 1000 Hz)...\r\n";
 #endif
 #endif
+#endif /* !PULSE_SMOKE_TEST */
     ns_uart_transmit((const uint8_t *)boot, (uint16_t)(sizeof(boot) - 1U));
   }
+#if PULSE_SMOKE_TEST
+  PulseSmoke_Init();
+#else
   MX_TIM2_Init();
   HAL_TIM_Base_Start(&htim2);
+#endif
   osKernelInitialize();
   uart_mutex = xSemaphoreCreateMutex();
   if (uart_mutex == NULL) {
       Error_Handler();
   }
+#if PULSE_SMOKE_TEST
+  myTask02Handle = osThreadNew(PulseSmoke_Task, NULL, &myTask02_attributes);
+  if (myTask02Handle == NULL) {
+    Error_Handler();
+  }
+#if PULSE_SMOKE_USE_WHEEL
+  wheelTaskHandle = osThreadNew(WheelSmoke_Task, NULL, &wheelTask_attributes);
+  if (wheelTaskHandle == NULL) {
+    Error_Handler();
+  }
+  {
+    const char ok[] = "SonarTask + WheelTask created. Starting scheduler...\r\n";
+    ns_uart_transmit((const uint8_t *)ok, (uint16_t)(sizeof(ok) - 1U));
+  }
+#else
+  {
+    const char ok[] = "PulseSmoke_Task created. Starting scheduler...\r\n";
+    ns_uart_transmit((const uint8_t *)ok, (uint16_t)(sizeof(ok) - 1U));
+  }
+#endif
+#else
   /* FAR run: Real-time NormalTask at TARGET_FREQ_HZ counts activations during attestation. */
 #if !NS_APP_MODE_E4_ATOMIC
   LEDThreadHandleHandle = osThreadNew(NormalTask, NULL, &LEDThreadHandle_attributes);
@@ -166,6 +283,7 @@ int main(void)
 #endif
     ns_uart_transmit((const uint8_t *)ok, (uint16_t)(sizeof(ok) - 1U));
   }
+#endif /* !PULSE_SMOKE_TEST */
   osKernelStart();
   while (1) {}
 }
@@ -256,6 +374,378 @@ static void MX_GPIO_Init(void)
   __HAL_RCC_GPIOG_CLK_ENABLE();
   HAL_PWREx_EnableVddIO2();
 }
+
+#if PULSE_SMOKE_TEST
+#if PULSE_SMOKE_USE_PWM_LOOP
+void HAL_TIM_PWM_MspInit(TIM_HandleTypeDef *htim)
+{
+  if (htim->Instance != TIM3) {
+    return;
+  }
+  __HAL_RCC_TIM3_CLK_ENABLE();
+  __HAL_RCC_GPIOA_CLK_ENABLE();
+  {
+    GPIO_InitTypeDef gpio = {0};
+    /* PA6 = D12 = TIM3_CH1 PWM out */
+    gpio.Pin = GPIO_PIN_6;
+    gpio.Mode = GPIO_MODE_AF_PP;
+    gpio.Pull = GPIO_NOPULL;
+    gpio.Speed = GPIO_SPEED_FREQ_HIGH;
+    gpio.Alternate = GPIO_AF2_TIM3;
+    HAL_GPIO_Init(GPIOA, &gpio);
+  }
+}
+#endif
+
+#if PULSE_SMOKE_USE_ULTRASONIC
+static void us_dwt_init(void)
+{
+  CoreDebug->DEMCR |= CoreDebug_DEMCR_TRCENA_Msk;
+  DWT->CYCCNT = 0;
+  DWT->CTRL |= DWT_CTRL_CYCCNTENA_Msk;
+}
+
+static uint32_t us_clk_mhz(void)
+{
+  uint32_t hz = HAL_RCC_GetHCLKFreq();
+  if (hz < 1000000U) {
+    hz = SystemCoreClock;
+  }
+  if (hz < 1000000U) {
+    hz = 110000000U; /* Nucleo-L552 typical after PLL */
+  }
+  return hz / 1000000U;
+}
+
+static void us_delay_us(uint32_t us)
+{
+  uint32_t start = DWT->CYCCNT;
+  uint32_t ticks = us * us_clk_mhz();
+  while ((DWT->CYCCNT - start) < ticks) {
+  }
+}
+
+static void us_sig_output(void)
+{
+  GPIO_InitTypeDef gpio = {0};
+  gpio.Pin = US_SIG_Pin;
+  gpio.Mode = GPIO_MODE_OUTPUT_PP;
+  gpio.Pull = GPIO_NOPULL;
+  gpio.Speed = GPIO_SPEED_FREQ_HIGH;
+  HAL_GPIO_Init(US_SIG_GPIO_Port, &gpio);
+}
+
+static void us_sig_input(void)
+{
+  GPIO_InitTypeDef gpio = {0};
+  /* No pull: Grove idle is low; MCU pull-up fakes echo and causes err=-2 */
+  gpio.Pin = US_SIG_Pin;
+  gpio.Mode = GPIO_MODE_INPUT;
+  gpio.Pull = GPIO_NOPULL;
+  HAL_GPIO_Init(US_SIG_GPIO_Port, &gpio);
+}
+
+/* Grove single-wire: >10 us trigger, then echo high time → cm (us/58). */
+static int32_t us_read_distance_cm(void)
+{
+  uint32_t t0;
+  uint32_t mhz = us_clk_mhz();
+  uint32_t timeout_ticks = US_ECHO_TIMEOUT_US * mhz;
+  uint32_t primask;
+
+  primask = __get_PRIMASK();
+  __disable_irq();
+
+  us_sig_output();
+  HAL_GPIO_WritePin(US_SIG_GPIO_Port, US_SIG_Pin, GPIO_PIN_RESET);
+  us_delay_us(2);
+  HAL_GPIO_WritePin(US_SIG_GPIO_Port, US_SIG_Pin, GPIO_PIN_SET);
+  us_delay_us(20); /* Seeed: >10 us TTL trigger */
+  HAL_GPIO_WritePin(US_SIG_GPIO_Port, US_SIG_Pin, GPIO_PIN_RESET);
+  us_sig_input();
+
+  /* Wait until line is low (release / pre-echo), then rising edge = echo */
+  t0 = DWT->CYCCNT;
+  while (HAL_GPIO_ReadPin(US_SIG_GPIO_Port, US_SIG_Pin) == GPIO_PIN_SET) {
+    if ((DWT->CYCCNT - t0) > timeout_ticks) {
+      if (!primask) {
+        __enable_irq();
+      }
+      return -4; /* stuck high before echo */
+    }
+  }
+
+  t0 = DWT->CYCCNT;
+  while (HAL_GPIO_ReadPin(US_SIG_GPIO_Port, US_SIG_Pin) == GPIO_PIN_RESET) {
+    if ((DWT->CYCCNT - t0) > timeout_ticks) {
+      if (!primask) {
+        __enable_irq();
+      }
+      return -1; /* no echo start — often wiring / no  power */
+    }
+  }
+
+  t0 = DWT->CYCCNT;
+  while (HAL_GPIO_ReadPin(US_SIG_GPIO_Port, US_SIG_Pin) == GPIO_PIN_SET) {
+    if ((DWT->CYCCNT - t0) > timeout_ticks) {
+      if (!primask) {
+        __enable_irq();
+      }
+      return -2; /* echo stuck high */
+    }
+  }
+
+  {
+    uint32_t echo_us = (DWT->CYCCNT - t0) / mhz;
+    if (!primask) {
+      __enable_irq();
+    }
+    if (echo_us < 100U) {
+      return -3; /* too short */
+    }
+    return (int32_t)(echo_us / 58U);
+  }
+}
+#endif /* PULSE_SMOKE_USE_ULTRASONIC */
+
+static void PulseSmoke_Init(void)
+{
+  __HAL_RCC_GPIOA_CLK_ENABLE();
+
+#if PULSE_SMOKE_USE_ULTRASONIC
+  us_dwt_init();
+  us_sig_output();
+  HAL_GPIO_WritePin(US_SIG_GPIO_Port, US_SIG_Pin, GPIO_PIN_RESET);
+#endif
+
+#if PULSE_SMOKE_USE_WHEEL
+  {
+    GPIO_InitTypeDef gpio = {0};
+    /* PA6 = D12: optical encoder OUT (Robotlinking U-slot + slotted disk) */
+    gpio.Pin = WHEEL_Pin;
+    gpio.Mode = GPIO_MODE_IT_RISING;
+    gpio.Pull = GPIO_PULLUP; /* many modules are open-collector / idle-high */
+    HAL_GPIO_Init(WHEEL_GPIO_Port, &gpio);
+    HAL_NVIC_SetPriority(EXTI6_IRQn, 5, 0);
+    HAL_NVIC_EnableIRQ(EXTI6_IRQn);
+  }
+#endif
+
+#if PULSE_SMOKE_USE_PWM_LOOP || PULSE_SMOKE_USE_HW_SENSOR
+  {
+    GPIO_InitTypeDef gpio = {0};
+    gpio.Pin = GPIO_PIN_7;
+    gpio.Mode = GPIO_MODE_IT_RISING;
+#if PULSE_SMOKE_USE_HW_SENSOR
+    gpio.Pull = GPIO_PULLUP;
+#else
+    gpio.Pull = GPIO_PULLDOWN;
+#endif
+    HAL_GPIO_Init(GPIOA, &gpio);
+    HAL_NVIC_SetPriority(EXTI7_IRQn, 5, 0);
+    HAL_NVIC_EnableIRQ(EXTI7_IRQn);
+  }
+#endif
+
+#if PULSE_SMOKE_USE_PWM_LOOP
+  {
+    TIM_OC_InitTypeDef sConfigOC = {0};
+    htim3.Instance = TIM3;
+    htim3.Init.Prescaler = 109;
+    htim3.Init.CounterMode = TIM_COUNTERMODE_UP;
+    htim3.Init.Period = 999;
+    htim3.Init.ClockDivision = TIM_CLOCKDIVISION_DIV1;
+    htim3.Init.AutoReloadPreload = TIM_AUTORELOAD_PRELOAD_DISABLE;
+    if (HAL_TIM_PWM_Init(&htim3) != HAL_OK) {
+      Error_Handler();
+    }
+    sConfigOC.OCMode = TIM_OCMODE_PWM1;
+    sConfigOC.Pulse = 500;
+    sConfigOC.OCPolarity = TIM_OCPOLARITY_HIGH;
+    sConfigOC.OCFastMode = TIM_OCFAST_DISABLE;
+    if (HAL_TIM_PWM_ConfigChannel(&htim3, &sConfigOC, TIM_CHANNEL_1) != HAL_OK) {
+      Error_Handler();
+    }
+    if (HAL_TIM_PWM_Start(&htim3, TIM_CHANNEL_1) != HAL_OK) {
+      Error_Handler();
+    }
+  }
+#endif
+}
+
+#if PULSE_SMOKE_USE_PWM_LOOP || PULSE_SMOKE_USE_HW_SENSOR || PULSE_SMOKE_USE_WHEEL
+void HAL_GPIO_EXTI_Rising_Callback(uint16_t GPIO_Pin)
+{
+#if PULSE_SMOKE_USE_WHEEL
+  if (GPIO_Pin == WHEEL_Pin) {
+    g_wheel_edges++;
+  }
+#endif
+#if PULSE_SMOKE_USE_PWM_LOOP || PULSE_SMOKE_USE_HW_SENSOR
+  if (GPIO_Pin == GPIO_PIN_7) {
+    g_pulse_edges++;
+  }
+#endif
+}
+#endif
+
+void PulseSmoke_Task(void *argument)
+{
+  (void)argument;
+  char line[128];
+#if PULSE_SMOKE_USE_ULTRASONIC
+  uint32_t n_ok = 0U;
+  uint32_t n_fail = 0U;
+#if !PULSE_SMOKE_USE_WHEEL
+  {
+    const char help[] =
+        "WIRE TEST 8s: yellow in D11 (CN7). Touch free end to red metal -> SIG=1.\r\n"
+        "White NC unused. Then yellow back to sensor SIG. Red=3V3 Black=GND.\r\n";
+    ns_uart_transmit((const uint8_t *)help, (uint16_t)(sizeof(help) - 1U));
+  }
+  us_sig_input();
+  for (uint32_t i = 0U; i < 40U; i++) {
+    int sig = (HAL_GPIO_ReadPin(US_SIG_GPIO_Port, US_SIG_Pin) == GPIO_PIN_SET) ? 1 : 0;
+    int n = snprintf(line, sizeof(line),
+                     "[wire] t=%lu.%lu s  SIG=%d  HCLK=%luMHz\r\n",
+                     (unsigned long)(i / 5U),
+                     (unsigned long)((i % 5U) * 2U),
+                     sig,
+                     (unsigned long)us_clk_mhz());
+    if (n > 0) {
+      ns_uart_transmit((const uint8_t *)line, (uint16_t)n);
+    }
+    osDelay(200);
+  }
+  {
+    const char go[] = "WIRE TEST done. Ranging...\r\n";
+    ns_uart_transmit((const uint8_t *)go, (uint16_t)(sizeof(go) - 1U));
+  }
+#else
+  {
+    const char go[] =
+        "SonarTask: ultrasonic on D11. WheelTask uses D12 (spin slotted disk).\r\n";
+    ns_uart_transmit((const uint8_t *)go, (uint16_t)(sizeof(go) - 1U));
+  }
+#endif
+  for (;;) {
+    int32_t cm = us_read_distance_cm();
+    if (cm >= 0) {
+      n_ok++;
+      int n = snprintf(line, sizeof(line),
+                       "[sonar] distance_cm=%ld  ok=%lu  fail=%lu\r\n",
+                       (long)cm, (unsigned long)n_ok, (unsigned long)n_fail);
+      if (n > 0) {
+        ns_uart_transmit((const uint8_t *)line, (uint16_t)n);
+      }
+    } else {
+      n_fail++;
+      int n = snprintf(line, sizeof(line),
+                       "[sonar] FAIL err=%ld  ok=%lu  fail=%lu\r\n",
+                       (long)cm, (unsigned long)n_ok, (unsigned long)n_fail);
+      if (n > 0) {
+        ns_uart_transmit((const uint8_t *)line, (uint16_t)n);
+      }
+    }
+    osDelay(200);
+  }
+#else
+  uint32_t sec = 0U;
+  uint32_t last_edges = g_pulse_edges;
+  uint32_t win_sum = 0U;
+  uint32_t win_n = 0U;
+  uint32_t win_min = UINT32_MAX;
+  uint32_t win_max = 0U;
+  uint32_t tick = osKernelGetTickCount();
+  {
+#if PULSE_SMOKE_USE_HW_SENSOR
+    const char ready[] =
+        "HW sensor ready. Idle edges/s≈0; spin disk → edges/s rises.\r\n";
+#else
+    const char ready[] =
+        "PULSE_SMOKE ready (NS-only). Expect ~10 pulses / 10 ms, ~1000/s.\r\n";
+#endif
+    ns_uart_transmit((const uint8_t *)ready, (uint16_t)(sizeof(ready) - 1U));
+  }
+  for (;;) {
+    tick += 10U;
+    osDelayUntil(tick);
+
+    uint32_t now = g_pulse_edges;
+    uint32_t d = now - last_edges;
+    last_edges = now;
+    win_sum += d;
+    win_n++;
+    if (d < win_min) {
+      win_min = d;
+    }
+    if (d > win_max) {
+      win_max = d;
+    }
+
+    if (win_n < 100U) {
+      continue;
+    }
+
+    uint32_t edges_per_s = win_sum;
+    uint32_t mean_per_10ms = win_sum / win_n;
+    uint32_t mm_per_s = (edges_per_s * WHEEL_CIRCUM_MM) / PULSE_TEETH_PER_REV;
+    sec++;
+    int n = snprintf(line, sizeof(line),
+                     "[smoke] t=%lus  /10ms mean=%lu min=%lu max=%lu  "
+                     "edges/s=%lu  v≈%lu mm/s  total=%lu\r\n",
+                     (unsigned long)sec,
+                     (unsigned long)mean_per_10ms,
+                     (unsigned long)win_min,
+                     (unsigned long)win_max,
+                     (unsigned long)edges_per_s,
+                     (unsigned long)mm_per_s,
+                     (unsigned long)now);
+    if (n > 0) {
+      ns_uart_transmit((const uint8_t *)line, (uint16_t)n);
+    }
+    win_sum = 0U;
+    win_n = 0U;
+    win_min = UINT32_MAX;
+    win_max = 0U;
+  }
+#endif /* !ULTRASONIC */
+}
+
+#if PULSE_SMOKE_USE_WHEEL
+void WheelSmoke_Task(void *argument)
+{
+  (void)argument;
+  char line[128];
+  uint32_t sec = 0U;
+  uint32_t last = g_wheel_edges;
+  {
+    const char ready[] =
+        "WheelTask: slotted disk in U-slot, OUT->D12. Spin by hand → edges/s > 0.\r\n";
+    ns_uart_transmit((const uint8_t *)ready, (uint16_t)(sizeof(ready) - 1U));
+  }
+  for (;;) {
+    uint32_t before = last;
+    osDelay(1000);
+    uint32_t now = g_wheel_edges;
+    uint32_t delta = now - before;
+    last = now;
+    sec++;
+    /* edges/s / 20 slots ≈ rev/s */
+    uint32_t rpm = (delta * 60U) / PULSE_TEETH_PER_REV;
+    int n = snprintf(line, sizeof(line),
+                     "[wheel] t=%lus  edges/s=%lu  rpm≈%lu  total=%lu\r\n",
+                     (unsigned long)sec,
+                     (unsigned long)delta,
+                     (unsigned long)rpm,
+                     (unsigned long)now);
+    if (n > 0) {
+      ns_uart_transmit((const uint8_t *)line, (uint16_t)n);
+    }
+  }
+}
+#endif /* WHEEL */
+#endif /* PULSE_SMOKE_TEST */
 
 #include <sys/time.h>
 int _gettimeofday(struct timeval *tv, void *tzvp) { (void)tv; (void)tzvp; return 0; }

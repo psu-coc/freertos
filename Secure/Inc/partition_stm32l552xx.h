@@ -384,8 +384,8 @@
 //   <o.14> EXTI3_IRQn          <0=> Secure state
 //   <o.15> EXTI4_IRQn          <0=> Secure state
 //   <o.16> EXTI5_IRQn          <0=> Secure state
-//   <o.17> EXTI6_IRQn          <0=> Secure state
-//   <o.18> EXTI7_IRQn          <0=> Secure state
+//   <o.17> EXTI6_IRQn          <1=> Non-Secure state
+//   <o.18> EXTI7_IRQn          <1=> Non-Secure state
 //   <o.19> EXTI8_IRQn          <0=> Secure state
 //   <o.20> EXTI9_IRQn          <0=> Secure state
 //   <o.21> EXTI10_IRQn         <0=> Secure state
@@ -401,7 +401,8 @@
 //   <o.31> DMA1_Channel3_IRQn  <0=> Secure state
 */
 
-#define NVIC_INIT_ITNS0_VAL      0x00000000
+/* Bit17=EXTI6 (PA6/D12 wheel), Bit18=EXTI7 (PA7 pulse) → Non-Secure */
+#define NVIC_INIT_ITNS0_VAL      0x00060000
 /*
 //   </e>
 */
