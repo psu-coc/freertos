@@ -124,6 +124,8 @@ int main(void)
         "Starting FreeRTOS (FAR: Guard + NormalTask 1000 Hz)...\r\n";
 #elif USE_SNAP
         "Starting FreeRTOS (FAR: Snap + NormalTask 1000 Hz)...\r\n";
+#elif FAR_REF_NO_IRQ_DISABLE
+        "Starting FreeRTOS (FAR REF EVAL-ONLY: Baseline HMAC no IRQ-disable + NormalTask 1000 Hz)...\r\n";
 #else
         "Starting FreeRTOS (FAR: Baseline + NormalTask 1000 Hz)...\r\n";
 #endif
@@ -160,6 +162,8 @@ int main(void)
     const char ok[] = "FreeRTOS tasks created (Guard + NormalTask 1000 Hz). Starting scheduler...\r\n";
 #elif USE_SNAP
     const char ok[] = "FreeRTOS tasks created (Snap + NormalTask 1000 Hz). Starting scheduler...\r\n";
+#elif FAR_REF_NO_IRQ_DISABLE
+    const char ok[] = "FreeRTOS tasks created (FAR REF EVAL-ONLY + NormalTask 1000 Hz). Starting scheduler...\r\n";
 #else
     const char ok[] = "FreeRTOS tasks created (Baseline + NormalTask 1000 Hz). Starting scheduler...\r\n";
 #endif
@@ -776,6 +780,9 @@ void SMARM_Experiment_Task(void *argument)
 #elif USE_SNAP
             "\r\nSMARM-Snap B=%u |M|=128KiB @0x08060000, "
             "1 pass/round, FAR @1000 Hz (memcpy IRQ-off) (10 rounds).\r\n",
+#elif FAR_REF_NO_IRQ_DISABLE
+            "\r\nFAR-REF EVAL-ONLY (NOT secure) B=%u |M|=128KiB @0x08060000, "
+            "1 pass/round, HMAC with IRQ enabled, FAR @1000 Hz (10 rounds).\r\n",
 #else
             "\r\nSMARM Baseline B=%u |M|=128KiB @0x08060000, "
             "1 pass/round, FAR @1000 Hz (HMAC IRQ-off) (10 rounds).\r\n",
@@ -795,6 +802,14 @@ void SMARM_Experiment_Task(void *argument)
         ns_uart_transmit((const uint8_t *)msg, (uint16_t)(sizeof(msg) - 1U));
     }
     static uint32_t durations_ms[10];
+#if TDIS_RAW_DUMP
+    static uint32_t s_tdis_raw_cy[TDIS_RAW_CAP];
+    static uint8_t s_tdis_raw_tag[TDIS_RAW_CAP];
+#endif
+    /* Across-round t_disabled aggregate (from per-round summaries). */
+    uint64_t tdis_avg_sum = 0U;
+    uint32_t tdis_min_all = UINT32_MAX;
+    uint32_t tdis_max_all = 0U;
     uint64_t far_sum_x10000 = 0U;
     uint32_t far_min_x10000 = UINT32_MAX;
     uint32_t far_max_x10000 = 0U;
@@ -825,7 +840,15 @@ void SMARM_Experiment_Task(void *argument)
             .sau_config_avg_cycles = 0U,
             .t_disabled_avg_cycles = 0U,
             .t_disabled_max_cycles = 0U,
+            .t_disabled_min_cycles = 0U,
+            .t_disabled_std_cycles = 0U,
             .attest_phase_ptr = &g_attest_phase,
+#if TDIS_RAW_DUMP
+            .raw_cycles = s_tdis_raw_cy,
+            .raw_tag = s_tdis_raw_tag,
+            .raw_cap = TDIS_RAW_CAP,
+            .raw_count = 0U,
+#endif
         };
         SECURE_ShuffledHMAC_secure(digest, challenge, sizeof(challenge), &attest_report);
         uint32_t end_tim2 = __HAL_TIM_GET_COUNTER(&htim2);
@@ -833,7 +856,18 @@ void SMARM_Experiment_Task(void *argument)
         uint32_t sau_avg = attest_report.sau_config_avg_cycles;
         uint32_t tdis_avg = attest_report.t_disabled_avg_cycles;
         uint32_t tdis_max = attest_report.t_disabled_max_cycles;
+        uint32_t tdis_min = attest_report.t_disabled_min_cycles;
+        uint32_t tdis_std = attest_report.t_disabled_std_cycles;
         g_secure_busy = 0U;
+        if (sau_avg != 0xBAD00001U && sau_avg != 0xBAD00002U) {
+            tdis_avg_sum += (uint64_t)tdis_avg;
+            if (tdis_min < tdis_min_all) {
+                tdis_min_all = tdis_min;
+            }
+            if (tdis_max > tdis_max_all) {
+                tdis_max_all = tdis_max;
+            }
+        }
         if (round == 0U) {
             const char back[] = "  NS: returned from SECURE_ShuffledHMAC_secure\r\n";
             ns_uart_transmit((const uint8_t *)back, (uint16_t)(sizeof(back) - 1U));
@@ -880,24 +914,56 @@ void SMARM_Experiment_Task(void *argument)
                         (uint32_t)(((uint64_t)tdis_avg * 1000U) / 110U);
                     uint32_t max_us_x1000 =
                         (uint32_t)(((uint64_t)tdis_max * 1000U) / 110U);
+                    uint32_t min_us_x1000 =
+                        (uint32_t)(((uint64_t)tdis_min * 1000U) / 110U);
+                    uint32_t std_us_x1000 =
+                        (uint32_t)(((uint64_t)tdis_std * 1000U) / 110U);
                     if (avg_us_x1000 >= 1000000U || max_us_x1000 >= 1000000U) {
-                        printf("t_disabled avg=%lu cy (%lu.%03lu ms), max=%lu cy (%lu.%03lu ms)\r\n",
+                        printf("t_disabled avg=%lu cy (%lu.%03lu ms), min=%lu cy (%lu.%03lu ms), max=%lu cy (%lu.%03lu ms), std=%lu cy (%lu.%03lu ms)\r\n",
                                (unsigned long)tdis_avg,
                                (unsigned long)(avg_us_x1000 / 1000000U),
                                (unsigned long)((avg_us_x1000 / 1000U) % 1000U),
+                               (unsigned long)tdis_min,
+                               (unsigned long)(min_us_x1000 / 1000000U),
+                               (unsigned long)((min_us_x1000 / 1000U) % 1000U),
                                (unsigned long)tdis_max,
                                (unsigned long)(max_us_x1000 / 1000000U),
-                               (unsigned long)((max_us_x1000 / 1000U) % 1000U));
+                               (unsigned long)((max_us_x1000 / 1000U) % 1000U),
+                               (unsigned long)tdis_std,
+                               (unsigned long)(std_us_x1000 / 1000000U),
+                               (unsigned long)((std_us_x1000 / 1000U) % 1000U));
                     } else {
-                        printf("t_disabled avg=%lu cy (%lu.%03lu us), max=%lu cy (%lu.%03lu us)\r\n",
+                        printf("t_disabled avg=%lu cy (%lu.%03lu us), min=%lu cy (%lu.%03lu us), max=%lu cy (%lu.%03lu us), std=%lu cy (%lu.%03lu us)\r\n",
                                (unsigned long)tdis_avg,
                                (unsigned long)(avg_us_x1000 / 1000U),
                                (unsigned long)(avg_us_x1000 % 1000U),
+                               (unsigned long)tdis_min,
+                               (unsigned long)(min_us_x1000 / 1000U),
+                               (unsigned long)(min_us_x1000 % 1000U),
                                (unsigned long)tdis_max,
                                (unsigned long)(max_us_x1000 / 1000U),
-                               (unsigned long)(max_us_x1000 % 1000U));
+                               (unsigned long)(max_us_x1000 % 1000U),
+                               (unsigned long)tdis_std,
+                               (unsigned long)(std_us_x1000 / 1000U),
+                               (unsigned long)(std_us_x1000 % 1000U));
                     }
                 }
+#if TDIS_RAW_DUMP
+                {
+                    uint32_t n = attest_report.raw_count;
+                    uint32_t i;
+                    printf("TDIS_RAW round=%u B=%u count=%lu\r\n",
+                           (unsigned)(round + 1U),
+                           (unsigned)ATTEST_BLOCK_SIZE,
+                           (unsigned long)n);
+                    for (i = 0U; i < n; i++) {
+                        printf("%c,%lu\r\n",
+                               (char)s_tdis_raw_tag[i],
+                               (unsigned long)s_tdis_raw_cy[i]);
+                    }
+                    printf("TDIS_RAW_END\r\n");
+                }
+#endif
             }
             xSemaphoreGive(uart_mutex);
         }
@@ -911,6 +977,8 @@ void SMARM_Experiment_Task(void *argument)
         printf("\r\n=== SUMMARY SMARM-Guard FAR @1000 Hz (10 rounds) ===\r\n");
 #elif USE_SNAP
         printf("\r\n=== SUMMARY SMARM-Snap FAR @1000 Hz (10 rounds) ===\r\n");
+#elif FAR_REF_NO_IRQ_DISABLE
+        printf("\r\n=== SUMMARY FAR-REF EVAL-ONLY (HMAC IRQ on) @1000 Hz (10 rounds) ===\r\n");
 #else
         printf("\r\n=== SUMMARY SMARM Baseline FAR @1000 Hz (10 rounds) ===\r\n");
 #endif
@@ -929,6 +997,37 @@ void SMARM_Experiment_Task(void *argument)
                    (unsigned long)(far_max_x10000 % 10000U));
         }
         printf("t_disabled: DWT over each IRQ-off window (110 MHz).\r\n");
+        if (tdis_min_all != UINT32_MAX) {
+            uint32_t tdis_mean10 = (uint32_t)(tdis_avg_sum / 10U);
+            uint32_t mean_us_x1000 =
+                (uint32_t)(((uint64_t)tdis_mean10 * 1000U) / 110U);
+            uint32_t min_us_x1000 =
+                (uint32_t)(((uint64_t)tdis_min_all * 1000U) / 110U);
+            uint32_t max_us_x1000 =
+                (uint32_t)(((uint64_t)tdis_max_all * 1000U) / 110U);
+            printf("t_disabled over 10 rounds: mean_of_avgs=%lu cy, min=%lu cy, max=%lu cy\r\n",
+                   (unsigned long)tdis_mean10,
+                   (unsigned long)tdis_min_all,
+                   (unsigned long)tdis_max_all);
+            if (mean_us_x1000 >= 1000000U) {
+                printf("  → mean=%lu.%03lu ms, min=%lu.%03lu ms, max=%lu.%03lu ms\r\n",
+                       (unsigned long)(mean_us_x1000 / 1000000U),
+                       (unsigned long)((mean_us_x1000 / 1000U) % 1000U),
+                       (unsigned long)(min_us_x1000 / 1000000U),
+                       (unsigned long)((min_us_x1000 / 1000U) % 1000U),
+                       (unsigned long)(max_us_x1000 / 1000000U),
+                       (unsigned long)((max_us_x1000 / 1000U) % 1000U));
+            } else {
+                printf("  → mean=%lu.%03lu us, min=%lu.%03lu us, max=%lu.%03lu us\r\n",
+                       (unsigned long)(mean_us_x1000 / 1000U),
+                       (unsigned long)(mean_us_x1000 % 1000U),
+                       (unsigned long)(min_us_x1000 / 1000U),
+                       (unsigned long)(min_us_x1000 % 1000U),
+                       (unsigned long)(max_us_x1000 / 1000U),
+                       (unsigned long)(max_us_x1000 % 1000U));
+            }
+            printf("  (std: use per-round std=… line; or mean of those 10 stds)\r\n");
+        }
         printf("==========================================\r\n");
         printf("Done. Press RESET to run again.\r\n");
         xSemaphoreGive(uart_mutex);

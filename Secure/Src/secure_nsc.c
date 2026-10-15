@@ -76,6 +76,27 @@ static void attest_enable_dwt(void)
     DWT->CTRL |= DWT_CTRL_CYCCNTENA_Msk;
 }
 
+/* Integer sqrt for population stddev (cycles). */
+static uint32_t tdis_isqrt_u64(uint64_t x)
+{
+    uint64_t op = x;
+    uint64_t res = 0U;
+    uint64_t one = 1ULL << 62;
+    while (one > op) {
+        one >>= 2;
+    }
+    while (one != 0U) {
+        if (op >= res + one) {
+            op -= res + one;
+            res = (res >> 1) + one;
+        } else {
+            res >>= 1;
+        }
+        one >>= 2;
+    }
+    return (uint32_t)res;
+}
+
 #if USE_SAU_APPROACH
 
 /* Program one enabled Non-Secure SAU region [start, end_inclusive]. */
@@ -343,6 +364,11 @@ void SECURE_ShuffledHMAC_secure(uint8_t *out_digest,
             report->sau_config_avg_cycles = 0xBAD00001U;
             report->t_disabled_avg_cycles = 0U;
             report->t_disabled_max_cycles = 0U;
+            report->t_disabled_min_cycles = 0U;
+            report->t_disabled_std_cycles = 0U;
+#if TDIS_RAW_DUMP
+            report->raw_count = 0U;
+#endif
         }
         return;
     }
@@ -353,6 +379,11 @@ void SECURE_ShuffledHMAC_secure(uint8_t *out_digest,
                 report->sau_config_avg_cycles = 0xBAD00002U;
                 report->t_disabled_avg_cycles = 0U;
                 report->t_disabled_max_cycles = 0U;
+                report->t_disabled_min_cycles = 0U;
+                report->t_disabled_std_cycles = 0U;
+#if TDIS_RAW_DUMP
+                report->raw_count = 0U;
+#endif
             }
             return;
         }
@@ -374,8 +405,33 @@ void SECURE_ShuffledHMAC_secure(uint8_t *out_digest,
     /* One NS round: ATTEST_PASSES × |M| bytes (default: 1 × 128 KiB). */
     hmac_sha256_initialize(&hmac, (const uint8_t*)key, strlen((const char *)key));
     uint64_t tdis_cycles_total = 0U;
+    uint64_t tdis_sumsq = 0U;
     uint32_t tdis_windows = 0U;
     uint32_t tdis_max = 0U;
+    uint32_t tdis_min = 0xFFFFFFFFU;
+#if TDIS_RAW_DUMP
+    uint32_t *raw_cy = NULL;
+    uint8_t *raw_tg = NULL;
+    uint32_t raw_cap = 0U;
+    uint32_t raw_n = 0U;
+    if (report != NULL) {
+      report->raw_count = 0U;
+      if (report->raw_cycles != NULL && report->raw_tag != NULL &&
+          report->raw_cap > 0U) {
+        raw_cy = cmse_check_address_range(report->raw_cycles,
+                                          report->raw_cap * sizeof(uint32_t),
+                                          CMSE_NONSECURE);
+        raw_tg = cmse_check_address_range(report->raw_tag, report->raw_cap,
+                                          CMSE_NONSECURE);
+        if (raw_cy != NULL && raw_tg != NULL) {
+          raw_cap = report->raw_cap;
+        } else {
+          raw_cy = NULL;
+          raw_tg = NULL;
+        }
+      }
+    }
+#endif
 #if USE_SAU_APPROACH
     uint64_t sau_cycles_total = 0U;
     uint32_t sau_lock_blocks = 0U;
@@ -402,6 +458,11 @@ void SECURE_ShuffledHMAC_secure(uint8_t *out_digest,
                     report->sau_config_avg_cycles = 0U;
                     report->t_disabled_avg_cycles = 0U;
                     report->t_disabled_max_cycles = 0U;
+                    report->t_disabled_min_cycles = 0U;
+                    report->t_disabled_std_cycles = 0U;
+#if TDIS_RAW_DUMP
+                    report->raw_count = 0U;
+#endif
                 }
                 return;
             }
@@ -419,18 +480,40 @@ void SECURE_ShuffledHMAC_secure(uint8_t *out_digest,
                 uint32_t unlock_c;
                 sau_cycles_total += (uint64_t)lock_c;
                 tdis_cycles_total += (uint64_t)lock_c;
+                tdis_sumsq += (uint64_t)lock_c * (uint64_t)lock_c;
                 tdis_windows++;
                 if (lock_c > tdis_max) {
                     tdis_max = lock_c;
                 }
+                if (lock_c < tdis_min) {
+                    tdis_min = lock_c;
+                }
+#if TDIS_RAW_DUMP
+                if (raw_cy != NULL && raw_n < raw_cap) {
+                    raw_cy[raw_n] = lock_c;
+                    raw_tg[raw_n] = (uint8_t)'L';
+                    raw_n++;
+                }
+#endif
                 hmac_sha256_update(&hmac, blk, BLOCK_SIZE);
                 unlock_c = sau_memory_unlock_window();
                 sau_cycles_total += (uint64_t)unlock_c;
                 tdis_cycles_total += (uint64_t)unlock_c;
+                tdis_sumsq += (uint64_t)unlock_c * (uint64_t)unlock_c;
                 tdis_windows++;
                 if (unlock_c > tdis_max) {
                     tdis_max = unlock_c;
                 }
+                if (unlock_c < tdis_min) {
+                    tdis_min = unlock_c;
+                }
+#if TDIS_RAW_DUMP
+                if (raw_cy != NULL && raw_n < raw_cap) {
+                    raw_cy[raw_n] = unlock_c;
+                    raw_tg[raw_n] = (uint8_t)'U';
+                    raw_n++;
+                }
+#endif
                 sau_lock_blocks++;
             }
 #elif USE_SNAP
@@ -445,15 +528,30 @@ void SECURE_ShuffledHMAC_secure(uint8_t *out_digest,
                 __enable_irq();
                 dt = t1 - t0;
                 tdis_cycles_total += (uint64_t)dt;
+                tdis_sumsq += (uint64_t)dt * (uint64_t)dt;
                 tdis_windows++;
                 if (dt > tdis_max) {
                     tdis_max = dt;
                 }
+                if (dt < tdis_min) {
+                    tdis_min = dt;
+                }
+#if TDIS_RAW_DUMP
+                if (raw_cy != NULL && raw_n < raw_cap) {
+                    raw_cy[raw_n] = dt;
+                    raw_tg[raw_n] = (uint8_t)'W';
+                    raw_n++;
+                }
+#endif
             }
             hmac_sha256_update(&hmac, hmac_blk_scratch, BLOCK_SIZE);
 #else
-            /* Baseline SMARM: hash the live block with interrupts disabled. */
+            /* Baseline SMARM: hash the live block (IRQ-off unless FAR reference). */
             {
+#if FAR_REF_NO_IRQ_DISABLE
+                /* EVAL-ONLY: same HMAC workload, no IRQ mask — not a secure design. */
+                hmac_sha256_update(&hmac, blk, BLOCK_SIZE);
+#else
                 uint32_t t0;
                 uint32_t t1;
                 uint32_t dt;
@@ -464,10 +562,22 @@ void SECURE_ShuffledHMAC_secure(uint8_t *out_digest,
                 __enable_irq();
                 dt = t1 - t0;
                 tdis_cycles_total += (uint64_t)dt;
+                tdis_sumsq += (uint64_t)dt * (uint64_t)dt;
                 tdis_windows++;
                 if (dt > tdis_max) {
                     tdis_max = dt;
                 }
+                if (dt < tdis_min) {
+                    tdis_min = dt;
+                }
+#if TDIS_RAW_DUMP
+                if (raw_cy != NULL && raw_n < raw_cap) {
+                    raw_cy[raw_n] = dt;
+                    raw_tg[raw_n] = (uint8_t)'W';
+                    raw_n++;
+                }
+#endif
+#endif /* FAR_REF_NO_IRQ_DISABLE */
             }
 #endif
         }
@@ -493,6 +603,20 @@ void SECURE_ShuffledHMAC_secure(uint8_t *out_digest,
                 ? (uint32_t)(tdis_cycles_total / (uint64_t)tdis_windows)
                 : 0U;
         report->t_disabled_max_cycles = tdis_max;
+        report->t_disabled_min_cycles =
+            (tdis_windows > 0U) ? tdis_min : 0U;
+        if (tdis_windows > 0U) {
+            uint64_t mean = tdis_cycles_total / (uint64_t)tdis_windows;
+            uint64_t mean_sq = mean * mean;
+            uint64_t second = tdis_sumsq / (uint64_t)tdis_windows;
+            report->t_disabled_std_cycles =
+                (second >= mean_sq) ? tdis_isqrt_u64(second - mean_sq) : 0U;
+        } else {
+            report->t_disabled_std_cycles = 0U;
+        }
+#if TDIS_RAW_DUMP
+        report->raw_count = raw_n;
+#endif
     }
 }
 

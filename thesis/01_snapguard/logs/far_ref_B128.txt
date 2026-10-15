@@ -1,0 +1,46 @@
+
+[NS boot] SMARM Baseline |M|=128KiB @0x08060000, 1 pass.
+UART log: ST-Link VCP=USART3 (COMx) + LPUART1 PG7 — 115200. Open terminal BEFORE reset.
+Starting FreeRTOS (FAR REF EVAL-ONLY: Baseline HMAC no IRQ-disable + NormalTask 1000 Hz)...
+FreeRTOS tasks created (FAR REF EVAL-ONLY + NormalTask 1000 Hz). Starting scheduler...
+SMARM_Experiment_Task running (FAR + NormalTask 1000 Hz).
+
+FAR-REF EVAL-ONLY (NOT secure) B=128 |M|=128KiB @0x08060000, 1 pass/round, HMAC with IRQ enabled, FAR @1000 Hz (10 rounds).
+Allocating secure context (8 KiB)...
+Secure context OK. Waiting 1 s then starting rounds...
+  NS: SECURE_LEDToggle OK (SG path alive)
+Calling SECURE_ShuffledHMAC_secure (round 1)...
+  NS: returned from SECURE_ShuffledHMAC_secure
+Returned from secure attestation (round 1).
+Round 1: Runtime=144 ms, NS=144/144 activations, FAR=1.0000
+t_disabled avg=0 cy (0.000 us), min=0 cy (0.000 us), max=0 cy (0.000 us), std=0 cy (0.000 us)
+Round 2: Runtime=144 ms, NS=144/144 activations, FAR=1.0000
+t_disabled avg=0 cy (0.000 us), min=0 cy (0.000 us), max=0 cy (0.000 us), std=0 cy (0.000 us)
+Round 3: Runtime=144 ms, NS=144/144 activations, FAR=1.0000
+t_disabled avg=0 cy (0.000 us), min=0 cy (0.000 us), max=0 cy (0.000 us), std=0 cy (0.000 us)
+.Round 4: Runtime=144 ms, NS=144/144 activations, FAR=1.0000
+t_disabled avg=0 cy (0.000 us), min=0 cy (0.000 us), max=0 cy (0.000 us), std=0 cy (0.000 us)
+Round 5: Runtime=144 ms, NS=144/144 activations, FAR=1.0000
+t_disabled avg=0 cy (0.000 us), min=0 cy (0.000 us), max=0 cy (0.000 us), std=0 cy (0.000 us)
+Round 6: Runtime=144 ms, NS=144/144 activations, FAR=1.0000
+t_disabled avg=0 cy (0.000 us), min=0 cy (0.000 us), max=0 cy (0.000 us), std=0 cy (0.000 us)
+.Round 7: Runtime=144 ms, NS=144/144 activations, FAR=1.0000
+t_disabled avg=0 cy (0.000 us), min=0 cy (0.000 us), max=0 cy (0.000 us), std=0 cy (0.000 us)
+Round 8: Runtime=144 ms, NS=144/144 activations, FAR=1.0000
+t_disabled avg=0 cy (0.000 us), min=0 cy (0.000 us), max=0 cy (0.000 us), std=0 cy (0.000 us)
+Round 9: Runtime=144 ms, NS=144/144 activations, FAR=1.0000
+t_disabled avg=0 cy (0.000 us), min=0 cy (0.000 us), max=0 cy (0.000 us), std=0 cy (0.000 us)
+Round 10: Runtime=144 ms, NS=144/144 activations, FAR=1.0000
+t_disabled avg=0 cy (0.000 us), min=0 cy (0.000 us), max=0 cy (0.000 us), std=0 cy (0.000 us)
+
+=== SUMMARY FAR-REF EVAL-ONLY (HMAC IRQ on) @1000 Hz (10 rounds) ===
+Mean: 144 ms
+Min:  144 ms
+Max:  144 ms
+FAR mean=1.0000, min=1.0000, max=1.0000
+t_disabled: DWT over each IRQ-off window (110 MHz).
+t_disabled over 10 rounds: mean_of_avgs=0 cy, min=0 cy, max=0 cy
+  → mean=0.000 us, min=0.000 us, max=0.000 us
+  (std: use per-round std=… line; or mean of those 10 stds)
+==========================================
+Done. Press RESET to run again.
