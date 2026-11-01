@@ -20,30 +20,37 @@
 //#include "aes-gcm/aes.h"   // รวม AES CBC, CTR, ECB ไว้หมด
 #include "Aesnew/aes.h"
 #include "arm_cmse.h"
-//#include "Speck/speck.h"
-//#include "Speck/ff1_speck.h"
+#if ATTEST_SHUFFLE_MODE == ATTEST_SHUFFLE_FPE
+#include "Speck/ff1_speck.h"
+#endif
 
 #define SHA256_DIGEST_SIZE 32
 #define BLOCK_SIZE ATTEST_BLOCK_SIZE
 /*
- * Attested window (all three modes), selected by ATTEST_FAULT_DEMO:
- *   0: |M| = 128 KiB @ 0x08060000..0x0807FFFF (no live NS XIP; paper numbers)
- *   1: |M| = 256 KiB @ 0x08040000..0x0807FFFF (full NS flash incl. FreeRTOS XIP)
- *      Guard will SecureFault when NS fetches from a locked block — Q3 demo only.
- * Guard: every block SAU lock → HMAC (IRQ on) → SAU unlock.
+ * Attested window (all three modes):
+ *   ATTEST_FAULT_DEMO=1: |M|=256 KiB @ 0x08040000 (Guard Q3 demo; live NS XIP)
+ *   ATTEST_NS_256K_REGION=1: |M|=256 KiB @ 0x08040000..0x0807FFFF (primary NS)
+ *   ATTEST_TABLE_I_REGION=1: |M|=512 KiB @ 0x08000000..0x0807FFFF (historical)
+ *   else: |M|=128 KiB @ 0x08060000..0x0807FFFF (FAR / Wheel default)
  *
- * Single shuffled traversal (ATTEST_PASSES = 1).
+ * Single shuffled traversal (ATTEST_PASSES = 1) unless otherwise noted.
  *
- * Professor lock sequence:
+ * Professor lock sequence (Guard only):
  *   disable IRQ; DSB; SAU->CTRL disable; configure regions 6/7;
  *   SAU->CTRL enable; DSB; ISB; enable IRQ — then HMAC with IRQ on.
  */
 #if ATTEST_FAULT_DEMO
 #define ATTEST_DATA_BASE   0x08040000U
 #define TOTAL_SIZE         0x40000U      /* 256 KiB = entire NS flash bank */
+#elif ATTEST_NS_256K_REGION
+#define ATTEST_DATA_BASE   0x08040000U
+#define TOTAL_SIZE         0x40000U      /* 256 KiB Non-Secure flash only */
+#elif ATTEST_TABLE_I_REGION
+#define ATTEST_DATA_BASE   0x08000000U
+#define TOTAL_SIZE         0x80000U      /* 512 KiB Access Table I window */
 #else
 #define ATTEST_DATA_BASE   0x08060000U
-#define TOTAL_SIZE         0x20000U      /* 128 KiB pure Guard window */
+#define TOTAL_SIZE         0x20000U      /* 128 KiB pure Guard / FAR window */
 #endif
 #define ATTEST_PASSES      1U
 #define BLOCKS             (TOTAL_SIZE / BLOCK_SIZE)
@@ -236,29 +243,49 @@ CMSE_NS_ENTRY void SECURE_RegisterCallback(SECURE_CallbackIDTypeDef CallbackId, 
 }
 
 uint8_t *real_memory = (uint8_t *)ATTEST_DATA_BASE;
-static const uint8_t key[] = "MySecureKey123"; /* Example key */
+static const uint8_t key[] = "MySecureKey123"; /* Example master key k */
 static hmac_sha256 hmac;
 #if USE_SNAP
 static uint8_t hmac_blk_scratch[BLOCK_SIZE];
 #endif
 
-// ---- Key/IV derivation: HMAC(secret, challenge) -> 32B -> 16B key + 16B iv
+/*
+ * Domain-separated KDF (reviewer key separation):
+ *   KDF(label, k) := HMAC-SHA256(k, label)  with one-byte label
+ *   k_prp := KDF(0x00, k)   — order generation (AES-CTR / FFX key material)
+ *   k_mac := KDF(0x01, k)   — attestation HMAC only
+ * No authenticated hdr in this change.
+ */
+#define KDF_LABEL_PRP  ((uint8_t)0x00)
+#define KDF_LABEL_MAC  ((uint8_t)0x01)
+
+static void kdf_derive_32(uint8_t out32[32], uint8_t label)
+{
+    uint8_t lab = label;
+    hmac_sha256_initialize(&hmac, (const uint8_t *)key, strlen((const char *)key));
+    hmac_sha256_update(&hmac, &lab, 1U);
+    hmac_sha256_finalize(&hmac, NULL, 0);
+    memcpy(out32, hmac.digest, 32);
+}
+
+/* Seed for shuffle/PRNG/FFX: HMAC-SHA256(k_prp, challenge) -> 16B AES key + 16B IV */
 static void derive_aes_key_iv_from_challenge(uint8_t key16[16],
                                              uint8_t iv16[16],
+                                             const uint8_t *k_prp32,
                                              const uint8_t *challenge,
                                              size_t clen)
 {
-    hmac_sha256_initialize(&hmac, (const uint8_t*)key, strlen((const char *)key));
+    hmac_sha256_initialize(&hmac, k_prp32, 32U);
     if (challenge && clen) {
         hmac_sha256_update(&hmac, challenge, clen);
     } else {
-        // fallback entropy so it’s never constant
+        /* fallback entropy so it’s never constant */
         uint32_t tick = (uint32_t)SysTick->VAL;
-        hmac_sha256_update(&hmac, (uint8_t*)&tick, sizeof(tick));
+        hmac_sha256_update(&hmac, (uint8_t *)&tick, sizeof(tick));
     }
     hmac_sha256_finalize(&hmac, NULL, 0);
     memcpy(key16, hmac.digest, 16);
-    memcpy(iv16,  hmac.digest + 16, 16);
+    memcpy(iv16, hmac.digest + 16, 16);
 }
 
 // ---- PRNG: AES-CTR keystream -> 32-bit samples
@@ -307,7 +334,8 @@ static int prng_uniform_u32(ctr_prng_t *p, int n)
     }
 }
 
-// ---- Fisher–Yates using the PRNG above
+// ---- Fisher–Yates using the PRNG above (Original SMARM only)
+#if ATTEST_SHUFFLE_MODE == ATTEST_SHUFFLE_ORIGINAL
 static void shuffle_secure_aes_ctr(int *arr, int n,
                                    const uint8_t key16[16],
                                    const uint8_t iv16[16])
@@ -320,6 +348,48 @@ static void shuffle_secure_aes_ctr(int *arr, int n,
         int tmp = arr[i]; arr[i] = arr[j]; arr[j] = tmp;
     }
 }
+#endif /* ATTEST_SHUFFLE_ORIGINAL */
+
+#if ATTEST_SHUFFLE_MODE == ATTEST_SHUFFLE_PRNG
+/* Ported from bitarray @ 65daa56 SECURE_RTSMARM_ShuffledHMAC_secure helpers.
+ * Same always-scan FindKthZero; IRQ-off HMAC is applied in the shared loop. */
+#define RTSMARM_BITARRAY_BYTES  (((BLOCKS) + 7) / 8)
+static uint8_t rtsmarm_used_bits[RTSMARM_BITARRAY_BYTES];
+
+static int rtsmarm_get_bit(int i)
+{
+    return (rtsmarm_used_bits[i / 8] >> (i % 8)) & 1;
+}
+
+static void rtsmarm_set_bit(int i)
+{
+    rtsmarm_used_bits[i / 8] |= (uint8_t)(1U << (i % 8));
+}
+
+static void rtsmarm_clear_bits(int n)
+{
+    memset(rtsmarm_used_bits, 0, (size_t)((n + 7) / 8));
+}
+
+static int rtsmarm_find_kth_zero(int n, int k)
+{
+    int count = 0;
+    int result = 0;
+    for (int i = 0; i < n; i++) {
+        if (rtsmarm_get_bit(i) == 0) {
+            if (count == k) {
+                result = i;
+            }
+            count++;
+        }
+    }
+    return result;
+}
+#endif /* ATTEST_SHUFFLE_PRNG */
+
+#if ATTEST_SHUFFLE_MODE == ATTEST_SHUFFLE_FPE
+static FF1_Key_Speck s_ff1_speck_key;
+#endif
 
 // ---- Non-secure callable: secure shuffle + HMAC over blocks
 __attribute__((cmse_nonsecure_entry))
@@ -361,9 +431,16 @@ void SECURE_ShuffledHMAC_secure(uint8_t *out_digest,
     BSP_LED_Toggle(LED1);
     attest_phase_set(ATTEST_PHASE_ENTER);
 
+#if ATTEST_SHUFFLE_MODE == ATTEST_SHUFFLE_ORIGINAL
     static int indices[BLOCKS];
-    uint8_t key16[16], iv16[16], iv_pass[16];
-    derive_aes_key_iv_from_challenge(key16, iv16, challenge, challenge_len);
+    uint8_t iv_pass[16];
+#endif
+    uint8_t k_prp[32];
+    uint8_t k_mac[32];
+    uint8_t key16[16], iv16[16];
+    kdf_derive_32(k_prp, KDF_LABEL_PRP);
+    kdf_derive_32(k_mac, KDF_LABEL_MAC);
+    derive_aes_key_iv_from_challenge(key16, iv16, k_prp, challenge, challenge_len);
 
     attest_enable_dwt();
 #if USE_SAU_APPROACH
@@ -372,7 +449,7 @@ void SECURE_ShuffledHMAC_secure(uint8_t *out_digest,
 #endif
 
     /* One NS round: ATTEST_PASSES × |M| bytes (default: 1 × 128 KiB). */
-    hmac_sha256_initialize(&hmac, (const uint8_t*)key, strlen((const char *)key));
+    hmac_sha256_initialize(&hmac, k_mac, 32U);
     uint64_t tdis_cycles_total = 0U;
     uint32_t tdis_windows = 0U;
     uint32_t tdis_max = 0U;
@@ -382,16 +459,61 @@ void SECURE_ShuffledHMAC_secure(uint8_t *out_digest,
 #endif
 
     for (uint32_t pass = 0U; pass < ATTEST_PASSES; pass++) {
+#if ATTEST_SHUFFLE_MODE == ATTEST_SHUFFLE_ORIGINAL
         for (int i = 0; i < BLOCKS; i++) {
             indices[i] = i;
         }
         memcpy(iv_pass, iv16, sizeof(iv_pass));
         iv_pass[0] ^= (uint8_t)pass; /* distinct shuffle per pass */
         shuffle_secure_aes_ctr(indices, BLOCKS, key16, iv_pass);
+#elif ATTEST_SHUFFLE_MODE == ATTEST_SHUFFLE_PRNG
+        ctr_prng_t prng;
+        uint8_t iv_pass_prng[16];
+        memcpy(iv_pass_prng, iv16, sizeof(iv_pass_prng));
+        iv_pass_prng[0] ^= (uint8_t)pass;
+        prng_init(&prng, key16, iv_pass_prng);
+        rtsmarm_clear_bits(BLOCKS);
+#elif ATTEST_SHUFFLE_MODE == ATTEST_SHUFFLE_FPE
+        /* Historical tip: tweak = first 4 B of challenge (public). */
+        uint32_t ff1_tweak = 0U;
+        if (challenge != NULL && challenge_len >= 4U) {
+            ff1_tweak = ((uint32_t)challenge[0] << 24) |
+                        ((uint32_t)challenge[1] << 16) |
+                        ((uint32_t)challenge[2] << 8) |
+                        (uint32_t)challenge[3];
+        }
+        ff1_tweak ^= (uint32_t)pass;
+        FF1_SetKey_Speck(&s_ff1_speck_key, key16);
+#endif
         attest_phase_set(ATTEST_PHASE_SHUFFLE);
 
         for (int i = 0; i < BLOCKS; i++) {
-            const uint8_t *blk = &real_memory[(size_t)indices[i] * BLOCK_SIZE];
+            const uint8_t *blk;
+#if ATTEST_SHUFFLE_MODE == ATTEST_SHUFFLE_ORIGINAL
+            blk = &real_memory[(size_t)indices[i] * BLOCK_SIZE];
+#elif ATTEST_SHUFFLE_MODE == ATTEST_SHUFFLE_PRNG
+            {
+                int remaining = BLOCKS - i;
+                int k = prng_uniform_u32(&prng, remaining);
+                int idx = rtsmarm_find_kth_zero(BLOCKS, k);
+                rtsmarm_set_bit(idx);
+                blk = &real_memory[(size_t)idx * BLOCK_SIZE];
+            }
+#else /* ATTEST_SHUFFLE_FPE */
+            {
+                uint32_t idx = FF1Permute_Speck((uint32_t)i, (uint32_t)BLOCKS,
+                                                &s_ff1_speck_key, ff1_tweak);
+                if (idx >= (uint32_t)BLOCKS) {
+                    if (report != NULL) {
+                        report->sau_config_avg_cycles = 0xBAD00003U;
+                        report->t_disabled_avg_cycles = 0U;
+                        report->t_disabled_max_cycles = 0U;
+                    }
+                    return;
+                }
+                blk = &real_memory[(size_t)idx * BLOCK_SIZE];
+            }
+#endif
 #if USE_SAU_APPROACH
             if (((uint32_t)blk < ATTEST_DATA_BASE) ||
                 (((uint32_t)blk + (uint32_t)BLOCK_SIZE) > (ATTEST_DATA_BASE + TOTAL_SIZE)) ||
@@ -452,8 +574,12 @@ void SECURE_ShuffledHMAC_secure(uint8_t *out_digest,
             }
             hmac_sha256_update(&hmac, hmac_blk_scratch, BLOCK_SIZE);
 #else
-            /* Baseline SMARM: hash the live block with interrupts disabled. */
+            /* Baseline SMARM: hash the live block (IRQ-off unless FAR reference). */
             {
+#if FAR_REF_NO_IRQ_DISABLE
+                /* EVAL-ONLY: same HMAC workload, no IRQ mask — not a secure design. */
+                hmac_sha256_update(&hmac, blk, BLOCK_SIZE);
+#else
                 uint32_t t0;
                 uint32_t t1;
                 uint32_t dt;
@@ -468,6 +594,7 @@ void SECURE_ShuffledHMAC_secure(uint8_t *out_digest,
                 if (dt > tdis_max) {
                     tdis_max = dt;
                 }
+#endif /* FAR_REF_NO_IRQ_DISABLE */
             }
 #endif
         }

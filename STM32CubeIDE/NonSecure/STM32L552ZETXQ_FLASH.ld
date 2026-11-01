@@ -162,6 +162,15 @@ SECTIONS
     __bss_end__ = _ebss;
   } >RAM
 
+  /* Survives NRST. Startup zeros only _sbss.._ebss, so a boot counter here
+   * stays put across a hard reset and is cleared only when SRAM is lost. */
+  .noinit (NOLOAD) :
+  {
+    . = ALIGN(8);
+    *(.noinit)
+    *(.noinit*)
+  } >RAM
+
   /* User_heap_stack section, used to check that there is enough "RAM" Ram  type memory left */
   ._user_heap_stack :
   {
