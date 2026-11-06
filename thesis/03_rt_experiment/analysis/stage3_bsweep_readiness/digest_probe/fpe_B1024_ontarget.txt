@@ -1,0 +1,4 @@
+mode=fpe
+B=1024
+challenge=0123456789abcdeffedcba9876543210
+digest=1aedc694a73a1ff5ddbe6a32ebf0d67d80f8b16985256f0981e17ec046366caf

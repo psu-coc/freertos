@@ -1,0 +1,69 @@
+{
+  "tag": "dmr_10Hz10Hz_original_B2048_r2",
+  "uart_meta": {
+    "raw_bytes": 36027,
+    "T0_us": 2030445,
+    "Tend_us": 32030445,
+    "tick0": 2019,
+    "tick_end": 18419,
+    "tick_delta": 16400,
+    "tick_expected": 30000,
+    "sonar_ovf": 0,
+    "wheel_ovf": 0,
+    "P_us": 100000
+  },
+  "dmr": {
+    "n_rows": 330,
+    "tasks": {
+      "sonar": {
+        "n_rows": 165,
+        "device_counts": {
+          "ontime": 2,
+          "late": 162,
+          "incomplete_miss": 1
+        },
+        "recomputed_counts": {
+          "ontime": 2,
+          "late": 162,
+          "incomplete_miss": 1
+        },
+        "status_mismatches": 0,
+        "eligible": 165,
+        "miss": 163,
+        "dmr": 0.9878787878787879,
+        "q1_map_mismatches": 0,
+        "deadline_mismatches": 0,
+        "period_us": 100000,
+        "has_window_open": 0
+      },
+      "wheel": {
+        "n_rows": 165,
+        "device_counts": {
+          "ontime": 2,
+          "late": 162,
+          "incomplete_miss": 1
+        },
+        "recomputed_counts": {
+          "ontime": 2,
+          "late": 162,
+          "incomplete_miss": 1
+        },
+        "status_mismatches": 0,
+        "eligible": 165,
+        "miss": 163,
+        "dmr": 0.9878787878787879,
+        "q1_map_mismatches": 0,
+        "deadline_mismatches": 0,
+        "period_us": 100000,
+        "has_window_open": 164
+      }
+    }
+  },
+  "capture_valid": true,
+  "tim2_obs_span_us": 30000000,
+  "tim2_obs_ok": true,
+  "tick_delta": 16400,
+  "tick_expected": 30000,
+  "tick_lag": 13600,
+  "tick_sync_ok": false
+}

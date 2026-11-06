@@ -1,0 +1,5 @@
+mode=fpe
+patterned=1
+host=3244441f1c6eee9039c47c753d846c34ac94d46b12205ac31ff5d55e3a1a2f65
+ontarget=3244441f1c6eee9039c47c753d846c34ac94d46b12205ac31ff5d55e3a1a2f65
+match=True

@@ -1,0 +1,56 @@
+{
+  "tag": "dmr_10Hz10Hz_noattest_inj150000_r1",
+  "uart_meta": {
+    "raw_bytes": 22243,
+    "T0_us": 2028337,
+    "Tend_us": 32028337,
+    "tick0": 2019,
+    "tick_end": 32020,
+    "tick_delta": 30001,
+    "tick_expected": 30000,
+    "sonar_ovf": 0,
+    "wheel_ovf": 0,
+    "P_us": 100000
+  },
+  "dmr": {
+    "n_rows": 201,
+    "tasks": {
+      "sonar": {
+        "n_rows": 1,
+        "device_counts": {
+          "censored": 1
+        },
+        "recomputed_counts": {
+          "censored": 1
+        },
+        "status_mismatches": 0,
+        "eligible": 0,
+        "miss": 0,
+        "dmr": null,
+        "q1_map_mismatches": 0,
+        "deadline_mismatches": 0,
+        "period_us": 100000,
+        "has_window_open": 0
+      },
+      "wheel": {
+        "n_rows": 200,
+        "device_counts": {
+          "late": 200
+        },
+        "recomputed_counts": {
+          "late": 200
+        },
+        "status_mismatches": 0,
+        "eligible": 200,
+        "miss": 200,
+        "dmr": 1.0,
+        "q1_map_mismatches": 0,
+        "deadline_mismatches": 0,
+        "period_us": 100000,
+        "has_window_open": 0
+      }
+    }
+  },
+  "capture_valid": true,
+  "tick_sync_ok": true
+}

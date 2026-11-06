@@ -1,0 +1,55 @@
+{
+  "tag": "dmr_Wheel1000Hz_fpe_B64_r1",
+  "uart_meta": {
+    "raw_bytes": 304050,
+    "T0_us": 2022667,
+    "Tend_us": 5022667,
+    "tick0": 2012,
+    "tick_end": 5012,
+    "tick_delta": 3000,
+    "tick_expected": 3000,
+    "sonar_ovf": 0,
+    "wheel_ovf": 0,
+    "P_us": 1000
+  },
+  "dmr": {
+    "n_rows": 3001,
+    "tasks": {
+      "sonar": {
+        "n_rows": 0,
+        "eligible": 0,
+        "miss": 0,
+        "dmr": null,
+        "counts": {},
+        "invalid": false,
+        "notes": "no rows"
+      },
+      "wheel": {
+        "n_rows": 3001,
+        "device_counts": {
+          "ontime": 3000,
+          "censored": 1
+        },
+        "recomputed_counts": {
+          "ontime": 3000,
+          "censored": 1
+        },
+        "status_mismatches": 0,
+        "eligible": 3000,
+        "miss": 0,
+        "dmr": 0.0,
+        "q1_map_mismatches": 0,
+        "deadline_mismatches": 0,
+        "period_us": 1000,
+        "has_window_open": 3000
+      }
+    }
+  },
+  "capture_valid": true,
+  "tim2_obs_span_us": 3000000,
+  "tim2_obs_ok": true,
+  "tick_delta": 3000,
+  "tick_expected": 3000,
+  "tick_lag": 0,
+  "tick_sync_ok": true
+}

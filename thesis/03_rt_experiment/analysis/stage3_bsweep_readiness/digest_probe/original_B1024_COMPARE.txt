@@ -1,0 +1,5 @@
+mode=original
+patterned=1
+host=782422b4b7ae3468b415b689d9dbb46bf0b92451beff2c11ff038245a22de0dc
+ontarget=782422b4b7ae3468b415b689d9dbb46bf0b92451beff2c11ff038245a22de0dc
+match=True

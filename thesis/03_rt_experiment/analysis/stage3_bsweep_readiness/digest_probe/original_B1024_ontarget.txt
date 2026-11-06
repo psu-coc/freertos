@@ -1,0 +1,4 @@
+mode=original
+B=1024
+challenge=0123456789abcdeffedcba9876543210
+digest=782422b4b7ae3468b415b689d9dbb46bf0b92451beff2c11ff038245a22de0dc

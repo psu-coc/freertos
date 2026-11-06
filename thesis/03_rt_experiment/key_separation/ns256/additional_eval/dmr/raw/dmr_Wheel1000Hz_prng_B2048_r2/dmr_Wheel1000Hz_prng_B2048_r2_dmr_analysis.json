@@ -1,0 +1,57 @@
+{
+  "tag": "dmr_Wheel1000Hz_prng_B2048_r2",
+  "uart_meta": {
+    "raw_bytes": 164996,
+    "T0_us": 2022668,
+    "Tend_us": 5022668,
+    "tick0": 2012,
+    "tick_end": 3674,
+    "tick_delta": 1662,
+    "tick_expected": 3000,
+    "sonar_ovf": 0,
+    "wheel_ovf": 0,
+    "P_us": 1000
+  },
+  "dmr": {
+    "n_rows": 1663,
+    "tasks": {
+      "sonar": {
+        "n_rows": 0,
+        "eligible": 0,
+        "miss": 0,
+        "dmr": null,
+        "counts": {},
+        "invalid": false,
+        "notes": "no rows"
+      },
+      "wheel": {
+        "n_rows": 1663,
+        "device_counts": {
+          "ontime": 2,
+          "late": 1660,
+          "incomplete_miss": 1
+        },
+        "recomputed_counts": {
+          "ontime": 2,
+          "late": 1660,
+          "incomplete_miss": 1
+        },
+        "status_mismatches": 0,
+        "eligible": 1663,
+        "miss": 1661,
+        "dmr": 0.9987973541791942,
+        "q1_map_mismatches": 0,
+        "deadline_mismatches": 0,
+        "period_us": 1000,
+        "has_window_open": 1562
+      }
+    }
+  },
+  "capture_valid": true,
+  "tim2_obs_span_us": 3000000,
+  "tim2_obs_ok": true,
+  "tick_delta": 1662,
+  "tick_expected": 3000,
+  "tick_lag": 1338,
+  "tick_sync_ok": false
+}

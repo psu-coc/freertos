@@ -1,0 +1,65 @@
+{
+  "tag": "dmr_10Hz10Hz_original_B1024_r3",
+  "uart_meta": {
+    "raw_bytes": 65028,
+    "T0_us": 2030445,
+    "Tend_us": 32030445,
+    "tick0": 2019,
+    "tick_end": 32019,
+    "tick_delta": 30000,
+    "tick_expected": 30000,
+    "sonar_ovf": 0,
+    "wheel_ovf": 0,
+    "P_us": 100000
+  },
+  "dmr": {
+    "n_rows": 602,
+    "tasks": {
+      "sonar": {
+        "n_rows": 301,
+        "device_counts": {
+          "ontime": 300,
+          "censored": 1
+        },
+        "recomputed_counts": {
+          "ontime": 300,
+          "censored": 1
+        },
+        "status_mismatches": 0,
+        "eligible": 300,
+        "miss": 0,
+        "dmr": 0.0,
+        "q1_map_mismatches": 0,
+        "deadline_mismatches": 0,
+        "period_us": 100000,
+        "has_window_open": 0
+      },
+      "wheel": {
+        "n_rows": 301,
+        "device_counts": {
+          "ontime": 300,
+          "censored": 1
+        },
+        "recomputed_counts": {
+          "ontime": 300,
+          "censored": 1
+        },
+        "status_mismatches": 0,
+        "eligible": 300,
+        "miss": 0,
+        "dmr": 0.0,
+        "q1_map_mismatches": 0,
+        "deadline_mismatches": 0,
+        "period_us": 100000,
+        "has_window_open": 300
+      }
+    }
+  },
+  "capture_valid": true,
+  "tim2_obs_span_us": 30000000,
+  "tim2_obs_ok": true,
+  "tick_delta": 30000,
+  "tick_expected": 30000,
+  "tick_lag": 0,
+  "tick_sync_ok": true
+}

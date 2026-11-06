@@ -1,0 +1,35 @@
+# Local maps / IDE
+BRANCH_MAP.local.md
+.vscode/
+.idea/
+
+# Build products (do not upload)
+**/Debug/
+**/Release/
+*.o
+*.elf
+*.map
+*.list
+*.hex
+*.bin
+*.su
+*.cyclo
+*.d
+
+# Huge experiment rebuild trees (CSV raw timing is kept under dmr/raw)
+thesis/03_rt_experiment/builds/
+thesis/03_rt_experiment/checkpoints/
+thesis/03_rt_experiment/key_separation/ns256/additional_eval/dmr/builds/
+thesis/03_rt_experiment/key_separation/ns256/additional_eval/dmr/recapture/
+thesis/03_rt_experiment/**/__pycache__/
+
+# Optional local archives
+thesis/06_archive/
+thesis/07_refs_pdf/
+*.pdf
+!thesis/02_smarmplus/**/*.pdf
+
+*.exe
+*.pdb
+*.ilk
+

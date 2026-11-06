@@ -1,0 +1,9 @@
+# CORRECTNESS vectors — fixed challenge + synthetic |M|
+# (Distinct from wall30 PERFORMANCE smoke; digests not on UART.)
+# challenge = 0123456789abcdeffedcba9876543210
+# secret = MySecureKey123
+# |M| = 128KiB, mem[i]=((i/B)*17)^((i*131+17)), B=1024, passes=1
+# NOT equal to on-flash 0x08060000 contents
+original bc841a442e5bdcd0e01767e514cb359be001a53dc47f5b74241a08cae9cf9d84
+prng e59871b94ec7b40ef48795bb20afe2ea11836893ba07da5e33c324000c3640f1
+fpe 2b2f22542587a59969ce8da9bc0333b1bbdfeb671235617d525115c1995eeb0a

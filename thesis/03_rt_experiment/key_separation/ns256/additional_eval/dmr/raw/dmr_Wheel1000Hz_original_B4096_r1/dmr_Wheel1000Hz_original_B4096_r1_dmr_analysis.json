@@ -1,0 +1,57 @@
+{
+  "tag": "dmr_Wheel1000Hz_original_B4096_r1",
+  "uart_meta": {
+    "raw_bytes": 84469,
+    "T0_us": 2022668,
+    "Tend_us": 5022668,
+    "tick0": 2012,
+    "tick_end": 2853,
+    "tick_delta": 841,
+    "tick_expected": 3000,
+    "sonar_ovf": 0,
+    "wheel_ovf": 0,
+    "P_us": 1000
+  },
+  "dmr": {
+    "n_rows": 842,
+    "tasks": {
+      "sonar": {
+        "n_rows": 0,
+        "eligible": 0,
+        "miss": 0,
+        "dmr": null,
+        "counts": {},
+        "invalid": false,
+        "notes": "no rows"
+      },
+      "wheel": {
+        "n_rows": 842,
+        "device_counts": {
+          "ontime": 3,
+          "late": 838,
+          "incomplete_miss": 1
+        },
+        "recomputed_counts": {
+          "ontime": 3,
+          "late": 838,
+          "incomplete_miss": 1
+        },
+        "status_mismatches": 0,
+        "eligible": 842,
+        "miss": 839,
+        "dmr": 0.996437054631829,
+        "q1_map_mismatches": 0,
+        "deadline_mismatches": 0,
+        "period_us": 1000,
+        "has_window_open": 813
+      }
+    }
+  },
+  "capture_valid": true,
+  "tim2_obs_span_us": 3000000,
+  "tim2_obs_ok": true,
+  "tick_delta": 841,
+  "tick_expected": 3000,
+  "tick_lag": 2159,
+  "tick_sync_ok": false
+}
